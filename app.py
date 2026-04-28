@@ -1,7 +1,5 @@
 import streamlit as st
 import pandas as pd
-import gspread
-from google.oauth2.service_account import Credentials
 from datetime import datetime, date
 import plotly.express as px
 import plotly.graph_objects as go
@@ -38,29 +36,27 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ── CONNEXION GOOGLE SHEETS ───────────────────────────────────────────────────
-import json
-creds_dict = json.loads(st.secrets["gcp_service_account"])
-creds = Credentials.from_service_account_info(creds_dict, scopes=[
-    "https://spreadsheets.google.com/feeds",
-    "https://www.googleapis.com/auth/drive"
-])
-client = gspread.authorize(creds)
-
+# ── CONSTANTES ────────────────────────────────────────────────────────────────
 POIDS_UNIT = 18.14
 CRTNS = {"TURBO(COLOMBIA)": 1080, "MOIN(COSTA RICA)": 1200}
 
-# ── LECTURE DONNÉES ───────────────────────────────────────────────────────────
-@st.cache_data(ttl=30)  # rafraîchit toutes les 30 secondes
+# ── SESSION STATE (nouvelles commandes temporaires) ───────────────────────────
+if "new_commandes" not in st.session_state:
+    st.session_state.new_commandes = []
+
+# ── LECTURE DONNÉES EXCEL ─────────────────────────────────────────────────────
+@st.cache_data(ttl=60)
 def load_clients():
-    df = conn.read(worksheet="BASE CLIENTS", usecols=list(range(9)), header=3)
+    df = pd.read_excel("data/eden_food.xlsx", sheet_name="BASE CLIENTS",
+                       usecols=list(range(9)), header=3)
     df.columns = ["num","nom","adresse1","adresse2","ville","pays","licence","poids_total","solde_init"]
     df = df[df["nom"].notna() & (df["nom"] != "")].copy()
     return df
 
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=60)
 def load_commandes():
-    df = conn.read(worksheet="COMMANDES", usecols=list(range(13)), header=3)
+    df = pd.read_excel("data/eden_food.xlsx", sheet_name="COMMANDES",
+                       usecols=list(range(13)), header=3)
     df.columns = ["num","semaine","client","booking","licence","navire","voyage",
                   "pol","depart","eta","nb_cnt","produit","statut"]
     df = df[df["client"].notna() & (df["client"] != "")].copy()
@@ -70,10 +66,23 @@ def load_commandes():
     df["total_kgs"]   = (df["total_crtns"] * POIDS_UNIT).round(2)
     return df
 
-clients   = load_clients()
-commandes = load_commandes()
+# ── FUSION BASE + NOUVELLES COMMANDES SESSION ─────────────────────────────────
+clients_base   = load_clients()
+commandes_base = load_commandes()
 
-# Calcul solde réel par licence
+if st.session_state.new_commandes:
+    df_sess = pd.DataFrame(st.session_state.new_commandes)
+    df_sess["nb_cnt"]       = pd.to_numeric(df_sess["nb_cnt"], errors="coerce").fillna(0).astype(int)
+    df_sess["crtns_cnt"]    = df_sess["pol"].apply(lambda x: CRTNS.get(str(x).strip(), 1200))
+    df_sess["total_crtns"]  = df_sess["nb_cnt"] * df_sess["crtns_cnt"]
+    df_sess["total_kgs"]    = (df_sess["total_crtns"] * POIDS_UNIT).round(2)
+    commandes = pd.concat([commandes_base, df_sess], ignore_index=True)
+else:
+    commandes = commandes_base.copy()
+
+clients = clients_base.copy()
+
+# ── CALCUL SOLDE ──────────────────────────────────────────────────────────────
 def get_solde(client_nom, licence, poids_total):
     mask = (commandes["client"] == client_nom) & (commandes["licence"] == licence)
     charge = commandes.loc[mask, "total_kgs"].sum()
@@ -83,7 +92,7 @@ clients["poids_total"] = pd.to_numeric(clients["poids_total"], errors="coerce").
 clients["solde_reel"]  = clients.apply(
     lambda r: get_solde(r["nom"], r["licence"], r["poids_total"]), axis=1)
 
-# ── HEADER ─────────────────────────────────────────────────────────────────────
+# ── HEADER ────────────────────────────────────────────────────────────────────
 col_logo, col_title, col_refresh = st.columns([1,8,2])
 with col_logo:
     st.markdown("## 🍌")
@@ -92,12 +101,12 @@ with col_title:
     st.caption(f"Licences DPVCT & Suivi Commandes · Mis à jour : {datetime.now().strftime('%d/%m/%Y %H:%M')}")
 with col_refresh:
     if st.button("🔄 Rafraîchir", use_container_width=True):
-        st.cache_data.clear(); st.rerun()
+        st.cache_data.clear()
+        st.session_state.new_commandes = []
+        st.rerun()
 
 st.divider()
 
-# ══════════════════════════════════════════════════════════════════════════════
-#  TABS
 # ══════════════════════════════════════════════════════════════════════════════
 tab1, tab2, tab3, tab4 = st.tabs([
     "📊 Tableau de bord",
@@ -117,12 +126,12 @@ with tab1:
 
     k1,k2,k3,k4,k5,k6 = st.columns(6)
     for col, val, lbl, sub, color in [
-        (k1, len(clients),         "Licences",       f"{clients['nom'].nunique()} clients", "#1E8449"),
-        (k2, len(todo),            "⏳ À générer",   "commandes en attente",                "#6C3483"),
-        (k3, len(done),            "✅ Générées",    "confirmations envoyées",               "#1A4D8F"),
-        (k4, int(todo["nb_cnt"].sum()), "CNT en cours","conteneurs planifiés",              "#E67E22"),
-        (k5, len(alerte),          "🔴 Alertes",     "licences critiques",                   "#C0392B"),
-        (k6, len(depass),          "❌ Dépassements","licences négatives",                   "#C0392B"),
+        (k1, len(clients),              "Licences",      f"{clients['nom'].nunique()} clients", "#1E8449"),
+        (k2, len(todo),                 "⏳ À générer",  "commandes en attente",                "#6C3483"),
+        (k3, len(done),                 "✅ Générées",   "confirmations envoyées",               "#1A4D8F"),
+        (k4, int(todo["nb_cnt"].sum()), "CNT en cours",  "conteneurs planifiés",                "#E67E22"),
+        (k5, len(alerte),               "🔴 Alertes",    "licences critiques",                   "#C0392B"),
+        (k6, len(depass),               "❌ Dépassements","licences négatives",                  "#C0392B"),
     ]:
         col.markdown(f"""
         <div class="kpi-card" style="border-color:{color}">
@@ -145,7 +154,6 @@ with tab1:
                 title_font_size=13, margin=dict(t=40,b=20,l=20,r=20))
             fig.update_traces(marker_cornerradius=4)
             st.plotly_chart(fig, use_container_width=True)
-
     with c2:
         if not commandes.empty:
             df_pol = commandes.groupby("pol")["nb_cnt"].sum().reset_index()
@@ -174,7 +182,6 @@ with tab1:
 with tab2:
     st.markdown('<div class="section-hdr">🚢 Toutes les commandes</div>', unsafe_allow_html=True)
 
-    # Filtres
     fc1, fc2, fc3 = st.columns(3)
     with fc1:
         f_statut = st.multiselect("Statut", commandes["statut"].dropna().unique().tolist(),
@@ -207,17 +214,27 @@ with tab2:
             "statut":    st.column_config.TextColumn("Statut"),
         }, hide_index=True)
 
-    st.caption(f"**{len(df_filt)} commandes** affichées · Total : {df_filt['nb_cnt'].sum()} CNT · {df_filt['total_kgs'].sum():,.0f} kgs")
+    st.caption(f"**{len(df_filt)} commandes** · Total : {df_filt['nb_cnt'].sum()} CNT · {df_filt['total_kgs'].sum():,.0f} kgs")
+
+    # ── EXPORT EXCEL ──────────────────────────────────────────────────────────
+    if st.session_state.new_commandes:
+        st.info(f"💾 {len(st.session_state.new_commandes)} nouvelle(s) commande(s) ajoutée(s) cette session — télécharge le fichier mis à jour :")
+        export_df = commandes[["num","semaine","client","booking","licence",
+            "navire","voyage","pol","depart","eta","nb_cnt","produit","statut"]]
+        csv = export_df.to_csv(index=False).encode("utf-8")
+        st.download_button("📥 Télécharger commandes (CSV)", csv,
+            file_name=f"commandes_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
+            mime="text/csv", use_container_width=True)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 with tab3:
     st.markdown('<div class="section-hdr">➕ Saisir une nouvelle commande</div>', unsafe_allow_html=True)
-    st.info("💡 Les champs calculés (kgs, cartons) s'affichent automatiquement avant validation.")
+    st.info("💡 Les nouvelles commandes sont actives pendant la session. Télécharge le CSV depuis l'onglet Commandes pour sauvegarder.")
 
     with st.form("form_commande", clear_on_submit=True):
         f1, f2 = st.columns(2)
         with f1:
-            sem   = st.text_input("Semaine *", placeholder="ex: S-26")
+            sem        = st.text_input("Semaine *", placeholder="ex: S-26")
             client_sel = st.selectbox("Client *", clients["nom"].unique().tolist())
             booking    = st.text_input("Référence Booking *", placeholder="ex: LHV4005547")
             licences_dispo = clients[clients["nom"]==client_sel]["licence"].tolist()
@@ -229,33 +246,30 @@ with tab3:
             nb_cnt  = st.number_input("Nombre CNT *", min_value=1, max_value=100, value=1)
 
         f3, f4, f5 = st.columns(3)
-        with f3: depart = st.date_input("Date départ *", value=date.today())
-        with f4: eta    = st.date_input("ETA *", value=date.today())
+        with f3: depart  = st.date_input("Date départ *", value=date.today())
+        with f4: eta     = st.date_input("ETA *", value=date.today())
         with f5: produit = st.selectbox("Produit *", ["BANANE","ANANAS","MANGUE","AUTRE"])
 
-        # Preview calcul
         crtns_cnt   = CRTNS[pol_sel]
         total_crtns = nb_cnt * crtns_cnt
         total_kgs   = round(total_crtns * POIDS_UNIT, 2)
 
-        # Solde courant pour cette licence
-        lic_row = clients[(clients["nom"]==client_sel)&(clients["licence"]==licence_sel)]
+        lic_row     = clients[(clients["nom"]==client_sel)&(clients["licence"]==licence_sel)]
         solde_avant = float(lic_row["solde_reel"].values[0]) if len(lic_row)>0 else 0
         solde_apres = round(solde_avant - total_kgs, 2)
 
         st.markdown("---")
         p1,p2,p3,p4 = st.columns(4)
-        p1.metric("Cartons/CNT", f"{crtns_cnt:,}")
-        p2.metric("Total cartons", f"{total_crtns:,}")
-        p3.metric("Total kgs", f"{total_kgs:,.2f}")
-        p4.metric("Solde après", f"{solde_apres:,.2f} kgs",
-            delta=f"{-total_kgs:,.0f} kgs",
-            delta_color="inverse")
+        p1.metric("Cartons/CNT",  f"{crtns_cnt:,}")
+        p2.metric("Total cartons",f"{total_crtns:,}")
+        p3.metric("Total kgs",    f"{total_kgs:,.2f}")
+        p4.metric("Solde après",  f"{solde_apres:,.2f} kgs",
+            delta=f"{-total_kgs:,.0f} kgs", delta_color="inverse")
 
         if solde_apres < 0:
-            st.markdown('<div class="alert-red">⚠️ ATTENTION — Cette commande dépasse le solde de la licence. Solde insuffisant.</div>', unsafe_allow_html=True)
+            st.markdown('<div class="alert-red">⚠️ ATTENTION — Solde insuffisant. Commande bloquée.</div>', unsafe_allow_html=True)
         elif solde_apres < 19591.2:
-            st.markdown('<div class="alert-red">🔴 Solde critique après cette commande — moins d\'1 CNT TURBO restant</div>', unsafe_allow_html=True)
+            st.markdown('<div class="alert-red">🔴 Solde critique après cette commande</div>', unsafe_allow_html=True)
         else:
             st.markdown('<div class="alert-ok">✅ Solde suffisant après cette commande</div>', unsafe_allow_html=True)
 
@@ -264,20 +278,17 @@ with tab3:
 
         if submitted:
             new_row = {
-                "num": "", "semaine": sem, "client": client_sel,
-                "booking": booking, "licence": licence_sel,
-                "navire": navire, "voyage": voyage, "pol": pol_sel,
-                "depart": depart.strftime("%d/%m/%Y"),
-                "eta": eta.strftime("%d/%m/%Y"),
-                "nb_cnt": nb_cnt, "produit": produit,
-                "statut": "⏳ À GÉNÉRER"
+                "num":"", "semaine":sem, "client":client_sel,
+                "booking":booking, "licence":licence_sel,
+                "navire":navire, "voyage":voyage, "pol":pol_sel,
+                "depart":depart.strftime("%d/%m/%Y"),
+                "eta":eta.strftime("%d/%m/%Y"),
+                "nb_cnt":nb_cnt, "produit":produit,
+                "statut":"⏳ À GÉNÉRER"
             }
-            df_new = pd.concat([commandes[["num","semaine","client","booking","licence",
-                "navire","voyage","pol","depart","eta","nb_cnt","produit","statut"]],
-                pd.DataFrame([new_row])], ignore_index=True)
-            conn.update(worksheet="COMMANDES", data=df_new)
+            st.session_state.new_commandes.append(new_row)
             st.cache_data.clear()
-            st.success(f"✅ Commande {booking} enregistrée ! Le dashboard se met à jour automatiquement.")
+            st.success(f"✅ Commande {booking} enregistrée ! Va dans l'onglet Commandes pour télécharger le fichier mis à jour.")
             st.rerun()
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -285,7 +296,6 @@ with tab4:
     st.markdown('<div class="section-hdr">📋 Licences & soldes</div>', unsafe_allow_html=True)
     for _, row in clients.iterrows():
         pct = max(0, min(100, row["solde_reel"]/row["poids_total"]*100)) if row["poids_total"]>0 else 0
-        color = "#1E8449" if pct>35 else ("#E67E22" if pct>10 else "#C0392B")
         c1,c2,c3 = st.columns([2,4,2])
         with c1:
             st.markdown(f"**{row['nom'][:30]}**")
