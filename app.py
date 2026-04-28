@@ -40,42 +40,43 @@ st.markdown("""
 POIDS_UNIT = 18.14
 CRTNS = {"TURBO(COLOMBIA)": 1080, "MOIN(COSTA RICA)": 1200}
 
-# ── SESSION STATE (nouvelles commandes temporaires) ───────────────────────────
+# ── SESSION STATE ─────────────────────────────────────────────────────────────
 if "new_commandes" not in st.session_state:
     st.session_state.new_commandes = []
 
 # ── LECTURE DONNÉES EXCEL ─────────────────────────────────────────────────────
 @st.cache_data(ttl=60)
 def load_clients():
-   df = pd.read_excel("eden_food.xlsx", sheet_name="📋 BASE CLIENTS",
-                   usecols=list(range(11)), header=3)
-    df.columns = ["num","nom","adresse1","adresse2","ville","pays","licence","poids_total","solde_init"]
+    df = pd.read_excel("eden_food.xlsx", sheet_name="📋 BASE CLIENTS",
+                       usecols=list(range(11)), header=3)
+    df.columns = ["num","nom","adresse1","adresse2","ville","pays","licence",
+                  "poids_total","solde_init","contact","notes"]
     df = df[df["nom"].notna() & (df["nom"] != "")].copy()
     return df
 
 @st.cache_data(ttl=60)
 def load_commandes():
-   df = pd.read_excel("eden_food.xlsx", sheet_name="🚢 COMMANDES",
-                   usecols=list(range(13)), header=3)
+    df = pd.read_excel("eden_food.xlsx", sheet_name="🚢 COMMANDES",
+                       usecols=list(range(13)), header=3)
     df.columns = ["num","semaine","client","booking","licence","navire","voyage",
                   "pol","depart","eta","nb_cnt","produit","statut"]
     df = df[df["client"].notna() & (df["client"] != "")].copy()
     df["nb_cnt"] = pd.to_numeric(df["nb_cnt"], errors="coerce").fillna(0).astype(int)
     df["crtns_cnt"] = df["pol"].apply(lambda x: CRTNS.get(str(x).strip(), 1200))
     df["total_crtns"] = df["nb_cnt"] * df["crtns_cnt"]
-    df["total_kgs"]   = (df["total_crtns"] * POIDS_UNIT).round(2)
+    df["total_kgs"] = (df["total_crtns"] * POIDS_UNIT).round(2)
     return df
 
-# ── FUSION BASE + NOUVELLES COMMANDES SESSION ─────────────────────────────────
+# ── CHARGEMENT + FUSION SESSION ───────────────────────────────────────────────
 clients_base   = load_clients()
 commandes_base = load_commandes()
 
 if st.session_state.new_commandes:
     df_sess = pd.DataFrame(st.session_state.new_commandes)
-    df_sess["nb_cnt"]       = pd.to_numeric(df_sess["nb_cnt"], errors="coerce").fillna(0).astype(int)
-    df_sess["crtns_cnt"]    = df_sess["pol"].apply(lambda x: CRTNS.get(str(x).strip(), 1200))
-    df_sess["total_crtns"]  = df_sess["nb_cnt"] * df_sess["crtns_cnt"]
-    df_sess["total_kgs"]    = (df_sess["total_crtns"] * POIDS_UNIT).round(2)
+    df_sess["nb_cnt"]      = pd.to_numeric(df_sess["nb_cnt"], errors="coerce").fillna(0).astype(int)
+    df_sess["crtns_cnt"]   = df_sess["pol"].apply(lambda x: CRTNS.get(str(x).strip(), 1200))
+    df_sess["total_crtns"] = df_sess["nb_cnt"] * df_sess["crtns_cnt"]
+    df_sess["total_kgs"]   = (df_sess["total_crtns"] * POIDS_UNIT).round(2)
     commandes = pd.concat([commandes_base, df_sess], ignore_index=True)
 else:
     commandes = commandes_base.copy()
@@ -93,7 +94,7 @@ clients["solde_reel"]  = clients.apply(
     lambda r: get_solde(r["nom"], r["licence"], r["poids_total"]), axis=1)
 
 # ── HEADER ────────────────────────────────────────────────────────────────────
-col_logo, col_title, col_refresh = st.columns([1,8,2])
+col_logo, col_title, col_refresh = st.columns([1, 8, 2])
 with col_logo:
     st.markdown("## 🍌")
 with col_title:
@@ -107,7 +108,7 @@ with col_refresh:
 
 st.divider()
 
-# ══════════════════════════════════════════════════════════════════════════════
+# ── TABS ──────────────────────────────────────────────────────────────────────
 tab1, tab2, tab3, tab4 = st.tabs([
     "📊 Tableau de bord",
     "🚢 Commandes",
@@ -124,14 +125,14 @@ with tab1:
     alerte = clients[clients["solde_reel"] < 19591.2]
     depass = clients[clients["solde_reel"] < 0]
 
-    k1,k2,k3,k4,k5,k6 = st.columns(6)
+    k1, k2, k3, k4, k5, k6 = st.columns(6)
     for col, val, lbl, sub, color in [
-        (k1, len(clients),              "Licences",      f"{clients['nom'].nunique()} clients", "#1E8449"),
-        (k2, len(todo),                 "⏳ À générer",  "commandes en attente",                "#6C3483"),
-        (k3, len(done),                 "✅ Générées",   "confirmations envoyées",               "#1A4D8F"),
-        (k4, int(todo["nb_cnt"].sum()), "CNT en cours",  "conteneurs planifiés",                "#E67E22"),
-        (k5, len(alerte),               "🔴 Alertes",    "licences critiques",                   "#C0392B"),
-        (k6, len(depass),               "❌ Dépassements","licences négatives",                  "#C0392B"),
+        (k1, len(clients),               "Licences",       f"{clients['nom'].nunique()} clients", "#1E8449"),
+        (k2, len(todo),                  "⏳ À générer",   "commandes en attente",                "#6C3483"),
+        (k3, len(done),                  "✅ Générées",    "confirmations envoyées",               "#1A4D8F"),
+        (k4, int(todo["nb_cnt"].sum()),  "CNT en cours",   "conteneurs planifiés",                "#E67E22"),
+        (k5, len(alerte),                "🔴 Alertes",     "licences critiques",                   "#C0392B"),
+        (k6, len(depass),                "❌ Dépassements","licences négatives",                   "#C0392B"),
     ]:
         col.markdown(f"""
         <div class="kpi-card" style="border-color:{color}">
@@ -141,7 +142,7 @@ with tab1:
         </div>""", unsafe_allow_html=True)
 
     st.markdown('<div class="section-hdr">📦 Volumes par semaine</div>', unsafe_allow_html=True)
-    c1, c2 = st.columns([2,1])
+    c1, c2 = st.columns([2, 1])
     with c1:
         if not commandes.empty:
             df_sem = commandes.groupby("semaine")["nb_cnt"].sum().reset_index()
@@ -163,7 +164,7 @@ with tab1:
                 hole=0.6)
             fig2.update_layout(title_font_size=13,
                 margin=dict(t=40,b=20,l=20,r=20),
-                legend=dict(orientation="h",yanchor="bottom",y=-0.2))
+                legend=dict(orientation="h", yanchor="bottom", y=-0.2))
             st.plotly_chart(fig2, use_container_width=True)
 
     st.markdown('<div class="section-hdr">⚖️ Poids chargés (kgs)</div>', unsafe_allow_html=True)
@@ -216,9 +217,8 @@ with tab2:
 
     st.caption(f"**{len(df_filt)} commandes** · Total : {df_filt['nb_cnt'].sum()} CNT · {df_filt['total_kgs'].sum():,.0f} kgs")
 
-    # ── EXPORT EXCEL ──────────────────────────────────────────────────────────
     if st.session_state.new_commandes:
-        st.info(f"💾 {len(st.session_state.new_commandes)} nouvelle(s) commande(s) ajoutée(s) cette session — télécharge le fichier mis à jour :")
+        st.info(f"💾 {len(st.session_state.new_commandes)} nouvelle(s) commande(s) cette session — télécharge pour sauvegarder :")
         export_df = commandes[["num","semaine","client","booking","licence",
             "navire","voyage","pol","depart","eta","nb_cnt","produit","statut"]]
         csv = export_df.to_csv(index=False).encode("utf-8")
@@ -237,7 +237,7 @@ with tab3:
             sem        = st.text_input("Semaine *", placeholder="ex: S-26")
             client_sel = st.selectbox("Client *", clients["nom"].unique().tolist())
             booking    = st.text_input("Référence Booking *", placeholder="ex: LHV4005547")
-            licences_dispo = clients[clients["nom"]==client_sel]["licence"].tolist()
+            licences_dispo = clients[clients["nom"] == client_sel]["licence"].tolist()
             licence_sel    = st.selectbox("N° Licence *", licences_dispo)
         with f2:
             navire  = st.text_input("Navire *", placeholder="ex: CMA CGM EXCELLENCE")
@@ -246,24 +246,27 @@ with tab3:
             nb_cnt  = st.number_input("Nombre CNT *", min_value=1, max_value=100, value=1)
 
         f3, f4, f5 = st.columns(3)
-        with f3: depart  = st.date_input("Date départ *", value=date.today())
-        with f4: eta     = st.date_input("ETA *", value=date.today())
-        with f5: produit = st.selectbox("Produit *", ["BANANE","ANANAS","MANGUE","AUTRE"])
+        with f3:
+            depart = st.date_input("Date départ *", value=date.today())
+        with f4:
+            eta = st.date_input("ETA *", value=date.today())
+        with f5:
+            produit = st.selectbox("Produit *", ["BANANE","ANANAS","MANGUE","AUTRE"])
 
         crtns_cnt   = CRTNS[pol_sel]
         total_crtns = nb_cnt * crtns_cnt
         total_kgs   = round(total_crtns * POIDS_UNIT, 2)
 
-        lic_row     = clients[(clients["nom"]==client_sel)&(clients["licence"]==licence_sel)]
-        solde_avant = float(lic_row["solde_reel"].values[0]) if len(lic_row)>0 else 0
+        lic_row     = clients[(clients["nom"] == client_sel) & (clients["licence"] == licence_sel)]
+        solde_avant = float(lic_row["solde_reel"].values[0]) if len(lic_row) > 0 else 0
         solde_apres = round(solde_avant - total_kgs, 2)
 
         st.markdown("---")
-        p1,p2,p3,p4 = st.columns(4)
-        p1.metric("Cartons/CNT",  f"{crtns_cnt:,}")
-        p2.metric("Total cartons",f"{total_crtns:,}")
-        p3.metric("Total kgs",    f"{total_kgs:,.2f}")
-        p4.metric("Solde après",  f"{solde_apres:,.2f} kgs",
+        p1, p2, p3, p4 = st.columns(4)
+        p1.metric("Cartons/CNT",   f"{crtns_cnt:,}")
+        p2.metric("Total cartons", f"{total_crtns:,}")
+        p3.metric("Total kgs",     f"{total_kgs:,.2f}")
+        p4.metric("Solde après",   f"{solde_apres:,.2f} kgs",
             delta=f"{-total_kgs:,.0f} kgs", delta_color="inverse")
 
         if solde_apres < 0:
@@ -278,30 +281,30 @@ with tab3:
 
         if submitted:
             new_row = {
-                "num":"", "semaine":sem, "client":client_sel,
-                "booking":booking, "licence":licence_sel,
-                "navire":navire, "voyage":voyage, "pol":pol_sel,
-                "depart":depart.strftime("%d/%m/%Y"),
-                "eta":eta.strftime("%d/%m/%Y"),
-                "nb_cnt":nb_cnt, "produit":produit,
-                "statut":"⏳ À GÉNÉRER"
+                "num": "", "semaine": sem, "client": client_sel,
+                "booking": booking, "licence": licence_sel,
+                "navire": navire, "voyage": voyage, "pol": pol_sel,
+                "depart": depart.strftime("%d/%m/%Y"),
+                "eta": eta.strftime("%d/%m/%Y"),
+                "nb_cnt": nb_cnt, "produit": produit,
+                "statut": "⏳ À GÉNÉRER"
             }
             st.session_state.new_commandes.append(new_row)
             st.cache_data.clear()
-            st.success(f"✅ Commande {booking} enregistrée ! Va dans l'onglet Commandes pour télécharger le fichier mis à jour.")
+            st.success(f"✅ Commande {booking} enregistrée ! Va dans l'onglet Commandes pour télécharger.")
             st.rerun()
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 with tab4:
     st.markdown('<div class="section-hdr">📋 Licences & soldes</div>', unsafe_allow_html=True)
     for _, row in clients.iterrows():
-        pct = max(0, min(100, row["solde_reel"]/row["poids_total"]*100)) if row["poids_total"]>0 else 0
-        c1,c2,c3 = st.columns([2,4,2])
+        pct = max(0, min(100, row["solde_reel"] / row["poids_total"] * 100)) if row["poids_total"] > 0 else 0
+        c1, c2, c3 = st.columns([2, 4, 2])
         with c1:
             st.markdown(f"**{row['nom'][:30]}**")
             st.caption(row["licence"])
         with c2:
-            st.progress(pct/100)
+            st.progress(pct / 100)
             st.caption(f"Solde : **{row['solde_reel']:,.0f} kgs** / {row['poids_total']:,.0f} kgs")
         with c3:
             if row["solde_reel"] < 0:
