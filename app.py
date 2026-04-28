@@ -33,8 +33,53 @@ st.markdown("""
     font-weight:700; font-size:13px; margin:8px 0; }
   div[data-testid="stForm"] { background:#fff; border-radius:12px;
     padding:24px; box-shadow:0 1px 6px rgba(0,0,0,.08); border:none; }
+  .login-box { max-width:400px; margin:80px auto; background:#fff;
+    border-radius:16px; padding:40px; box-shadow:0 4px 24px rgba(0,0,0,.10); }
 </style>
 """, unsafe_allow_html=True)
+
+# ── UTILISATEURS AUTORISÉS ────────────────────────────────────────────────────
+USERS = {
+    "yann":    {"password": "EdenFood2026!", "role": "admin"},
+    "eden":    {"password": "Eden@Logistik", "role": "user"},
+    "srg":     {"password": "SRG@Trading1",  "role": "user"},
+}
+
+# ── AUTHENTIFICATION ──────────────────────────────────────────────────────────
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+    st.session_state.username = ""
+    st.session_state.role = ""
+
+def login_page():
+    st.markdown("""
+    <div style='text-align:center; padding:40px 0 20px'>
+        <div style='font-size:3rem'>🍌</div>
+        <h2 style='color:#0D1B2A; margin:8px 0'>EDEN FOOD</h2>
+        <p style='color:#6B7280; font-size:13px'>Logistics Dashboard — Accès sécurisé</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        with st.form("login_form"):
+            username = st.text_input("👤 Identifiant", placeholder="Votre identifiant")
+            password = st.text_input("🔒 Mot de passe", type="password", placeholder="Votre mot de passe")
+            submitted = st.form_submit_button("Se connecter", use_container_width=True, type="primary")
+
+            if submitted:
+                username_lower = username.strip().lower()
+                if username_lower in USERS and USERS[username_lower]["password"] == password:
+                    st.session_state.authenticated = True
+                    st.session_state.username = username_lower
+                    st.session_state.role = USERS[username_lower]["role"]
+                    st.rerun()
+                else:
+                    st.error("❌ Identifiant ou mot de passe incorrect")
+
+if not st.session_state.authenticated:
+    login_page()
+    st.stop()
 
 # ── CONSTANTES ────────────────────────────────────────────────────────────────
 POIDS_UNIT = 18.14
@@ -94,7 +139,7 @@ clients["solde_reel"]  = clients.apply(
     lambda r: get_solde(r["nom"], r["licence"], r["poids_total"]), axis=1)
 
 # ── HEADER ────────────────────────────────────────────────────────────────────
-col_logo, col_title, col_refresh = st.columns([1, 8, 2])
+col_logo, col_title, col_refresh, col_user = st.columns([1, 7, 2, 2])
 with col_logo:
     st.markdown("## 🍌")
 with col_title:
@@ -104,6 +149,13 @@ with col_refresh:
     if st.button("🔄 Rafraîchir", use_container_width=True):
         st.cache_data.clear()
         st.session_state.new_commandes = []
+        st.rerun()
+with col_user:
+    st.markdown(f"<div style='text-align:right; padding-top:8px; font-size:13px; color:#6B7280'>👤 <b>{st.session_state.username}</b></div>", unsafe_allow_html=True)
+    if st.button("🚪 Déconnexion", use_container_width=True):
+        st.session_state.authenticated = False
+        st.session_state.username = ""
+        st.session_state.role = ""
         st.rerun()
 
 st.divider()
@@ -127,12 +179,12 @@ with tab1:
 
     k1, k2, k3, k4, k5, k6 = st.columns(6)
     for col, val, lbl, sub, color in [
-        (k1, len(clients),               "Licences",       f"{clients['nom'].nunique()} clients", "#1E8449"),
-        (k2, len(todo),                  "⏳ À générer",   "commandes en attente",                "#6C3483"),
-        (k3, len(done),                  "✅ Générées",    "confirmations envoyées",               "#1A4D8F"),
-        (k4, int(todo["nb_cnt"].sum()),  "CNT en cours",   "conteneurs planifiés",                "#E67E22"),
-        (k5, len(alerte),                "🔴 Alertes",     "licences critiques",                   "#C0392B"),
-        (k6, len(depass),                "❌ Dépassements","licences négatives",                   "#C0392B"),
+        (k1, len(clients),               "Licences",        f"{clients['nom'].nunique()} clients", "#1E8449"),
+        (k2, len(todo),                  "⏳ À générer",    "commandes en attente",                "#6C3483"),
+        (k3, len(done),                  "✅ Générées",     "confirmations envoyées",               "#1A4D8F"),
+        (k4, int(todo["nb_cnt"].sum()),  "CNT en cours",    "conteneurs planifiés",                "#E67E22"),
+        (k5, len(alerte),                "🔴 Alertes",      "licences critiques",                   "#C0392B"),
+        (k6, len(depass),                "❌ Dépassements", "licences négatives",                   "#C0392B"),
     ]:
         col.markdown(f"""
         <div class="kpi-card" style="border-color:{color}">
@@ -218,7 +270,7 @@ with tab2:
     st.caption(f"**{len(df_filt)} commandes** · Total : {df_filt['nb_cnt'].sum()} CNT · {df_filt['total_kgs'].sum():,.0f} kgs")
 
     if st.session_state.new_commandes:
-        st.info(f"💾 {len(st.session_state.new_commandes)} nouvelle(s) commande(s) cette session — télécharge pour sauvegarder :")
+        st.info(f"💾 {len(st.session_state.new_commandes)} nouvelle(s) commande(s) cette session :")
         export_df = commandes[["num","semaine","client","booking","licence",
             "navire","voyage","pol","depart","eta","nb_cnt","produit","statut"]]
         csv = export_df.to_csv(index=False).encode("utf-8")
@@ -291,7 +343,7 @@ with tab3:
             }
             st.session_state.new_commandes.append(new_row)
             st.cache_data.clear()
-            st.success(f"✅ Commande {booking} enregistrée ! Va dans l'onglet Commandes pour télécharger.")
+            st.success(f"✅ Commande {booking} enregistrée !")
             st.rerun()
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
