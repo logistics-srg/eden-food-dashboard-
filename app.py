@@ -39,7 +39,13 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ── CONNEXION GOOGLE SHEETS ───────────────────────────────────────────────────
-conn = st.connection("gsheets", type=GSheetsConnection)
+import json
+creds_dict = json.loads(st.secrets["gcp_service_account"])
+creds = Credentials.from_service_account_info(creds_dict, scopes=[
+    "https://spreadsheets.google.com/feeds",
+    "https://www.googleapis.com/auth/drive"
+])
+client = gspread.authorize(creds)
 
 POIDS_UNIT = 18.14
 CRTNS = {"TURBO(COLOMBIA)": 1080, "MOIN(COSTA RICA)": 1200}
