@@ -16,12 +16,14 @@ st.set_page_config(
 # ── CSS CUSTOM ────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-  /* FOND BLANC GLOBAL */
+  header[data-testid="stHeader"] { display: none !important; }
+  #MainMenu { display: none !important; }
+  .stAppDeployButton { display: none !important; }
+
   .stApp { background: #F7F9FC; }
   .main { background: #F7F9FC; }
   .block-container { padding: 0 2rem 2rem 2rem; max-width: 1400px; }
 
-  /* HEADER BANNER */
   .header-banner {
     background: linear-gradient(135deg, #0D1B2A 0%, #1A3A5C 100%);
     border-radius: 0 0 20px 20px;
@@ -32,11 +34,9 @@ st.markdown("""
     justify-content: space-between;
     box-shadow: 0 4px 20px rgba(13,27,42,0.15);
   }
-  .header-title { color: #fff; font-size: 22px; font-weight: 800; margin: 0; letter-spacing: 0.5px; }
   .header-sub { color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 4px; }
   .header-user { color: rgba(255,255,255,0.85); font-size: 13px; text-align: right; }
 
-  /* KPI CARDS */
   .kpi-card {
     background: #fff;
     border-radius: 14px;
@@ -50,7 +50,6 @@ st.markdown("""
   .kpi-lbl { font-size: 11px; color: #6B7280; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
   .kpi-sub { font-size: 11px; color: #9CA3AF; margin-top: 6px; }
 
-  /* SECTION HEADERS */
   .section-hdr {
     font-size: 11px; font-weight: 800; color: #9CA3AF;
     text-transform: uppercase; letter-spacing: 1.5px;
@@ -58,7 +57,6 @@ st.markdown("""
     border-bottom: 2px solid #F0F2F5;
   }
 
-  /* ALERTS */
   .alert-red { background: #FEF2F2; border-left: 4px solid #EF4444;
     padding: 12px 16px; border-radius: 10px; color: #B91C1C;
     font-weight: 700; font-size: 13px; margin: 8px 0; }
@@ -66,13 +64,11 @@ st.markdown("""
     padding: 12px 16px; border-radius: 10px; color: #15803D;
     font-weight: 700; font-size: 13px; margin: 8px 0; }
 
-  /* FORMS */
   div[data-testid="stForm"] {
     background: #fff; border-radius: 16px;
     padding: 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: none;
   }
 
-  /* TABS */
   .stTabs [data-baseweb="tab-list"] {
     background: #fff; border-radius: 12px; padding: 4px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05); gap: 4px;
@@ -85,21 +81,7 @@ st.markdown("""
     background: #0D1B2A !important; color: #fff !important;
   }
 
-  /* LOGIN PAGE */
-  .login-wrap {
-    background: linear-gradient(135deg, #0D1B2A 0%, #1A3A5C 100%);
-    min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  }
-  .login-card {
-    background: #fff; border-radius: 20px; padding: 48px 40px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 420px; width: 100%;
-    text-align: center;
-  }
-
-  /* DATAFRAME */
   .stDataFrame { border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-
-  /* DIVIDER */
   hr { border-color: #F0F2F5 !important; margin: 16px 0 !important; }
 </style>
 """, unsafe_allow_html=True)
@@ -147,8 +129,8 @@ def login_page():
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         with st.form("login_form"):
-            username = st.text_input("👤 Identifiant", placeholder="Votre identifiant")
-            password = st.text_input("🔒 Mot de passe", type="password", placeholder="Votre mot de passe")
+            username  = st.text_input("👤 Identifiant", placeholder="Votre identifiant")
+            password  = st.text_input("🔒 Mot de passe", type="password", placeholder="Votre mot de passe")
             submitted = st.form_submit_button("→ Se connecter", use_container_width=True, type="primary")
             if submitted:
                 u = username.strip().lower()
@@ -223,7 +205,7 @@ try:
     b64  = base64.b64encode(logo).decode()
     logo_tag = f'<img src="data:image/jpeg;base64,{b64}" style="height:48px;">'
 except:
-    logo_tag = '<span style="color:#fff; font-size:28px; font-weight:900;">🍌 EDEN FOOD</span>'
+    logo_tag = '<span style="color:#fff; font-size:24px; font-weight:900; letter-spacing:2px;">🍌 EDEN FOOD</span>'
 
 col_h, col_r = st.columns([8, 2])
 with col_h:
@@ -300,8 +282,7 @@ with tab1:
                 labels={"semaine":"Semaine","nb_cnt":"Nb CNT"})
             fig.update_layout(showlegend=False, coloraxis_showscale=False,
                 plot_bgcolor="#fff", paper_bgcolor="#fff",
-                title_font_size=13, font_family="sans-serif",
-                margin=dict(t=40,b=20,l=20,r=20))
+                title_font_size=13, margin=dict(t=40,b=20,l=20,r=20))
             fig.update_traces(marker_cornerradius=6)
             st.plotly_chart(fig, use_container_width=True)
     with c2:
@@ -441,14 +422,22 @@ with tab3:
 with tab4:
     st.markdown('<div class="section-hdr">Licences & soldes</div>', unsafe_allow_html=True)
     for _, row in clients.iterrows():
-        pct   = max(0, min(100, row["solde_reel"] / row["poids_total"] * 100)) if row["poids_total"] > 0 else 0
+        pct = max(0, min(100, row["solde_reel"] / row["poids_total"] * 100)) if row["poids_total"] > 0 else 0
         c1, c2, c3 = st.columns([2, 4, 2])
         with c1:
-            st.markdown(f"**{row['nom'][:30]}**")
-            st.caption(row["licence"])
+            st.markdown(f"""
+            <p style='color:#111827; font-weight:700; font-size:15px; margin:0 0 4px 0;'>
+                {row['nom'][:30]}
+            </p>
+            <p style='color:#6B7280; font-size:12px; margin:0;'>
+                {row['licence']}
+            </p>""", unsafe_allow_html=True)
         with c2:
             st.progress(pct / 100)
-            st.caption(f"Solde : **{row['solde_reel']:,.0f} kgs** / {row['poids_total']:,.0f} kgs")
+            st.markdown(f"""
+            <p style='color:#374151; font-size:12px; margin:4px 0 0 0;'>
+                Solde : <b>{row['solde_reel']:,.0f} kgs</b> / {row['poids_total']:,.0f} kgs
+            </p>""", unsafe_allow_html=True)
         with c3:
             if row["solde_reel"] < 0:         st.error("❌ DÉPASSEMENT")
             elif row["solde_reel"] < 19591.2: st.error("🔴 CRITIQUE")
