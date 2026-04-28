@@ -47,16 +47,16 @@ if "new_commandes" not in st.session_state:
 # ── LECTURE DONNÉES EXCEL ─────────────────────────────────────────────────────
 @st.cache_data(ttl=60)
 def load_clients():
-    df = pd.read_excel("data/eden_food.xlsx", sheet_name="BASE CLIENTS",
-                       usecols=list(range(9)), header=3)
+   df = pd.read_excel("eden_food.xlsx", sheet_name="📋 BASE CLIENTS",
+                   usecols=list(range(11)), header=3)
     df.columns = ["num","nom","adresse1","adresse2","ville","pays","licence","poids_total","solde_init"]
     df = df[df["nom"].notna() & (df["nom"] != "")].copy()
     return df
 
 @st.cache_data(ttl=60)
 def load_commandes():
-    df = pd.read_excel("data/eden_food.xlsx", sheet_name="COMMANDES",
-                       usecols=list(range(13)), header=3)
+   df = pd.read_excel("eden_food.xlsx", sheet_name="🚢 COMMANDES",
+                   usecols=list(range(13)), header=3)
     df.columns = ["num","semaine","client","booking","licence","navire","voyage",
                   "pol","depart","eta","nb_cnt","produit","statut"]
     df = df[df["client"].notna() & (df["client"] != "")].copy()
