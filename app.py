@@ -98,9 +98,10 @@ div[data-testid="stDataFrame"]{border-radius:12px!important;overflow:hidden!impo
 
 # ── USERS ─────────────────────────────────────────────────────────────────────
 USERS = {
-    "yann": {"password": "EdenFood2026!", "role": "admin"},
-    "eden": {"password": "Eden@Logistik",  "role": "user"},
-    "srg":  {"password": "SRG@Trading1",   "role": "user"},
+    "yann":     {"password": "EdenFood2026!",  "role": "admin"},
+    "eden":     {"password": "Eden@Logistik",   "role": "user"},
+    "srg":      {"password": "SRG@Trading1",    "role": "user"},
+    "edenfood": {"password": "Edenfood@2026",   "role": "user"},
 }
 
 for k, v in {"authenticated": False, "username": "", "role": "",
