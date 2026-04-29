@@ -10,9 +10,11 @@ st.set_page_config(page_title="EDEN FOOD", page_icon="🍌", layout="wide", init
 st.markdown("""
 <style>
 header[data-testid="stHeader"],#MainMenu,.stAppDeployButton,footer{display:none!important}
+section[data-testid="stSidebarCollapsedControl"]{display:none!important}
+button[data-testid="collapsedControl"]{display:none!important}
 .stApp{background:#F5F5F7;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif}
 .block-container{padding:2rem 2.5rem;max-width:1400px}
-section[data-testid="stSidebar"]{background:#1D1D1F!important;border-right:none!important}
+section[data-testid="stSidebar"]{background:#1D1D1F!important;border-right:none!important;min-width:240px!important}
 section[data-testid="stSidebar"] p,section[data-testid="stSidebar"] span,section[data-testid="stSidebar"] label{color:#F5F5F7!important}
 section[data-testid="stSidebar"] .stButton>button{background:transparent!important;border:none!important;color:#EBEBF5!important;text-align:left!important;width:100%!important;padding:10px 16px!important;border-radius:10px!important;font-size:14px!important;font-weight:500!important;transition:background 0.15s!important;margin-bottom:2px!important}
 section[data-testid="stSidebar"] .stButton>button:hover{background:rgba(255,255,255,0.10)!important}
@@ -30,22 +32,34 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:rgba(255,255,
 .alert-warn{background:#FFFBF0;border-left:3px solid #FF9F0A;padding:12px 16px;border-radius:10px;color:#7A4F00;font-size:13px;margin:8px 0;font-weight:600}
 div[data-testid="stForm"]{background:#fff!important;border-radius:18px!important;padding:28px!important;box-shadow:0 1px 4px rgba(0,0,0,0.06)!important;border:none!important}
 hr{border:none!important;border-top:1px solid #E5E5EA!important;margin:16px 0!important}
-.cnt-box{background:#F5F5F7;border-radius:12px;padding:14px 18px;text-align:center}
-.cnt-val{font-size:1.6rem;font-weight:800;line-height:1;margin:4px 0}
-.cnt-lbl{font-size:10px;color:#6E6E73;text-transform:uppercase;letter-spacing:0.8px;font-weight:600}
 </style>
 """, unsafe_allow_html=True)
 
 # ── USERS ─────────────────────────────────────────────────────────────────────
 USERS = {
     "yann": {"password": "EdenFood2026!", "role": "admin"},
-    "eden": {"password": "Eden@Logistik", "role": "user"},
-    "srg":  {"password": "SRG@Trading1",  "role": "user"},
+    "eden": {"password": "Eden@Logistik",  "role": "user"},
+    "srg":  {"password": "SRG@Trading1",   "role": "user"},
 }
 
 for k, v in {"authenticated": False, "username": "", "role": "", "page": "dashboard", "new_commandes": []}.items():
     if k not in st.session_state:
         st.session_state[k] = v
+
+# ── CHART THEME ───────────────────────────────────────────────────────────────
+CHART_FONT = dict(family="SF Pro Display, Helvetica Neue, Arial", size=12, color="#1D1D1F")
+
+def apply_chart_style(fig, bgcolor="#fff"):
+    fig.update_layout(
+        paper_bgcolor=bgcolor,
+        plot_bgcolor=bgcolor,
+        font=CHART_FONT,
+        margin=dict(t=20, b=20, l=20, r=20),
+        legend=dict(font=dict(color="#1D1D1F", size=12)),
+    )
+    fig.update_xaxes(tickfont=dict(color="#1D1D1F"), title_font=dict(color="#1D1D1F"))
+    fig.update_yaxes(tickfont=dict(color="#1D1D1F"), title_font=dict(color="#1D1D1F"))
+    return fig
 
 # ── LOGIN ─────────────────────────────────────────────────────────────────────
 def login_page():
@@ -82,10 +96,10 @@ if not st.session_state.authenticated:
 
 # ── CONSTANTES ────────────────────────────────────────────────────────────────
 POIDS_UNIT = 18.14
-CRTNS = {"TURBO(COLOMBIA)": 1080, "MOIN(COSTA RICA)": 1200}
+CRTNS      = {"TURBO(COLOMBIA)": 1080, "MOIN(COSTA RICA)": 1200}
 KGS_PER_CNT = {
-    "MOIN(COSTA RICA)":  1200 * 18.14,   # 21 768 kgs
-    "TURBO(COLOMBIA)":   1080 * 18.14,   # 19 591.2 kgs
+    "MOIN(COSTA RICA)": 1200 * 18.14,
+    "TURBO(COLOMBIA)":  1080 * 18.14,
 }
 
 def licence_to_filename(lic_num):
@@ -143,8 +157,6 @@ def get_solde_prev(nom, lic, poids):
 
 clients["solde_reel"] = clients.apply(lambda r: get_solde_reel(r["nom"], r["licence"], r["poids_total"]), axis=1)
 clients["solde_prev"] = clients.apply(lambda r: get_solde_prev(r["nom"], r["licence"], r["poids_total"]), axis=1)
-
-# Solde en CNT dynamique par POL
 clients["cnt_reel_cr"]  = (clients["solde_reel"] / KGS_PER_CNT["MOIN(COSTA RICA)"]).round(2)
 clients["cnt_reel_col"] = (clients["solde_reel"] / KGS_PER_CNT["TURBO(COLOMBIA)"]).round(2)
 clients["cnt_prev_cr"]  = (clients["solde_prev"] / KGS_PER_CNT["MOIN(COSTA RICA)"]).round(2)
@@ -195,7 +207,6 @@ if page == "dashboard":
     todo   = commandes[commandes["statut"].str.contains("À GÉNÉRER", na=False)]
     done   = commandes[commandes["statut"].str.contains("GÉNÉRÉ", na=False)]
     alerte = clients[clients["solde_reel"] < 19591.2]
-    depass = clients[clients["solde_reel"] < 0]
 
     k1, k2, k3, k4, k5, k6 = st.columns(6)
     for col, val, lbl, sub, color in [
@@ -234,9 +245,15 @@ if page == "dashboard":
             df_pol = commandes.groupby("pol")["nb_cnt"].sum().reset_index()
             fig = px.pie(df_pol, values="nb_cnt", names="pol", hole=0.65,
                 color_discrete_sequence=["#0071E3","#FF9F0A"])
-            fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", margin=dict(t=20,b=20,l=0,r=0),
-                legend=dict(orientation="h", y=-0.15))
-            fig.update_traces(textinfo="percent+label")
+            fig.update_traces(
+                textinfo="percent+label",
+                textfont=dict(color="#1D1D1F", size=12)
+            )
+            fig = apply_chart_style(fig, "rgba(0,0,0,0)")
+            fig.update_layout(legend=dict(
+                orientation="h", y=-0.15,
+                font=dict(color="#1D1D1F", size=12)
+            ))
             st.plotly_chart(fig, use_container_width=True)
 
     st.markdown('<div class="sec-hdr">Volume hebdomadaire (CNT)</div>', unsafe_allow_html=True)
@@ -244,11 +261,13 @@ if page == "dashboard":
         df_sem = commandes.groupby("semaine")["nb_cnt"].sum().reset_index()
         fig2 = px.bar(df_sem, x="semaine", y="nb_cnt",
             color_discrete_sequence=["#0071E3"],
-            labels={"semaine":"Semaine","nb_cnt":"Conteneurs"})
-        fig2.update_layout(plot_bgcolor="#fff", paper_bgcolor="#fff",
-            margin=dict(t=10,b=20,l=20,r=20),
-            xaxis=dict(showgrid=False), yaxis=dict(showgrid=True, gridcolor="#F0F0F0"))
+            labels={"semaine": "Semaine", "nb_cnt": "Conteneurs"})
         fig2.update_traces(marker_cornerradius=6)
+        fig2 = apply_chart_style(fig2)
+        fig2.update_layout(
+            xaxis=dict(showgrid=False, tickfont=dict(color="#1D1D1F")),
+            yaxis=dict(showgrid=True, gridcolor="#F0F0F0", tickfont=dict(color="#1D1D1F"))
+        )
         st.plotly_chart(fig2, use_container_width=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -265,10 +284,10 @@ elif page == "semaine":
         done_s = commandes_semaine[commandes_semaine["statut"].str.contains("GÉNÉRÉ", na=False)]
         a, b, c, d = st.columns(4)
         for col, val, lbl, color in [
-            (a, len(commandes_semaine),            "Total commandes", "#0071E3"),
-            (b, len(todo_s),                       "⏳ À générer",    "#FF9F0A"),
-            (c, len(done_s),                       "✅ Confirmées",   "#34C759"),
-            (d, int(commandes_semaine["nb_cnt"].sum()), "CNT total",  "#5856D6"),
+            (a, len(commandes_semaine),                 "Total commandes", "#0071E3"),
+            (b, len(todo_s),                            "⏳ À générer",    "#FF9F0A"),
+            (c, len(done_s),                            "✅ Confirmées",   "#34C759"),
+            (d, int(commandes_semaine["nb_cnt"].sum()), "CNT total",       "#5856D6"),
         ]:
             col.markdown(f'<div class="kpi-card"><div class="kpi-lbl">{lbl}</div><div class="kpi-num" style="color:{color}">{val}</div></div>', unsafe_allow_html=True)
 
@@ -315,7 +334,6 @@ elif page == "licences":
 
         st.markdown(f"""
         <div class="card">
-          <!-- HEADER -->
           <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px">
             <div>
               <div style="font-size:17px;font-weight:800;color:#1D1D1F">{row['nom']}</div>
@@ -323,8 +341,6 @@ elif page == "licences":
             </div>
             {badge}
           </div>
-
-          <!-- SOLDES kgs -->
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px">
             <div style="background:#F5F5F7;border-radius:12px;padding:14px 16px">
               <div style="font-size:10px;color:#6E6E73;text-transform:uppercase;letter-spacing:0.8px;font-weight:700;margin-bottom:4px">Poids total</div>
@@ -339,8 +355,6 @@ elif page == "licences":
               <div style="font-size:20px;font-weight:800;color:#FF9F0A">{row['solde_prev']:,.0f} <span style="font-size:12px;font-weight:500">kgs</span></div>
             </div>
           </div>
-
-          <!-- SOLDES EN CNT PAR PORT -->
           <div style="margin-bottom:18px">
             <div style="font-size:10px;color:#8E8E93;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:10px">Capacité restante en conteneurs</div>
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
@@ -366,8 +380,6 @@ elif page == "licences":
               </div>
             </div>
           </div>
-
-          <!-- BARRES PROGRESSION -->
           <div style="margin-bottom:10px">
             <div style="display:flex;justify-content:space-between;margin-bottom:4px">
               <span style="font-size:11px;color:#6E6E73">Solde réel</span>
@@ -388,11 +400,10 @@ elif page == "licences":
           </div>
         </div>""", unsafe_allow_html=True)
 
-        # BOUTON PDF
         if pdf_exists:
             with open(pdf_path, "rb") as f:
                 pdf_data = f.read()
-            col_pdf, col_space = st.columns([2, 5])
+            col_pdf, _ = st.columns([2, 5])
             with col_pdf:
                 st.download_button(
                     label=f"📄 Télécharger {row['licence']}",
@@ -470,10 +481,10 @@ elif page == "planning":
 
         a, b, c, d = st.columns(4)
         for col, val, lbl, color in [
-            (a, int(df_client["nb_cnt"].sum()),                                              "Total CNT",      "#0071E3"),
-            (b, f"{df_client['total_kgs'].sum():,.0f}",                                      "Total kgs",      "#5856D6"),
-            (c, len(df_client[df_client["statut"].str.contains("À GÉNÉRER", na=False)]),    "⏳ En cours",    "#FF9F0A"),
-            (d, len(df_client[df_client["statut"].str.contains("GÉNÉRÉ", na=False)]),       "✅ Confirmées",  "#34C759"),
+            (a, int(df_client["nb_cnt"].sum()),                                          "Total CNT",     "#0071E3"),
+            (b, f"{df_client['total_kgs'].sum():,.0f}",                                  "Total kgs",     "#5856D6"),
+            (c, len(df_client[df_client["statut"].str.contains("À GÉNÉRER", na=False)]), "⏳ En cours",   "#FF9F0A"),
+            (d, len(df_client[df_client["statut"].str.contains("GÉNÉRÉ",    na=False)]), "✅ Confirmées", "#34C759"),
         ]:
             col.markdown(f'<div class="kpi-card"><div class="kpi-lbl">{lbl}</div><div class="kpi-num" style="color:{color}">{val}</div></div>', unsafe_allow_html=True)
 
@@ -563,21 +574,21 @@ elif page == "new_cmd":
         with f4: eta     = st.date_input("ETA *", value=date.today())
         with f5: produit = st.selectbox("Produit *", ["BANANE","ANANAS","MANGUE","AUTRE"])
 
-        crtns_cnt   = CRTNS[pol_sel]
-        total_crtns = nb_cnt * crtns_cnt
-        total_kgs   = round(total_crtns * POIDS_UNIT, 2)
-        lic_row     = clients[(clients["nom"] == client_sel) & (clients["licence"] == licence_sel)]
-        solde_avant = float(lic_row["solde_reel"].values[0]) if len(lic_row) > 0 else 0
-        solde_apres = round(solde_avant - total_kgs, 2)
+        crtns_cnt     = CRTNS[pol_sel]
+        total_crtns   = nb_cnt * crtns_cnt
+        total_kgs     = round(total_crtns * POIDS_UNIT, 2)
+        lic_row       = clients[(clients["nom"] == client_sel) & (clients["licence"] == licence_sel)]
+        solde_avant   = float(lic_row["solde_reel"].values[0]) if len(lic_row) > 0 else 0
+        solde_apres   = round(solde_avant - total_kgs, 2)
         cnt_apres_cr  = round(solde_apres / KGS_PER_CNT["MOIN(COSTA RICA)"], 2)
         cnt_apres_col = round(solde_apres / KGS_PER_CNT["TURBO(COLOMBIA)"], 2)
 
         st.markdown("---")
         p1, p2, p3, p4, p5, p6 = st.columns(6)
-        p1.metric("Cartons/CNT",    f"{crtns_cnt:,}")
-        p2.metric("Total cartons",  f"{total_crtns:,}")
-        p3.metric("Total kgs",      f"{total_kgs:,.0f}")
-        p4.metric("Solde après",    f"{solde_apres:,.0f} kgs", delta=f"{-total_kgs:,.0f}", delta_color="inverse")
+        p1.metric("Cartons/CNT",     f"{crtns_cnt:,}")
+        p2.metric("Total cartons",   f"{total_crtns:,}")
+        p3.metric("Total kgs",       f"{total_kgs:,.0f}")
+        p4.metric("Solde après",     f"{solde_apres:,.0f} kgs", delta=f"{-total_kgs:,.0f}", delta_color="inverse")
         p5.metric("CNT restants 🇨🇷", f"{cnt_apres_cr:.1f}")
         p6.metric("CNT restants 🇨🇴", f"{cnt_apres_col:.1f}")
 
