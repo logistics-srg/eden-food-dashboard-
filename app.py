@@ -30,6 +30,9 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:rgba(255,255,
 .alert-warn{background:#FFFBF0;border-left:3px solid #FF9F0A;padding:12px 16px;border-radius:10px;color:#7A4F00;font-size:13px;margin:8px 0;font-weight:600}
 div[data-testid="stForm"]{background:#fff!important;border-radius:18px!important;padding:28px!important;box-shadow:0 1px 4px rgba(0,0,0,0.06)!important;border:none!important}
 hr{border:none!important;border-top:1px solid #E5E5EA!important;margin:16px 0!important}
+.cnt-box{background:#F5F5F7;border-radius:12px;padding:14px 18px;text-align:center}
+.cnt-val{font-size:1.6rem;font-weight:800;line-height:1;margin:4px 0}
+.cnt-lbl{font-size:10px;color:#6E6E73;text-transform:uppercase;letter-spacing:0.8px;font-weight:600}
 </style>
 """, unsafe_allow_html=True)
 
@@ -40,7 +43,6 @@ USERS = {
     "srg":  {"password": "SRG@Trading1",  "role": "user"},
 }
 
-# ── SESSION STATE ─────────────────────────────────────────────────────────────
 for k, v in {"authenticated": False, "username": "", "role": "", "page": "dashboard", "new_commandes": []}.items():
     if k not in st.session_state:
         st.session_state[k] = v
@@ -81,10 +83,16 @@ if not st.session_state.authenticated:
 # ── CONSTANTES ────────────────────────────────────────────────────────────────
 POIDS_UNIT = 18.14
 CRTNS = {"TURBO(COLOMBIA)": 1080, "MOIN(COSTA RICA)": 1200}
+KGS_PER_CNT = {
+    "MOIN(COSTA RICA)":  1200 * 18.14,   # 21 768 kgs
+    "TURBO(COLOMBIA)":   1080 * 18.14,   # 19 591.2 kgs
+}
 
-def licence_to_pdf(lic_num):
-    clean = str(lic_num).replace(" ", "_").replace("/", "_")
-    return f"licences/{clean}.pdf"
+def licence_to_filename(lic_num):
+    return str(lic_num).replace(" ", "_").replace("/", "_") + ".pdf"
+
+def licence_pdf_path(lic_num):
+    return os.path.join("licences", licence_to_filename(lic_num))
 
 # ── DATA ──────────────────────────────────────────────────────────────────────
 @st.cache_data(ttl=60)
@@ -92,7 +100,7 @@ def load_clients():
     df = pd.read_excel("eden_food.xlsx", sheet_name="📋 BASE CLIENTS",
                        usecols=list(range(11)), header=3)
     df.columns = ["num","nom","adresse1","adresse2","ville","pays","licence",
-                  "poids_total","solde_init","contact","notes"]
+                  "poids_total","solde_excel","cnt_cr","cnt_col"]
     return df[df["nom"].notna() & (df["nom"] != "")].copy()
 
 @st.cache_data(ttl=60)
@@ -136,8 +144,14 @@ def get_solde_prev(nom, lic, poids):
 clients["solde_reel"] = clients.apply(lambda r: get_solde_reel(r["nom"], r["licence"], r["poids_total"]), axis=1)
 clients["solde_prev"] = clients.apply(lambda r: get_solde_prev(r["nom"], r["licence"], r["poids_total"]), axis=1)
 
-current_week_num = datetime.now().isocalendar()[1]
-current_week_str = f"S-{current_week_num}"
+# Solde en CNT dynamique par POL
+clients["cnt_reel_cr"]  = (clients["solde_reel"] / KGS_PER_CNT["MOIN(COSTA RICA)"]).round(2)
+clients["cnt_reel_col"] = (clients["solde_reel"] / KGS_PER_CNT["TURBO(COLOMBIA)"]).round(2)
+clients["cnt_prev_cr"]  = (clients["solde_prev"] / KGS_PER_CNT["MOIN(COSTA RICA)"]).round(2)
+clients["cnt_prev_col"] = (clients["solde_prev"] / KGS_PER_CNT["TURBO(COLOMBIA)"]).round(2)
+
+current_week_num  = datetime.now().isocalendar()[1]
+current_week_str  = f"S-{current_week_num}"
 commandes_semaine = commandes[commandes["semaine"] == current_week_str]
 
 # ── SIDEBAR ───────────────────────────────────────────────────────────────────
@@ -172,7 +186,7 @@ with st.sidebar:
 page = st.session_state.page
 
 # ══════════════════════════════════════════════════════════════════════════════
-# PAGE : DASHBOARD
+# DASHBOARD
 # ══════════════════════════════════════════════════════════════════════════════
 if page == "dashboard":
     st.markdown('<p class="page-title">Tableau de bord</p>', unsafe_allow_html=True)
@@ -206,15 +220,14 @@ if page == "dashboard":
         recent = commandes.tail(8)[["semaine","client","booking","pol","nb_cnt","depart","statut"]].copy()
         st.dataframe(recent, use_container_width=True, hide_index=True, height=300,
             column_config={
-                "semaine":  st.column_config.TextColumn("Sem."),
-                "client":   st.column_config.TextColumn("Client"),
-                "booking":  st.column_config.TextColumn("Booking"),
-                "pol":      st.column_config.TextColumn("POL"),
-                "nb_cnt":   st.column_config.NumberColumn("CNT", format="%d"),
-                "depart":   st.column_config.TextColumn("Départ"),
-                "statut":   st.column_config.TextColumn("Statut"),
+                "semaine": st.column_config.TextColumn("Sem."),
+                "client":  st.column_config.TextColumn("Client"),
+                "booking": st.column_config.TextColumn("Booking"),
+                "pol":     st.column_config.TextColumn("POL"),
+                "nb_cnt":  st.column_config.NumberColumn("CNT", format="%d"),
+                "depart":  st.column_config.TextColumn("Départ"),
+                "statut":  st.column_config.TextColumn("Statut"),
             })
-
     with c2:
         st.markdown('<div class="sec-hdr">Répartition POL</div>', unsafe_allow_html=True)
         if not commandes.empty:
@@ -233,135 +246,169 @@ if page == "dashboard":
             color_discrete_sequence=["#0071E3"],
             labels={"semaine":"Semaine","nb_cnt":"Conteneurs"})
         fig2.update_layout(plot_bgcolor="#fff", paper_bgcolor="#fff",
-            margin=dict(t=10,b=20,l=20,r=20), xaxis=dict(showgrid=False), yaxis=dict(showgrid=True, gridcolor="#F0F0F0"))
+            margin=dict(t=10,b=20,l=20,r=20),
+            xaxis=dict(showgrid=False), yaxis=dict(showgrid=True, gridcolor="#F0F0F0"))
         fig2.update_traces(marker_cornerradius=6)
         st.plotly_chart(fig2, use_container_width=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# PAGE : SEMAINE EN COURS
+# SEMAINE EN COURS
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "semaine":
     st.markdown(f'<p class="page-title">Semaine en cours — {current_week_str}</p>', unsafe_allow_html=True)
-    st.markdown(f'<p class="page-sub">Toutes les commandes de la semaine {current_week_num} / {datetime.now().year}</p>', unsafe_allow_html=True)
+    st.markdown(f'<p class="page-sub">Commandes de la semaine {current_week_num} · {datetime.now().year}</p>', unsafe_allow_html=True)
 
     if commandes_semaine.empty:
-        st.info(f"Aucune commande enregistrée pour {current_week_str}. Vérifie le format de la colonne Semaine dans ton Excel (ex: S-18).")
+        st.info(f"Aucune commande pour {current_week_str}. Vérifie le format dans Excel (ex: S-18).")
     else:
         todo_s = commandes_semaine[commandes_semaine["statut"].str.contains("À GÉNÉRER", na=False)]
         done_s = commandes_semaine[commandes_semaine["statut"].str.contains("GÉNÉRÉ", na=False)]
-
         a, b, c, d = st.columns(4)
-        a.markdown(f'<div class="kpi-card"><div class="kpi-lbl">Total commandes</div><div class="kpi-num" style="color:#0071E3">{len(commandes_semaine)}</div></div>', unsafe_allow_html=True)
-        b.markdown(f'<div class="kpi-card"><div class="kpi-lbl">⏳ À générer</div><div class="kpi-num" style="color:#FF9F0A">{len(todo_s)}</div></div>', unsafe_allow_html=True)
-        c.markdown(f'<div class="kpi-card"><div class="kpi-lbl">✅ Confirmées</div><div class="kpi-num" style="color:#34C759">{len(done_s)}</div></div>', unsafe_allow_html=True)
-        d.markdown(f'<div class="kpi-card"><div class="kpi-lbl">CNT total</div><div class="kpi-num" style="color:#5856D6">{int(commandes_semaine["nb_cnt"].sum())}</div></div>', unsafe_allow_html=True)
+        for col, val, lbl, color in [
+            (a, len(commandes_semaine),            "Total commandes", "#0071E3"),
+            (b, len(todo_s),                       "⏳ À générer",    "#FF9F0A"),
+            (c, len(done_s),                       "✅ Confirmées",   "#34C759"),
+            (d, int(commandes_semaine["nb_cnt"].sum()), "CNT total",  "#5856D6"),
+        ]:
+            col.markdown(f'<div class="kpi-card"><div class="kpi-lbl">{lbl}</div><div class="kpi-num" style="color:{color}">{val}</div></div>', unsafe_allow_html=True)
 
         st.markdown("")
         st.markdown('<div class="sec-hdr">Détail des commandes</div>', unsafe_allow_html=True)
-
         for _, row in commandes_semaine.iterrows():
-            statut_color = "#34C759" if "GÉNÉRÉ" in str(row["statut"]) else "#FF9F0A"
-            statut_bg    = "#F1FAF4" if "GÉNÉRÉ" in str(row["statut"]) else "#FFFBF0"
+            sc = "#34C759" if "GÉNÉRÉ" in str(row["statut"]) else "#FF9F0A"
+            sb = "#F1FAF4" if "GÉNÉRÉ" in str(row["statut"]) else "#FFFBF0"
             st.markdown(f"""
             <div class="card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
               <div>
                 <div style="font-size:15px;font-weight:700;color:#1D1D1F">{row['client']}</div>
-                <div style="font-size:12px;color:#6E6E73;margin-top:2px">Booking : <b>{row['booking']}</b> &nbsp;·&nbsp; Licence : {row['licence']}</div>
+                <div style="font-size:12px;color:#6E6E73;margin-top:2px">📦 {row['booking']} &nbsp;·&nbsp; 🔑 {row['licence']}</div>
               </div>
-              <div style="text-align:center">
-                <div style="font-size:11px;color:#8E8E93">POL</div>
-                <div style="font-weight:700;color:#1D1D1F">{row['pol']}</div>
-              </div>
-              <div style="text-align:center">
-                <div style="font-size:11px;color:#8E8E93">CNT</div>
-                <div style="font-weight:700;color:#1D1D1F">{row['nb_cnt']}</div>
-              </div>
-              <div style="text-align:center">
-                <div style="font-size:11px;color:#8E8E93">Départ</div>
-                <div style="font-weight:700;color:#1D1D1F">{row['depart']}</div>
-              </div>
-              <div style="text-align:center">
-                <div style="font-size:11px;color:#8E8E93">ETA</div>
-                <div style="font-weight:700;color:#1D1D1F">{row['eta']}</div>
-              </div>
-              <div style="background:{statut_bg};color:{statut_color};padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700">
-                {row['statut']}
-              </div>
+              <div style="text-align:center"><div style="font-size:10px;color:#8E8E93">POL</div><div style="font-weight:700;color:#1D1D1F">{row['pol']}</div></div>
+              <div style="text-align:center"><div style="font-size:10px;color:#8E8E93">CNT</div><div style="font-weight:700;color:#0071E3">{row['nb_cnt']}</div></div>
+              <div style="text-align:center"><div style="font-size:10px;color:#8E8E93">Départ</div><div style="font-weight:600;color:#1D1D1F">{row['depart']}</div></div>
+              <div style="text-align:center"><div style="font-size:10px;color:#8E8E93">ETA</div><div style="font-weight:600;color:#1D1D1F">{row['eta']}</div></div>
+              <div style="background:{sb};color:{sc};padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700">{row['statut']}</div>
             </div>""", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# PAGE : LICENCES DPVCT
+# LICENCES DPVCT
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "licences":
     st.markdown('<p class="page-title">Licences DPVCT</p>', unsafe_allow_html=True)
-    st.markdown('<p class="page-sub">Soldes réels et prévisionnels par licence · Cliquez sur le PDF pour ouvrir la licence</p>', unsafe_allow_html=True)
+    st.markdown('<p class="page-sub">Soldes réels et prévisionnels · Capacité en conteneurs par port · PDF téléchargeables</p>', unsafe_allow_html=True)
 
     for _, row in clients.iterrows():
         pct_reel = max(0, min(100, row["solde_reel"] / row["poids_total"] * 100)) if row["poids_total"] > 0 else 0
         pct_prev = max(0, min(100, row["solde_prev"] / row["poids_total"] * 100)) if row["poids_total"] > 0 else 0
 
         if row["solde_reel"] < 0:
-            status_html = '<span style="background:#FF3B30;color:#fff;padding:4px 12px;border-radius:12px;font-size:11px;font-weight:700">❌ DÉPASSEMENT</span>'
+            badge = '<span style="background:#FF3B30;color:#fff;padding:4px 14px;border-radius:20px;font-size:11px;font-weight:700">❌ DÉPASSEMENT</span>'
         elif row["solde_reel"] < 19591.2:
-            status_html = '<span style="background:#FF9F0A;color:#fff;padding:4px 12px;border-radius:12px;font-size:11px;font-weight:700">🔴 CRITIQUE</span>'
+            badge = '<span style="background:#FF3B30;color:#fff;padding:4px 14px;border-radius:20px;font-size:11px;font-weight:700">🔴 CRITIQUE</span>'
         elif row["solde_reel"] < 58773.6:
-            status_html = '<span style="background:#FF9F0A22;color:#7A4F00;padding:4px 12px;border-radius:12px;font-size:11px;font-weight:700">⚠️ ATTENTION</span>'
+            badge = '<span style="background:#FF9F0A;color:#fff;padding:4px 14px;border-radius:20px;font-size:11px;font-weight:700">⚠️ ATTENTION</span>'
         else:
-            status_html = '<span style="background:#34C75922;color:#1B5E20;padding:4px 12px;border-radius:12px;font-size:11px;font-weight:700">✅ OK</span>'
+            badge = '<span style="background:#34C759;color:#fff;padding:4px 14px;border-radius:20px;font-size:11px;font-weight:700">✅ OK</span>'
 
-        pdf_path = licence_to_pdf(row["licence"])
+        pdf_path   = licence_pdf_path(row["licence"])
         pdf_exists = os.path.exists(pdf_path)
 
-        with st.container():
-            st.markdown(f"""
-            <div class="card">
-              <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">
-                <div>
-                  <div style="font-size:16px;font-weight:700;color:#1D1D1F">{row['nom']}</div>
-                  <div style="font-size:12px;color:#6E6E73;margin-top:3px">🔑 {row['licence']} &nbsp;·&nbsp; {row['pays']}</div>
-                </div>
-                <div style="display:flex;align-items:center;gap:10px">
-                  {status_html}
-                </div>
-              </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;margin-bottom:16px">
-                <div><div style="font-size:11px;color:#8E8E93;margin-bottom:2px">POIDS TOTAL</div>
-                  <div style="font-size:16px;font-weight:700;color:#1D1D1F">{row['poids_total']:,.0f} kgs</div></div>
-                <div><div style="font-size:11px;color:#8E8E93;margin-bottom:2px">SOLDE RÉEL</div>
-                  <div style="font-size:16px;font-weight:700;color:#0071E3">{row['solde_reel']:,.0f} kgs</div></div>
-                <div><div style="font-size:11px;color:#8E8E93;margin-bottom:2px">SOLDE PRÉVISIONNEL</div>
-                  <div style="font-size:16px;font-weight:700;color:#FF9F0A">{row['solde_prev']:,.0f} kgs</div></div>
-                <div><div style="font-size:11px;color:#8E8E93;margin-bottom:2px">UTILISÉ</div>
-                  <div style="font-size:16px;font-weight:700;color:#1D1D1F">{100-pct_reel:.0f}%</div></div>
-              </div>
-              <div style="margin-bottom:6px">
-                <div style="font-size:11px;color:#8E8E93;margin-bottom:4px">Solde réel</div>
-                <div style="background:#E5E5EA;border-radius:6px;height:8px;overflow:hidden">
-                  <div style="background:#0071E3;width:{pct_reel}%;height:100%;border-radius:6px"></div>
-                </div>
-              </div>
-              <div>
-                <div style="font-size:11px;color:#8E8E93;margin-bottom:4px">Solde prévisionnel (commandes en cours incluses)</div>
-                <div style="background:#E5E5EA;border-radius:6px;height:8px;overflow:hidden">
-                  <div style="background:#FF9F0A;width:{pct_prev}%;height:100%;border-radius:6px"></div>
-                </div>
-              </div>
-            </div>""", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class="card">
+          <!-- HEADER -->
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px">
+            <div>
+              <div style="font-size:17px;font-weight:800;color:#1D1D1F">{row['nom']}</div>
+              <div style="font-size:13px;color:#6E6E73;margin-top:3px">🔑 {row['licence']} &nbsp;·&nbsp; {row['pays']}</div>
+            </div>
+            {badge}
+          </div>
 
-            if pdf_exists:
-                with open(pdf_path, "rb") as f:
-                    st.download_button(
-                        label=f"📄 Télécharger licence {row['licence']}",
-                        data=f.read(),
-                        file_name=f"{row['licence'].replace('/','-')}.pdf",
-                        mime="application/pdf",
-                        key=f"pdf_{row['licence']}"
-                    )
-            else:
-                st.caption(f"📎 PDF non disponible — uploade `{pdf_path}` sur GitHub")
+          <!-- SOLDES kgs -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px">
+            <div style="background:#F5F5F7;border-radius:12px;padding:14px 16px">
+              <div style="font-size:10px;color:#6E6E73;text-transform:uppercase;letter-spacing:0.8px;font-weight:700;margin-bottom:4px">Poids total</div>
+              <div style="font-size:20px;font-weight:800;color:#1D1D1F">{row['poids_total']:,.0f} <span style="font-size:12px;font-weight:500">kgs</span></div>
+            </div>
+            <div style="background:#EAF4FF;border-radius:12px;padding:14px 16px">
+              <div style="font-size:10px;color:#0071E3;text-transform:uppercase;letter-spacing:0.8px;font-weight:700;margin-bottom:4px">Solde réel</div>
+              <div style="font-size:20px;font-weight:800;color:#0071E3">{row['solde_reel']:,.0f} <span style="font-size:12px;font-weight:500">kgs</span></div>
+            </div>
+            <div style="background:#FFF8EC;border-radius:12px;padding:14px 16px">
+              <div style="font-size:10px;color:#FF9F0A;text-transform:uppercase;letter-spacing:0.8px;font-weight:700;margin-bottom:4px">Solde prévisionnel</div>
+              <div style="font-size:20px;font-weight:800;color:#FF9F0A">{row['solde_prev']:,.0f} <span style="font-size:12px;font-weight:500">kgs</span></div>
+            </div>
+          </div>
+
+          <!-- SOLDES EN CNT PAR PORT -->
+          <div style="margin-bottom:18px">
+            <div style="font-size:10px;color:#8E8E93;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:10px">Capacité restante en conteneurs</div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+              <div style="background:#EAF4FF;border-radius:12px;padding:14px;text-align:center">
+                <div style="font-size:9px;color:#0071E3;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">🇨🇷 Costa Rica (réel)</div>
+                <div style="font-size:22px;font-weight:900;color:#0071E3;margin:6px 0 2px">{row['cnt_reel_cr']:.1f}</div>
+                <div style="font-size:10px;color:#6E6E73">CNT · MOIN</div>
+              </div>
+              <div style="background:#FFF8EC;border-radius:12px;padding:14px;text-align:center">
+                <div style="font-size:9px;color:#FF9F0A;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">🇨🇷 Costa Rica (prév.)</div>
+                <div style="font-size:22px;font-weight:900;color:#FF9F0A;margin:6px 0 2px">{row['cnt_prev_cr']:.1f}</div>
+                <div style="font-size:10px;color:#6E6E73">CNT · MOIN</div>
+              </div>
+              <div style="background:#EAF4FF;border-radius:12px;padding:14px;text-align:center">
+                <div style="font-size:9px;color:#0071E3;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">🇨🇴 Colombie (réel)</div>
+                <div style="font-size:22px;font-weight:900;color:#0071E3;margin:6px 0 2px">{row['cnt_reel_col']:.1f}</div>
+                <div style="font-size:10px;color:#6E6E73">CNT · TURBO</div>
+              </div>
+              <div style="background:#FFF8EC;border-radius:12px;padding:14px;text-align:center">
+                <div style="font-size:9px;color:#FF9F0A;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">🇨🇴 Colombie (prév.)</div>
+                <div style="font-size:22px;font-weight:900;color:#FF9F0A;margin:6px 0 2px">{row['cnt_prev_col']:.1f}</div>
+                <div style="font-size:10px;color:#6E6E73">CNT · TURBO</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BARRES PROGRESSION -->
+          <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span style="font-size:11px;color:#6E6E73">Solde réel</span>
+              <span style="font-size:11px;color:#0071E3;font-weight:700">{pct_reel:.0f}% disponible</span>
+            </div>
+            <div style="background:#E5E5EA;border-radius:6px;height:8px">
+              <div style="background:#0071E3;width:{pct_reel}%;height:100%;border-radius:6px"></div>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span style="font-size:11px;color:#6E6E73">Solde prévisionnel</span>
+              <span style="font-size:11px;color:#FF9F0A;font-weight:700">{pct_prev:.0f}% disponible</span>
+            </div>
+            <div style="background:#E5E5EA;border-radius:6px;height:8px">
+              <div style="background:#FF9F0A;width:{pct_prev}%;height:100%;border-radius:6px"></div>
+            </div>
+          </div>
+        </div>""", unsafe_allow_html=True)
+
+        # BOUTON PDF
+        if pdf_exists:
+            with open(pdf_path, "rb") as f:
+                pdf_data = f.read()
+            col_pdf, col_space = st.columns([2, 5])
+            with col_pdf:
+                st.download_button(
+                    label=f"📄 Télécharger {row['licence']}",
+                    data=pdf_data,
+                    file_name=licence_to_filename(row["licence"]),
+                    mime="application/pdf",
+                    key=f"pdf_{row['licence']}",
+                    use_container_width=True
+                )
+        else:
+            st.caption(f"⚠️ PDF non trouvé → uploade `{pdf_path}` sur GitHub")
+
+        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# PAGE : COMMANDES
+# COMMANDES
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "commandes":
     st.markdown('<p class="page-title">Commandes</p>', unsafe_allow_html=True)
@@ -409,7 +456,7 @@ elif page == "commandes":
             mime="text/csv", use_container_width=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# PAGE : PLANNING CLIENT
+# PLANNING CLIENT
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "planning":
     st.markdown('<p class="page-title">Planning client</p>', unsafe_allow_html=True)
@@ -418,51 +465,36 @@ elif page == "planning":
     client_sel = st.selectbox("Sélectionner un client", sorted(commandes["client"].dropna().unique().tolist()))
 
     if client_sel:
-        df_client = commandes[commandes["client"] == client_sel].copy()
+        df_client  = commandes[commandes["client"] == client_sel].copy()
         lic_client = clients[clients["nom"] == client_sel]
 
-        st.markdown(f'<div class="sec-hdr">{client_sel} — {len(df_client)} expédition(s)</div>', unsafe_allow_html=True)
-
         a, b, c, d = st.columns(4)
-        a.markdown(f'<div class="kpi-card"><div class="kpi-lbl">Total CNT</div><div class="kpi-num" style="color:#0071E3">{int(df_client["nb_cnt"].sum())}</div></div>', unsafe_allow_html=True)
-        b.markdown(f'<div class="kpi-card"><div class="kpi-lbl">Total kgs</div><div class="kpi-num" style="color:#5856D6">{df_client["total_kgs"].sum():,.0f}</div></div>', unsafe_allow_html=True)
-        c.markdown(f'<div class="kpi-card"><div class="kpi-lbl">⏳ En cours</div><div class="kpi-num" style="color:#FF9F0A">{len(df_client[df_client["statut"].str.contains("À GÉNÉRER",na=False)])}</div></div>', unsafe_allow_html=True)
-        d.markdown(f'<div class="kpi-card"><div class="kpi-lbl">✅ Confirmées</div><div class="kpi-num" style="color:#34C759">{len(df_client[df_client["statut"].str.contains("GÉNÉRÉ",na=False)])}</div></div>', unsafe_allow_html=True)
+        for col, val, lbl, color in [
+            (a, int(df_client["nb_cnt"].sum()),                                              "Total CNT",      "#0071E3"),
+            (b, f"{df_client['total_kgs'].sum():,.0f}",                                      "Total kgs",      "#5856D6"),
+            (c, len(df_client[df_client["statut"].str.contains("À GÉNÉRER", na=False)]),    "⏳ En cours",    "#FF9F0A"),
+            (d, len(df_client[df_client["statut"].str.contains("GÉNÉRÉ", na=False)]),       "✅ Confirmées",  "#34C759"),
+        ]:
+            col.markdown(f'<div class="kpi-card"><div class="kpi-lbl">{lbl}</div><div class="kpi-num" style="color:{color}">{val}</div></div>', unsafe_allow_html=True)
 
         st.markdown("")
+        st.markdown(f'<div class="sec-hdr">{client_sel} — {len(df_client)} expédition(s)</div>', unsafe_allow_html=True)
 
-        for _, row in df_client.iterrows():
-            statut_color = "#34C759" if "GÉNÉRÉ" in str(row["statut"]) else "#FF9F0A"
-            statut_bg    = "#F1FAF4" if "GÉNÉRÉ" in str(row["statut"]) else "#FFFBF0"
+        for _, row in df_client.sort_values("semaine", ascending=False).iterrows():
+            sc = "#34C759" if "GÉNÉRÉ" in str(row["statut"]) else "#FF9F0A"
+            sb = "#F1FAF4" if "GÉNÉRÉ" in str(row["statut"]) else "#FFFBF0"
             st.markdown(f"""
             <div class="card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
               <div>
                 <div style="font-size:14px;font-weight:700;color:#1D1D1F">{row['booking']}</div>
                 <div style="font-size:12px;color:#6E6E73;margin-top:2px">{row['semaine']} &nbsp;·&nbsp; {row['licence']}</div>
               </div>
-              <div style="text-align:center">
-                <div style="font-size:11px;color:#8E8E93">Navire</div>
-                <div style="font-weight:600;font-size:13px;color:#1D1D1F">{row['navire']}</div>
-              </div>
-              <div style="text-align:center">
-                <div style="font-size:11px;color:#8E8E93">POL</div>
-                <div style="font-weight:700;color:#1D1D1F">{row['pol']}</div>
-              </div>
-              <div style="text-align:center">
-                <div style="font-size:11px;color:#8E8E93">CNT</div>
-                <div style="font-weight:700;color:#0071E3">{row['nb_cnt']}</div>
-              </div>
-              <div style="text-align:center">
-                <div style="font-size:11px;color:#8E8E93">Départ</div>
-                <div style="font-weight:600;color:#1D1D1F">{row['depart']}</div>
-              </div>
-              <div style="text-align:center">
-                <div style="font-size:11px;color:#8E8E93">ETA</div>
-                <div style="font-weight:600;color:#1D1D1F">{row['eta']}</div>
-              </div>
-              <div style="background:{statut_bg};color:{statut_color};padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700">
-                {row['statut']}
-              </div>
+              <div style="text-align:center"><div style="font-size:10px;color:#8E8E93">Navire</div><div style="font-weight:600;font-size:13px;color:#1D1D1F">{row['navire']}</div></div>
+              <div style="text-align:center"><div style="font-size:10px;color:#8E8E93">POL</div><div style="font-weight:700;color:#1D1D1F">{row['pol']}</div></div>
+              <div style="text-align:center"><div style="font-size:10px;color:#8E8E93">CNT</div><div style="font-weight:700;color:#0071E3">{row['nb_cnt']}</div></div>
+              <div style="text-align:center"><div style="font-size:10px;color:#8E8E93">Départ</div><div style="font-weight:600;color:#1D1D1F">{row['depart']}</div></div>
+              <div style="text-align:center"><div style="font-size:10px;color:#8E8E93">ETA</div><div style="font-weight:600;color:#1D1D1F">{row['eta']}</div></div>
+              <div style="background:{sb};color:{sc};padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700">{row['statut']}</div>
             </div>""", unsafe_allow_html=True)
 
         if not lic_client.empty:
@@ -471,21 +503,46 @@ elif page == "planning":
                 pct = max(0, min(100, lr["solde_reel"] / lr["poids_total"] * 100)) if lr["poids_total"] > 0 else 0
                 st.markdown(f"""
                 <div class="card">
-                  <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
-                    <div style="font-weight:700;color:#1D1D1F">🔑 {lr['licence']}</div>
-                    <div style="font-size:13px;color:#6E6E73">Solde réel : <b style="color:#0071E3">{lr['solde_reel']:,.0f} kgs</b> &nbsp;|&nbsp; Prévisionnel : <b style="color:#FF9F0A">{lr['solde_prev']:,.0f} kgs</b></div>
+                  <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+                    <div style="font-weight:800;color:#1D1D1F">🔑 {lr['licence']}</div>
+                    <div style="font-size:13px">
+                      Réel : <b style="color:#0071E3">{lr['solde_reel']:,.0f} kgs</b> &nbsp;|&nbsp;
+                      Prév. : <b style="color:#FF9F0A">{lr['solde_prev']:,.0f} kgs</b>
+                    </div>
                   </div>
-                  <div style="background:#E5E5EA;border-radius:6px;height:8px;overflow:hidden">
+                  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">
+                    <div style="background:#EAF4FF;border-radius:10px;padding:10px;text-align:center">
+                      <div style="font-size:9px;color:#0071E3;font-weight:700">🇨🇷 CR Réel</div>
+                      <div style="font-size:18px;font-weight:900;color:#0071E3">{lr['cnt_reel_cr']:.1f}</div>
+                      <div style="font-size:9px;color:#6E6E73">CNT</div>
+                    </div>
+                    <div style="background:#FFF8EC;border-radius:10px;padding:10px;text-align:center">
+                      <div style="font-size:9px;color:#FF9F0A;font-weight:700">🇨🇷 CR Prév.</div>
+                      <div style="font-size:18px;font-weight:900;color:#FF9F0A">{lr['cnt_prev_cr']:.1f}</div>
+                      <div style="font-size:9px;color:#6E6E73">CNT</div>
+                    </div>
+                    <div style="background:#EAF4FF;border-radius:10px;padding:10px;text-align:center">
+                      <div style="font-size:9px;color:#0071E3;font-weight:700">🇨🇴 COL Réel</div>
+                      <div style="font-size:18px;font-weight:900;color:#0071E3">{lr['cnt_reel_col']:.1f}</div>
+                      <div style="font-size:9px;color:#6E6E73">CNT</div>
+                    </div>
+                    <div style="background:#FFF8EC;border-radius:10px;padding:10px;text-align:center">
+                      <div style="font-size:9px;color:#FF9F0A;font-weight:700">🇨🇴 COL Prév.</div>
+                      <div style="font-size:18px;font-weight:900;color:#FF9F0A">{lr['cnt_prev_col']:.1f}</div>
+                      <div style="font-size:9px;color:#6E6E73">CNT</div>
+                    </div>
+                  </div>
+                  <div style="background:#E5E5EA;border-radius:6px;height:8px">
                     <div style="background:#0071E3;width:{pct}%;height:100%;border-radius:6px"></div>
                   </div>
                 </div>""", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# PAGE : NOUVELLE COMMANDE
+# NOUVELLE COMMANDE
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "new_cmd":
     st.markdown('<p class="page-title">Nouvelle commande</p>', unsafe_allow_html=True)
-    st.markdown('<p class="page-sub">Les champs calculés se mettent à jour automatiquement avant validation</p>', unsafe_allow_html=True)
+    st.markdown('<p class="page-sub">Les calculs de solde se mettent à jour avant validation</p>', unsafe_allow_html=True)
 
     with st.form("form_commande", clear_on_submit=True):
         f1, f2 = st.columns(2)
@@ -512,14 +569,17 @@ elif page == "new_cmd":
         lic_row     = clients[(clients["nom"] == client_sel) & (clients["licence"] == licence_sel)]
         solde_avant = float(lic_row["solde_reel"].values[0]) if len(lic_row) > 0 else 0
         solde_apres = round(solde_avant - total_kgs, 2)
+        cnt_apres_cr  = round(solde_apres / KGS_PER_CNT["MOIN(COSTA RICA)"], 2)
+        cnt_apres_col = round(solde_apres / KGS_PER_CNT["TURBO(COLOMBIA)"], 2)
 
         st.markdown("---")
-        p1, p2, p3, p4 = st.columns(4)
-        p1.metric("Cartons/CNT",   f"{crtns_cnt:,}")
-        p2.metric("Total cartons", f"{total_crtns:,}")
-        p3.metric("Total kgs",     f"{total_kgs:,.0f}")
-        p4.metric("Solde après",   f"{solde_apres:,.0f} kgs",
-            delta=f"{-total_kgs:,.0f} kgs", delta_color="inverse")
+        p1, p2, p3, p4, p5, p6 = st.columns(6)
+        p1.metric("Cartons/CNT",    f"{crtns_cnt:,}")
+        p2.metric("Total cartons",  f"{total_crtns:,}")
+        p3.metric("Total kgs",      f"{total_kgs:,.0f}")
+        p4.metric("Solde après",    f"{solde_apres:,.0f} kgs", delta=f"{-total_kgs:,.0f}", delta_color="inverse")
+        p5.metric("CNT restants 🇨🇷", f"{cnt_apres_cr:.1f}")
+        p6.metric("CNT restants 🇨🇴", f"{cnt_apres_col:.1f}")
 
         if solde_apres < 0:
             st.markdown('<div class="alert-red">⚠️ Solde insuffisant — commande bloquée</div>', unsafe_allow_html=True)
@@ -541,5 +601,5 @@ elif page == "new_cmd":
                 "nb_cnt":nb_cnt, "produit":produit, "statut":"⏳ À GÉNÉRER"
             })
             st.cache_data.clear()
-            st.success(f"✅ Commande {booking} enregistrée ! Va dans Commandes pour exporter le CSV.")
+            st.success(f"✅ Commande {booking} enregistrée !")
             st.rerun()
