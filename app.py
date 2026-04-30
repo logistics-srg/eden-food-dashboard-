@@ -356,216 +356,40 @@ def render_route_map_svg(active_ships):
 # GENERATION CONFIRMATION COMMANDE EXCEL
 # ══════════════════════════════════════════════════════════════════════════════
 def generate_conf_commande(data):
-    from openpyxl.utils import get_column_letter
-    wb = Workbook()
+    from openpyxl import load_workbook
+
+    wb = load_workbook("CONF-COMMANDE-TEMPLATE.xlsx")
     ws = wb.active
-    ws.title = "CONF COMMANDE"
 
-    col_widths = [18,14,18,14,4,22,4,14,4,14,4,14]
-    for i, w in enumerate(col_widths, 1):
-        ws.column_dimensions[get_column_letter(i)].width = w
+    # ── Référence + Semaine + Date ────────────────────────────────────────────
+    ws["A5"] = data["booking"]
+    ws["D5"] = data["semaine"]
+    ws["H5"] = date.today().strftime("%d/%m/%Y")
 
-    row_heights = {1:8,2:8,3:32,4:10,5:18,6:20,7:18,8:40,9:10,10:18,
-                   11:22,12:10,13:18,14:22,15:18,16:22,17:22,18:10,
-                   19:20,20:18,21:22,22:10,23:32,24:22,25:10}
-    for r, h in row_heights.items():
-        ws.row_dimensions[r].height = h
+    # ── Destinataire ──────────────────────────────────────────────────────────
+    adresse_full = (data["client"] + "\n"
+                    + data.get("adresse1", "") + "\n"
+                    + data.get("adresse2", "") + "\n"
+                    + data.get("ville", "") + " " + data.get("pays", ""))
+    ws["A8"] = adresse_full.strip()
 
-    BLUE_DARK  = "1A2B5C"
-    BLUE_MED   = "2E4699"
-    BLUE_LIGHT = "D6E0F5"
-    GOLD       = "C9A84C"
-    WHITE      = "FFFFFF"
-    GREY_LIGHT = "F5F7FC"
-    GREEN_OK   = "D1FAE5"
-    ORANGE_W   = "FEF3C7"
-    RED_CRIT   = "FEE2E2"
+    # ── Licence ───────────────────────────────────────────────────────────────
+    ws["A10"] = data["licence"]
+    ws["C10"] = float(str(data["poids_total_lic"]).replace(",", "").replace(" ", ""))
 
-    thin  = Side(style="thin",   color="B0B8D0")
-    med   = Side(style="medium", color=BLUE_MED)
-    b_all = Border(left=thin, right=thin, top=thin, bottom=thin)
-    b_med = Border(left=med,  right=med,  top=med,  bottom=med)
+    # ── Navire ────────────────────────────────────────────────────────────────
+    ws["A13"] = data["navire"]
+    ws["C13"] = data["voyage"]
+    ws["F13"] = data["pol"]
+    ws["I13"] = data["depart"]
+    ws["K13"] = data["eta"]
 
-    def st_cell(cell, bg=None, fg="000000", bold=False, size=10,
-                align="left", valign="center", wrap=False, brd=None, italic=False):
-        if bg:
-            cell.fill = PatternFill("solid", fgColor=bg)
-        cell.font      = Font(color=fg, bold=bold, size=size, name="Calibri", italic=italic)
-        cell.alignment = Alignment(horizontal=align, vertical=valign, wrap_text=wrap)
-        if brd:
-            cell.border = brd
+    # ── Conteneurs ────────────────────────────────────────────────────────────
+    ws["A16"] = int(data["nb_cnt"])
 
-    def mg(r1,c1,r2,c2):
-        ws.merge_cells(start_row=r1, start_column=c1, end_row=r2, end_column=c2)
-
-    # HEADER
-    for c in range(1,13):
-        ws.cell(row=3, column=c).fill = PatternFill("solid", fgColor=BLUE_DARK)
-    mg(3,1,3,5);  ws["A3"] = "CONFIRMATION DE COMMANDE"
-    st_cell(ws["A3"], bg=BLUE_DARK, fg=WHITE, bold=True, size=14,
-            align="center", valign="center")
-    mg(3,6,3,12); ws["F3"] = "EDEN FOOD  |  Logistics Department"
-    st_cell(ws["F3"], bg=BLUE_DARK, fg=GOLD, bold=True, size=11,
-            align="center", valign="center")
-
-    # REFERENCE + DATE
-    mg(5,1,5,2); ws["A5"] = "RÉFÉRENCE"
-    st_cell(ws["A5"], bg=BLUE_LIGHT, fg=BLUE_DARK, bold=True, size=9,
-            align="center", brd=b_all)
-    ws["C5"] = "SEMAINE"
-    st_cell(ws["C5"], bg=BLUE_LIGHT, fg=BLUE_DARK, bold=True, size=9,
-            align="center", brd=b_all)
-    mg(5,8,5,9); ws["H5"] = "DATE D'EMISSION"
-    st_cell(ws["H5"], bg=BLUE_LIGHT, fg=BLUE_DARK, bold=True, size=9,
-            align="center", brd=b_all)
-
-    mg(6,1,6,2); ws["A6"] = data["booking"]
-    st_cell(ws["A6"], fg=BLUE_DARK, bold=True, size=12, align="center", brd=b_all)
-    ws["C6"] = data["semaine"]
-    st_cell(ws["C6"], fg=BLUE_MED, bold=True, size=11, align="center", brd=b_all)
-    mg(6,8,6,9); ws["H6"] = date.today().strftime("%d/%m/%Y")
-    st_cell(ws["H6"], fg="374151", size=10, align="center", brd=b_all)
-
-    # DESTINATAIRE
-    mg(7,1,7,5); ws["A7"] = "DESTINATAIRE"
-    st_cell(ws["A7"], bg=BLUE_MED, fg=WHITE, bold=True, size=9,
-            align="left", brd=b_all)
-    mg(7,8,7,12); ws["H7"] = "EDEN FOOD"
-    st_cell(ws["H7"], bg=BLUE_MED, fg=WHITE, bold=True, size=9,
-            align="left", brd=b_all)
-
-    adresse_full = (data["client"]+"\n"
-                    +data.get("adresse1","")+"\n"
-                    +data.get("adresse2","")+"\n"
-                    +data.get("ville","")+" "+data.get("pays",""))
-    mg(8,1,9,5); ws["A8"] = adresse_full.strip()
-    st_cell(ws["A8"], bg=GREY_LIGHT, fg="111827", size=9,
-            align="left", valign="top", wrap=True, brd=b_all)
-
-    eden_addr = ("Lake Central Tower\nBusiness Bay - Office 708\nDubai, UAE\n"
-                 "logistics@edenfoodtrading.com\nContact : Yann Gabguidi")
-    mg(8,8,9,12); ws["H8"] = eden_addr
-    st_cell(ws["H8"], bg=GREY_LIGHT, fg="111827", size=9,
-            align="left", valign="top", wrap=True, brd=b_all)
-
-    # LICENCE
-    mg(10,1,10,2); ws["A10"] = "LICENCE N"
-    st_cell(ws["A10"], bg=BLUE_LIGHT, fg=BLUE_DARK, bold=True, size=9,
-            align="center", brd=b_all)
-    mg(10,3,10,5); ws["C10"] = "POIDS INITIAL LICENCE (kgs)"
-    st_cell(ws["C10"], bg=BLUE_LIGHT, fg=BLUE_DARK, bold=True, size=9,
-            align="center", brd=b_all)
-    mg(11,1,11,2); ws["A11"] = data["licence"]
-    st_cell(ws["A11"], fg=BLUE_DARK, bold=True, size=11, align="center", brd=b_all)
-    mg(11,3,11,5)
-    ws["C11"] = float(str(data["poids_total_lic"]).replace(",","").replace(" ",""))
-    ws["C11"].number_format = '#,##0.00'
-    st_cell(ws["C11"], fg="374151", size=10, align="center", brd=b_all)
-
-    # NAVIRE
-    nav_labels = ["NAVIRE","N VOYAGE","POL","DATE DEPART","ETA ESTIMEE"]
-    nav_cols   = [1,3,6,9,11]
-    nav_merges = [(13,1,13,2),(13,3,13,4),(13,6,13,7),(13,9,13,9),(13,11,13,12)]
-    for m in nav_merges: mg(*m)
-    for lbl, c in zip(nav_labels, nav_cols):
-        ws.cell(row=13, column=c, value=lbl)
-        st_cell(ws.cell(row=13, column=c),
-                bg=BLUE_MED, fg=WHITE, bold=True, size=9,
-                align="center", brd=b_all)
-
-    nav_vals = [data["navire"],data["voyage"],data["pol"],data["depart"],data["eta"]]
-    for v, c, m in zip(nav_vals, nav_cols, nav_merges):
-        ws.cell(row=14, column=c, value=v)
-        st_cell(ws.cell(row=14, column=c),
-                fg="111827", bold=(c==1), size=10, align="center", brd=b_all)
-        mg(14, m[1], 14, m[3])
-
-    # DETAILS CNT
-    nb_cnt  = int(data["nb_cnt"])
-    pol_key = str(data["pol"]).upper()
-    crtns   = 1080 if ("TURBO" in pol_key or "COLOMBIA" in pol_key) else 1200
-    tot_crt = nb_cnt * crtns
-    pds_u   = 18.14
-    tot_kgs = round(tot_crt * pds_u, 2)
-
-    det_labels = ["NBR CNT","CRTNS/CNT","TOTAL CARTONS","POIDS UNIT.","TOTAL NET (kgs)","PRODUIT"]
-    det_cols   = [1,2,4,6,8,11]
-    det_merges = [(15,1,15,1),(15,2,15,2),(15,4,15,5),(15,6,15,7),(15,8,15,10),(15,11,15,12)]
-    for m in det_merges: mg(*m)
-    for lbl, c in zip(det_labels, det_cols):
-        ws.cell(row=15, column=c, value=lbl)
-        st_cell(ws.cell(row=15, column=c),
-                bg=BLUE_LIGHT, fg=BLUE_DARK, bold=True, size=8,
-                align="center", brd=b_all)
-
-    det_vals = [nb_cnt, crtns, tot_crt, pds_u, tot_kgs, data.get("produit","BANANES FRAICHES")]
-    det_mval = [(16,1,16,1),(16,2,16,2),(16,4,16,5),(16,6,16,7),(16,8,16,10),(16,11,16,12)]
-    for m in det_mval: mg(*m)
-    for v, c, m in zip(det_vals, det_cols, det_mval):
-        cell = ws.cell(row=16, column=c, value=v)
-        st_cell(cell, fg="111827", bold=(c in [1,8]),
-                size=11 if c in [1,8] else 10,
-                align="center", brd=b_all)
-        if c in [6,8]:
-            cell.number_format = '#,##0.00'
-
-    mg(17,1,17,12)
-    ws["A17"] = ("TOTAL :   "+str(nb_cnt)+" CONTENEUR(S)   |   "
-                 +"{:,}".format(tot_crt)+" CARTONS   |   "
-                 +"{:,.2f}".format(tot_kgs)+" kgs")
-    st_cell(ws["A17"], bg=BLUE_DARK, fg=GOLD, bold=True, size=11,
-            align="center", brd=b_all)
-
-    # SUIVI LICENCE
-    mg(19,1,19,12); ws["A19"] = "SUIVI LICENCE — Poids en kgs"
-    st_cell(ws["A19"], bg=BLUE_MED, fg=WHITE, bold=True, size=10,
-            align="center", brd=b_all)
-
-    slv_labels = ["SOLDE AVANT (kgs)","POIDS COMMANDE (kgs)",
-                  "SOLDE APRES (kgs)","CARTONS RESTANTS","STATUT LICENCE"]
-    slv_cols   = [1,3,5,7,10]
-    slv_mh     = [(20,1,20,2),(20,3,20,4),(20,5,20,6),(20,7,20,9),(20,10,20,12)]
-    for m in slv_mh: mg(*m)
-    for lbl, c in zip(slv_labels, slv_cols):
-        ws.cell(row=20, column=c, value=lbl)
-        st_cell(ws.cell(row=20, column=c),
-                bg=BLUE_LIGHT, fg=BLUE_DARK, bold=True, size=8,
-                align="center", brd=b_all)
-
-    solde_avant = float(str(data.get("solde_avant",0)).replace(",","").replace(" ",""))
-    solde_apres = round(solde_avant - tot_kgs, 2)
-    crtns_rest  = int(solde_apres / pds_u) if solde_apres > 0 else 0
-
-    if   solde_apres >= 58773.6: statut_txt = "OK"; bg_st = GREEN_OK
-    elif solde_apres >= 19591.2: statut_txt = "ATTENTION"; bg_st = ORANGE_W
-    elif solde_apres >= 0:       statut_txt = "RESTE FAIBLE"; bg_st = RED_CRIT
-    else:                         statut_txt = "DEPASSEMENT"; bg_st = RED_CRIT
-
-    slv_vals = [solde_avant, tot_kgs, solde_apres, crtns_rest, statut_txt]
-    slv_mv   = [(21,1,21,2),(21,3,21,4),(21,5,21,6),(21,7,21,9),(21,10,21,12)]
-    for m in slv_mv: mg(*m)
-    for v, c, m in zip(slv_vals, slv_cols, slv_mv):
-        cell = ws.cell(row=21, column=c, value=v)
-        bg   = bg_st if c == 10 else None
-        st_cell(cell, bg=bg, fg="111827", bold=(c in [5,10]),
-                size=11 if c in [1,3,5,7] else 10,
-                align="center", brd=b_all)
-        if c in [1,3,5]:
-            cell.number_format = '#,##0.00'
-
-    # MENTIONS LEGALES
-    mg(23,1,23,12)
-    ws["A23"] = ("Cette confirmation est etablie sous reserve de disponibilite des emplacements "
-                 "navire. Les quantites sont soumises a la licence phytosanitaire en cours de "
-                 "validite (Loi n87-17 - Decret n93-286). EDEN FOOD ne pourra etre tenu "
-                 "responsable de toute modification operee par la compagnie maritime.")
-    st_cell(ws["A23"], fg="6B7280", size=8,
-            align="justify", valign="top", wrap=True, italic=True)
-
-    mg(24,1,24,12)
-    ws["A24"] = "EDEN FOOD — Logistics Department  |  logistics@edenfoodtrading.com  |  +971 56 851 1818"
-    st_cell(ws["A24"], bg=BLUE_DARK, fg=GOLD, bold=True, size=10,
-            align="center", brd=b_all)
+    # ── Suivi licence — cellule clé ───────────────────────────────────────────
+    solde_avant = float(str(data.get("solde_avant", 0)).replace(",", "").replace(" ", ""))
+    ws["A22"] = solde_avant
 
     buf = BytesIO()
     wb.save(buf)
