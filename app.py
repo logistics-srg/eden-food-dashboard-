@@ -541,9 +541,22 @@ ICO = {
     "settings":  '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
 }
 
+# Emoji pour les boutons (st.button ne rend pas le HTML)
+EMO = {
+    "dashboard": "⊞",
+    "semaine":   "📅",
+    "commandes": "🚢",
+    "tracking":  "🗺️",
+    "documents": "📁",
+    "licences":  "📋",
+    "planning":  "👤",
+    "new_cmd":   "➕",
+    "logout":    "🚪",
+}
+
 NAV = [
     ("dashboard", "Overview"),
-    ("semaine",   "Semaine "+current_week_str),
+    ("semaine",   "Semaine " + current_week_str),
     ("commandes", "Commandes"),
     ("tracking",  "Tracking maritime"),
     ("documents", "Documents"),
@@ -552,35 +565,43 @@ NAV = [
 ]
 
 with st.sidebar:
+    # ── Logo + dot statut ─────────────────────────────────────────────────────
     logo_src = img_to_b64("logo_eden_food.jpg") or img_to_b64("logo_eden_food.png")
-    logo_tag = ('<img src="'+logo_src+'" style="height:26px">'
+    logo_tag = ('<img src="' + logo_src + '" style="height:26px">'
                 if logo_src else
                 '<span style="font-size:14px;font-weight:800;color:#fff">EDEN FOOD</span>')
     st.markdown(
         '<div style="padding:20px 16px 10px;display:flex;align-items:center;justify-content:space-between">'
-        '<div>'+logo_tag+'</div>'
-        '<div class="status-dot" style="width:7px;height:7px;border-radius:50%;background:#10B981"></div>'
+        '<div>' + logo_tag + '</div>'
+        '<div style="width:7px;height:7px;border-radius:50%;background:#10B981;'
+        'box-shadow:0 0 7px #10B981"></div>'
         '</div>'
         '<div style="height:1px;background:rgba(255,255,255,0.07);margin:4px 16px 12px"></div>'
         '<div style="padding:0 16px 6px;font-size:9px;color:rgba(255,255,255,0.28);'
         'text-transform:uppercase;letter-spacing:1.8px;font-weight:700">Menu</div>',
         unsafe_allow_html=True)
 
+    # ── NAV items ─────────────────────────────────────────────────────────────
     for pid, label in NAV:
         is_active = st.session_state.page == pid
         if is_active:
+            # Item actif : markdown avec SVG (HTML rendu correctement)
             st.markdown(
                 '<div style="background:rgba(255,255,255,0.1);border-radius:8px;'
                 'padding:9px 14px;margin-bottom:2px;display:flex;align-items:center;gap:10px;'
                 'border-left:2px solid #fff;cursor:default">'
-                '<span style="color:#fff;display:flex;align-items:center;flex-shrink:0">'+ICO[pid]+'</span>'
-                '<span style="font-size:13px;font-weight:600;color:#fff">'+label+'</span>'
+                '<span style="color:#fff;display:flex;align-items:center;flex-shrink:0">'
+                + ICO[pid] + '</span>'
+                '<span style="font-size:13px;font-weight:600;color:#fff">' + label + '</span>'
                 '</div>',
                 unsafe_allow_html=True)
         else:
-            if st.button(ICO[pid]+"  "+label, key="nav_"+pid, use_container_width=True):
-                st.session_state.page = pid; st.rerun()
+            # Item inactif : bouton avec emoji (pas de HTML dans st.button)
+            if st.button(EMO[pid] + "  " + label, key="nav_" + pid, use_container_width=True):
+                st.session_state.page = pid
+                st.rerun()
 
+    # ── Admin ─────────────────────────────────────────────────────────────────
     if st.session_state.role == "admin":
         st.markdown(
             '<div style="height:1px;background:rgba(255,255,255,0.07);margin:8px 16px"></div>'
@@ -593,38 +614,44 @@ with st.sidebar:
                 '<div style="background:rgba(255,255,255,0.1);border-radius:8px;'
                 'padding:9px 14px;margin-bottom:2px;display:flex;align-items:center;gap:10px;'
                 'border-left:2px solid #fff">'
-                '<span style="color:#fff;display:flex;align-items:center;flex-shrink:0">'+ICO["new_cmd"]+'</span>'
+                '<span style="color:#fff;display:flex;align-items:center;flex-shrink:0">'
+                + ICO["new_cmd"] + '</span>'
                 '<span style="font-size:13px;font-weight:600;color:#fff">Nouvelle commande</span>'
                 '</div>',
                 unsafe_allow_html=True)
         else:
-            if st.button(ICO["new_cmd"]+"  Nouvelle commande", key="nav_new_cmd", use_container_width=True):
-                st.session_state.page = "new_cmd"; st.rerun()
+            if st.button(EMO["new_cmd"] + "  Nouvelle commande", key="nav_new_cmd",
+                         use_container_width=True):
+                st.session_state.page = "new_cmd"
+                st.rerun()
 
+    # ── Spacer ────────────────────────────────────────────────────────────────
     st.markdown('<div style="min-height:30px"></div>', unsafe_allow_html=True)
     st.markdown(
         '<div style="height:1px;background:rgba(255,255,255,0.07);margin:0 16px 10px"></div>',
         unsafe_allow_html=True)
 
+    # ── Profil card ───────────────────────────────────────────────────────────
     role_color = "#4361EE" if st.session_state.role == "admin" else "#374151"
     role_label = "Admin" if st.session_state.role == "admin" else "Utilisateur"
     initiale   = st.session_state.username[0].upper() if st.session_state.username else "?"
     st.markdown(
         '<div style="padding:10px 12px;display:flex;align-items:center;gap:10px;'
         'background:rgba(255,255,255,0.05);border-radius:10px;margin:0 8px 8px">'
-        '<div style="width:34px;height:34px;border-radius:50%;background:'+role_color+';'
+        '<div style="width:34px;height:34px;border-radius:50%;background:' + role_color + ';'
         'display:flex;align-items:center;justify-content:center;font-size:13px;'
-        'font-weight:700;color:#fff;flex-shrink:0">'+initiale+'</div>'
+        'font-weight:700;color:#fff;flex-shrink:0">' + initiale + '</div>'
         '<div style="min-width:0;flex:1">'
         '<div style="font-size:12px;font-weight:700;color:#fff;white-space:nowrap;'
-        'overflow:hidden;text-overflow:ellipsis">'+st.session_state.username.upper()+'</div>'
-        '<div style="font-size:10px;color:rgba(255,255,255,0.35)">'+role_label+'</div>'
+        'overflow:hidden;text-overflow:ellipsis">' + st.session_state.username.upper() + '</div>'
+        '<div style="font-size:10px;color:rgba(255,255,255,0.35)">' + role_label + '</div>'
         '</div>'
-        '<span style="color:rgba(255,255,255,0.3);flex-shrink:0">'+ICO["settings"]+'</span>'
+        '<span style="color:rgba(255,255,255,0.3);flex-shrink:0">' + ICO["settings"] + '</span>'
         '</div>',
         unsafe_allow_html=True)
 
-    if st.button(ICO["logout"]+"  Deconnexion", use_container_width=True, key="logout"):
+    # ── Déconnexion ───────────────────────────────────────────────────────────
+    if st.button(EMO["logout"] + "  Deconnexion", use_container_width=True, key="logout"):
         st.session_state.update(authenticated=False, username="")
         st.rerun()
 
