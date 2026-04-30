@@ -96,17 +96,18 @@ section[data-testid="stSidebar"] .stButton>button:hover{
   border:1px solid var(--border);box-shadow:var(--shadow-sm);margin-bottom:12px;transition:var(--transition);}
 .card:hover{box-shadow:var(--shadow-md)}
 
-/* ── HERO FIX — objet-fit correct ── */
-.hero-wrap{position:relative;width:100%;height:320px;overflow:hidden;border-radius:0}
-.hero-wrap img{
-  width:100%;height:100%;
-  object-fit:cover;
-  object-position:center 55%;
-  display:block;
+/* ── HERO — background-image approach (100% fiable Streamlit) ── */
+.hero-wrap{
+  position:relative;width:100%;height:320px;overflow:hidden;
+  background-size:cover!important;
+  background-position:center 50%!important;
+  background-repeat:no-repeat!important;
 }
-.hero-overlay{position:absolute;inset:0;
-  background:linear-gradient(110deg,rgba(10,15,30,0.85) 0%,rgba(67,97,238,0.4) 55%,rgba(0,0,0,0.15) 100%);
-  display:flex;align-items:center;padding:0 52px;}
+.hero-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(110deg,rgba(10,15,30,0.88) 0%,rgba(67,97,238,0.42) 55%,rgba(0,0,0,0.1) 100%);
+  display:flex;align-items:center;padding:0 52px;
+}
 .hero-text h1{font-size:34px;font-weight:900;color:#fff;letter-spacing:-1.2px;line-height:1.15;margin:0 0 10px}
 .hero-text p{font-size:14px;color:rgba(255,255,255,0.78);max-width:440px;line-height:1.65;margin:0 0 22px}
 .hero-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,0.12);
@@ -132,9 +133,6 @@ hr{border:none!important;border-top:1px solid var(--border)!important;margin:16p
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:#D1D5DB;border-radius:var(--radius-full)}
-
-/* ── HIDDEN FAB TRIGGERS ── */
-.fab-hidden{position:fixed;left:-9999px;width:0;height:0;overflow:hidden;opacity:0;pointer-events:none}
 </style>
 """, unsafe_allow_html=True)
 
@@ -196,7 +194,7 @@ def delete_doc(booking, filename):
         os.remove(fp)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# LOGIN + SPARKLES (uniquement ici)
+# LOGIN + SPARKLES (uniquement cette page)
 # ══════════════════════════════════════════════════════════════════════════════
 def login_page():
     logo_src = img_to_b64("logo_eden_food.jpg") or img_to_b64("logo_eden_food.png")
@@ -230,7 +228,7 @@ def login_page():
       </div>
     </div>""", unsafe_allow_html=True)
 
-    # ── SparklesCore — Canvas JS (UNIQUEMENT page login) ──────────────────
+    # Sparkles UNIQUEMENT sur la page login
     components.html("""
     <script>
     (function(){
@@ -243,8 +241,7 @@ def login_page():
         parent.document.body.appendChild(cvs);
         const ctx=cvs.getContext('2d');
         function resize(){cvs.width=parent.window.innerWidth;cvs.height=parent.window.innerHeight;}
-        resize();
-        parent.window.addEventListener('resize',resize);
+        resize();parent.window.addEventListener('resize',resize);
         setTimeout(()=>{cvs.style.opacity='1';},120);
         const N=160;
         const pts=Array.from({length:N},()=>({
@@ -293,11 +290,6 @@ def login_page():
                 ul = u.strip().lower()
                 if ul in USERS and USERS[ul]["password"] == pwd:
                     st.session_state.update(authenticated=True, username=ul, role=USERS[ul]["role"])
-                    # Supprime le canvas sparkles après login
-                    components.html("""
-                    <script>
-                    try{const c=parent.document.getElementById('eden-sparkles');if(c)c.remove();}catch(e){}
-                    </script>""", height=0)
                     st.rerun()
                 else:
                     st.error("Identifiant ou mot de passe incorrect")
@@ -305,6 +297,18 @@ def login_page():
 if not st.session_state.authenticated:
     login_page()
     st.stop()
+
+# ── SUPPRESSION SPARKLES — exécuté sur TOUTES les pages authentifiées ─────────
+components.html("""
+<script>
+(function(){
+  try{
+    const c = parent.document.getElementById('eden-sparkles');
+    if(c){ c.style.opacity='0'; setTimeout(()=>c.remove(), 400); }
+  }catch(e){}
+})();
+</script>
+""", height=0)
 
 # ── CONSTANTES ────────────────────────────────────────────────────────────────
 POIDS_UNIT  = 18.14
@@ -372,185 +376,6 @@ current_week_num  = datetime.now().isocalendar()[1]
 current_week_str  = f"S-{current_week_num}"
 commandes_semaine = commandes[commandes["semaine"]==current_week_str]
 
-# ══════════════════════════════════════════════════════════════════════════════
-# FLOATING ACTION MENU — traduction FloatingActionMenu React → JS natif
-# Animé avec spring cubic-bezier + blur, identique au composant fourni
-# ══════════════════════════════════════════════════════════════════════════════
-def inject_fab(role):
-    """
-    Traduit FloatingActionMenu (framer-motion React) en CSS/JS vanilla.
-    - Bouton + qui rotate 45° à l'ouverture (spring stiffness:300 damping:20)
-    - Options qui slide depuis la droite avec stagger delay index*0.05
-    - Backdrop blur + shadow identique au composant original
-    - Clic sur option → trouve et clique le bouton Streamlit caché correspondant
-    """
-    options_admin = [
-        ("➕", "Nouvelle commande", "__FAB_NEW_CMD__"),
-        ("📁", "Documents",         "__FAB_DOCUMENTS__"),
-        ("📋", "Licences",          "__FAB_LICENCES__"),
-        ("🚢", "Commandes",         "__FAB_COMMANDES__"),
-    ]
-    options_user = [
-        ("📁", "Documents",  "__FAB_DOCUMENTS__"),
-        ("📋", "Licences",   "__FAB_LICENCES__"),
-        ("🚢", "Commandes",  "__FAB_COMMANDES__"),
-    ]
-    opts = options_admin if role == "admin" else options_user
-    opts_json = str([[o[0], o[1], o[2]] for o in opts]).replace("'", '"')
-
-    components.html(f"""
-    <script>
-    (function(){{
-      const old = parent.document.getElementById('eden-fab-wrap');
-      if(old) old.remove();
-
-      const opts = {opts_json};
-
-      // ── CSS injection ──────────────────────────────────────────────────
-      const style = parent.document.createElement('style');
-      style.id = 'eden-fab-style';
-      const oldStyle = parent.document.getElementById('eden-fab-style');
-      if(oldStyle) oldStyle.remove();
-      style.textContent = `
-        #eden-fab-wrap {{
-          position:fixed; bottom:32px; right:32px; z-index:9999;
-          display:flex; flex-direction:column; align-items:flex-end; gap:8px;
-        }}
-        #eden-fab-menu {{
-          display:flex; flex-direction:column; align-items:flex-end; gap:8px;
-          margin-bottom:4px;
-          pointer-events:none;
-        }}
-        .fab-option {{
-          display:flex; align-items:center; gap:8px;
-          background:rgba(17,17,17,0.82);
-          color:#fff; border:none; border-radius:14px;
-          padding:9px 18px; font-size:13px; font-weight:600;
-          cursor:pointer; white-space:nowrap;
-          box-shadow:0 0 20px rgba(0,0,0,0.25);
-          backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
-          opacity:0; transform:translateX(20px);
-          filter:blur(8px);
-          transition:
-            opacity 0.35s cubic-bezier(0.34,1.56,0.64,1),
-            transform 0.35s cubic-bezier(0.34,1.56,0.64,1),
-            filter 0.35s cubic-bezier(0.34,1.56,0.64,1),
-            background 0.15s ease;
-          pointer-events:none;
-        }}
-        .fab-option:hover {{
-          background:rgba(17,17,17,0.95);
-        }}
-        .fab-option.visible {{
-          opacity:1; transform:translateX(0); filter:blur(0);
-          pointer-events:all;
-        }}
-        #eden-fab-btn {{
-          width:44px; height:44px; border-radius:50%;
-          background:rgba(17,17,17,0.82);
-          border:none; cursor:pointer; color:#fff;
-          font-size:22px; font-weight:300;
-          display:flex; align-items:center; justify-content:center;
-          box-shadow:0 0 20px rgba(0,0,0,0.25);
-          backdrop-filter:blur(12px);
-          transition:background 0.15s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
-        }}
-        #eden-fab-btn:hover {{ background:rgba(17,17,17,0.95); }}
-        #eden-fab-icon {{
-          display:inline-block;
-          transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
-          line-height:1;
-        }}
-      `;
-      parent.document.head.appendChild(style);
-
-      // ── DOM construction ───────────────────────────────────────────────
-      const wrap = parent.document.createElement('div');
-      wrap.id = 'eden-fab-wrap';
-
-      const menu = parent.document.createElement('div');
-      menu.id = 'eden-fab-menu';
-
-      opts.forEach((opt, i) => {{
-        const btn = parent.document.createElement('button');
-        btn.className = 'fab-option';
-        btn.dataset.delay = i * 55;
-        btn.innerHTML = `<span>${{opt[0]}}</span><span>${{opt[1]}}</span>`;
-        btn.addEventListener('click', () => {{
-          clickHidden(opt[2]);
-        }});
-        menu.appendChild(btn);
-      }});
-
-      const mainBtn = parent.document.createElement('button');
-      mainBtn.id = 'eden-fab-btn';
-      mainBtn.innerHTML = '<span id="eden-fab-icon">+</span>';
-
-      wrap.appendChild(menu);
-      wrap.appendChild(mainBtn);
-      parent.document.body.appendChild(wrap);
-
-      // ── Toggle logic (identique à isOpen state React) ──────────────────
-      let isOpen = false;
-      mainBtn.addEventListener('click', () => {{
-        isOpen = !isOpen;
-        const icon = parent.document.getElementById('eden-fab-icon');
-        icon.style.transform = isOpen ? 'rotate(45deg)' : 'rotate(0deg)';
-
-        const items = menu.querySelectorAll('.fab-option');
-        if(isOpen) {{
-          menu.style.pointerEvents = 'all';
-          items.forEach((item, i) => {{
-            setTimeout(() => {{
-              item.classList.add('visible');
-            }}, i * 55);
-          }});
-        }} else {{
-          menu.style.pointerEvents = 'none';
-          items.forEach((item, i) => {{
-            setTimeout(() => {{
-              item.classList.remove('visible');
-            }}, i * 40);
-          }});
-        }}
-      }});
-
-      // ── Click hidden Streamlit button ──────────────────────────────────
-      function clickHidden(label) {{
-        isOpen = false;
-        const icon = parent.document.getElementById('eden-fab-icon');
-        if(icon) icon.style.transform = 'rotate(0deg)';
-        const items = menu.querySelectorAll('.fab-option');
-        items.forEach(item => item.classList.remove('visible'));
-        menu.style.pointerEvents = 'none';
-
-        // Cherche le bouton Streamlit caché par son texte
-        const allBtns = parent.document.querySelectorAll('button');
-        for(const btn of allBtns) {{
-          if(btn.textContent.trim() === label) {{
-            btn.click();
-            return;
-          }}
-        }}
-      }}
-    }})();
-    </script>
-    """, height=0)
-
-# ── Boutons Streamlit cachés pour le FAB ─────────────────────────────────────
-st.markdown('<div class="fab-hidden">', unsafe_allow_html=True)
-if st.button("__FAB_NEW_CMD__",   key="fab_new_cmd"):
-    st.session_state.page = "new_cmd";   st.rerun()
-if st.button("__FAB_DOCUMENTS__", key="fab_documents"):
-    st.session_state.page = "documents"; st.rerun()
-if st.button("__FAB_LICENCES__",  key="fab_licences"):
-    st.session_state.page = "licences";  st.rerun()
-if st.button("__FAB_COMMANDES__", key="fab_commandes"):
-    st.session_state.page = "commandes"; st.rerun()
-st.markdown('</div>', unsafe_allow_html=True)
-
-inject_fab(st.session_state.role)
-
 # ── SIDEBAR ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     logo_src = img_to_b64("logo_eden_food.jpg") or img_to_b64("logo_eden_food.png")
@@ -617,9 +442,9 @@ if page == "dashboard":
     logo_ov  = f'<img src="{logo_src}" style="height:36px;margin-bottom:12px;display:block">' if logo_src else ""
 
     if hero_src:
+        # background-image CSS — cadrage garanti, pas de distorsion
         st.markdown(f"""
-        <div class="hero-wrap">
-          <img src="{hero_src}" alt="Eden Food Hero">
+        <div class="hero-wrap" style="background:url('{hero_src}') center 50% / cover no-repeat;">
           <div class="hero-overlay">
             <div class="hero-text">
               {logo_ov}
@@ -631,15 +456,17 @@ if page == "dashboard":
         </div>""", unsafe_allow_html=True)
     else:
         st.markdown(f"""
-        <div style="background:linear-gradient(110deg,#0F172A,#4361EE);padding:52px;overflow:hidden;position:relative">
+        <div style="background:linear-gradient(110deg,#0F172A,#4361EE);padding:52px;overflow:hidden;position:relative;height:320px;display:flex;align-items:center;">
           <div style="position:absolute;top:-40px;right:-40px;width:300px;height:300px;
               background:rgba(255,255,255,0.04);border-radius:50%"></div>
           {logo_ov}
+          <div>
           <h1 style="font-size:32px;font-weight:900;color:#fff;letter-spacing:-1px;margin:0 0 10px">
             Fresh from the plantation to the world</h1>
           <p style="font-size:14px;color:rgba(255,255,255,0.72);max-width:440px;margin:0 0 22px">
             Colombie & Costa Rica — Suivi logistique temps réel</p>
           <div class="hero-badge">🍌 {current_week_str} · {len(commandes)} expéditions</div>
+          </div>
         </div>""", unsafe_allow_html=True)
 
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
