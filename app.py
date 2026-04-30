@@ -1291,7 +1291,7 @@ elif page == "tracking":
                     '</div></div>',
                     unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
-  # ══════════════════════════════════════════════════════════════════════════════
+ # ══════════════════════════════════════════════════════════════════════════════
 # DOCUMENTS
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "documents":
@@ -1303,4 +1303,473 @@ elif page == "documents":
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
 
     all_bookings = commandes["booking"].dropna().unique().tolist()
-    total_docs   
+    total_docs   = sum(len(list_docs(b)) for b in all_bookings)
+    bookings_ok  = sum(1 for b in all_bookings if len(list_docs(b)) > 0)
+
+    st.markdown(
+        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px">'
+        '<div class="kpi-card" style="--card-color:#4361EE;--card-bg:#EEF2FF">'
+        '<div class="icon-wrap">📦</div><div class="kpi-lbl">Bookings total</div>'
+        '<div class="kpi-val" style="color:#4361EE">'+str(len(all_bookings))+'</div></div>'
+        '<div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">'
+        '<div class="icon-wrap">✅</div><div class="kpi-lbl">Avec documents</div>'
+        '<div class="kpi-val" style="color:#059669">'+str(bookings_ok)+'</div></div>'
+        '<div class="kpi-card" style="--card-color:#3B82F6;--card-bg:#DBEAFE">'
+        '<div class="icon-wrap">📄</div><div class="kpi-lbl">Fichiers uploades</div>'
+        '<div class="kpi-val" style="color:#2563EB">'+str(total_docs)+'</div></div>'
+        '</div>',
+        unsafe_allow_html=True)
+
+    search_doc = st.text_input("", placeholder="Rechercher un booking ou client...",
+                               label_visibility="collapsed")
+
+    df_docs = commandes.copy()
+    if search_doc:
+        df_docs = df_docs[
+            df_docs["booking"].str.contains(search_doc, case=False, na=False) |
+            df_docs["client"].str.contains(search_doc, case=False, na=False)
+        ]
+
+    for _, row in df_docs.iterrows():
+        docs = list_docs(row["booking"])
+        nd   = len(docs)
+        badge_doc = ('<span class="pill pill-blue">📁 '+str(nd)+' doc(s)</span>'
+                     if nd else
+                     '<span class="pill" style="background:#F3F4F6;color:#9CA3AF">📁 Vide</span>')
+        st.markdown(
+            '<div class="card">'
+            '<div style="display:flex;justify-content:space-between;align-items:center;'
+            'flex-wrap:wrap;gap:8px;margin-bottom:12px">'
+            '<div>'
+            '<div style="font-size:14px;font-weight:700;color:#111827">'+str(row["client"])+'</div>'
+            '<div style="font-size:11px;color:#9CA3AF;margin-top:2px">'
+            +str(row["booking"])+' · '+str(row["semaine"])+'</div>'
+            '</div>'+badge_doc+'</div>',
+            unsafe_allow_html=True)
+
+        if docs:
+            st.markdown('<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">',
+                        unsafe_allow_html=True)
+            for doc_name in docs:
+                doc_path = os.path.join(docs_path(row["booking"]), doc_name)
+                d1, d2, d3 = st.columns([4, 1, 1])
+                with d1:
+                    st.markdown('<div class="doc-chip">📄 '+doc_name+'</div>',
+                                unsafe_allow_html=True)
+                with d2:
+                    with open(doc_path, "rb") as f:
+                        st.download_button("⬇️", f.read(), file_name=doc_name,
+                            key="dldoc_"+str(row["booking"])+"_"+doc_name,
+                            use_container_width=True)
+                with d3:
+                    if st.session_state.role == "admin":
+                        if st.button("🗑️", key="deldoc_"+str(row["booking"])+"_"+doc_name,
+                                     use_container_width=True):
+                            delete_doc(row["booking"], doc_name)
+                            st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            st.caption("Aucun document.")
+
+        u1, u2, u3 = st.columns([3, 2, 1])
+        with u1:
+            up = st.file_uploader("", type=["pdf","xlsx","xls","docx","jpg","png"],
+                                  key="updoc_"+str(row["booking"]),
+                                  label_visibility="collapsed")
+        with u2:
+            dtype = st.selectbox("", DOC_TYPES,
+                                 key="dtypedoc_"+str(row["booking"]),
+                                 label_visibility="collapsed")
+        with u3:
+            if up and st.button("✅ Upload", key="upconfdoc_"+str(row["booking"]),
+                                type="primary", use_container_width=True):
+                up.name = dtype.replace(" ","_")+"_"+up.name
+                save_doc(row["booking"], up)
+                st.success("Uploade !")
+                st.rerun()
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# LICENCES
+# ══════════════════════════════════════════════════════════════════════════════
+elif page == "licences":
+    st.markdown(
+        '<div style="background:#fff;border-bottom:1px solid #E5E7EB;padding:18px 36px;'
+        'position:sticky;top:0;z-index:100;font-size:20px;font-weight:800;color:#111827">'
+        'Licences DPVCT</div>',
+        unsafe_allow_html=True)
+    st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
+
+    total_clients = len(clients)
+    clients_ok    = len(clients[clients["solde_reel"] >= 58773.6])
+    clients_warn  = len(clients[(clients["solde_reel"] >= 19591.2) & (clients["solde_reel"] < 58773.6)])
+    clients_crit  = len(clients[clients["solde_reel"] < 19591.2])
+
+    st.markdown(
+        '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px">'
+        '<div class="kpi-card" style="--card-color:#4361EE;--card-bg:#EEF2FF">'
+        '<div class="icon-wrap">📋</div><div class="kpi-lbl">Total clients</div>'
+        '<div class="kpi-val" style="color:#4361EE">'+str(total_clients)+'</div></div>'
+        '<div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">'
+        '<div class="icon-wrap">✅</div><div class="kpi-lbl">OK</div>'
+        '<div class="kpi-val" style="color:#059669">'+str(clients_ok)+'</div></div>'
+        '<div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7">'
+        '<div class="icon-wrap">⚠️</div><div class="kpi-lbl">Attention</div>'
+        '<div class="kpi-val" style="color:#D97706">'+str(clients_warn)+'</div></div>'
+        '<div class="kpi-card" style="--card-color:#EF4444;--card-bg:#FEE2E2">'
+        '<div class="icon-wrap">🔴</div><div class="kpi-lbl">Critique</div>'
+        '<div class="kpi-val" style="color:#DC2626">'+str(clients_crit)+'</div></div>'
+        '</div>',
+        unsafe_allow_html=True)
+
+    f1, f2, f3 = st.columns([3, 2, 2])
+    with f1:
+        search_lic = st.selectbox(
+            "Client", ["Tous les clients"] + sorted(clients["nom"].dropna().tolist()),
+            label_visibility="collapsed")
+    with f2:
+        filter_statut = st.selectbox(
+            "Statut", ["Tous","OK","Attention","Critique","Depassement"],
+            label_visibility="collapsed")
+    with f3:
+        sort_by = st.selectbox(
+            "Tri", ["Nom (A→Z)","Solde reel ↑","Solde reel ↓"],
+            label_visibility="collapsed")
+
+    df_lic = clients.copy()
+    if search_lic != "Tous les clients":
+        df_lic = df_lic[df_lic["nom"] == search_lic]
+    if filter_statut == "OK":
+        df_lic = df_lic[df_lic["solde_reel"] >= 58773.6]
+    elif filter_statut == "Attention":
+        df_lic = df_lic[(df_lic["solde_reel"] >= 19591.2) & (df_lic["solde_reel"] < 58773.6)]
+    elif filter_statut == "Critique":
+        df_lic = df_lic[(df_lic["solde_reel"] >= 0) & (df_lic["solde_reel"] < 19591.2)]
+    elif filter_statut == "Depassement":
+        df_lic = df_lic[df_lic["solde_reel"] < 0]
+    if sort_by == "Nom (A→Z)":
+        df_lic = df_lic.sort_values("nom")
+    elif sort_by == "Solde reel ↑":
+        df_lic = df_lic.sort_values("solde_reel", ascending=True)
+    elif sort_by == "Solde reel ↓":
+        df_lic = df_lic.sort_values("solde_reel", ascending=False)
+
+    st.markdown(
+        '<div style="font-size:12px;color:#6B7280;margin-bottom:16px">'
+        '<b style="color:#111827">'+str(len(df_lic))+'</b> client(s) affiché(s)</div>',
+        unsafe_allow_html=True)
+
+    for _, row in df_lic.iterrows():
+        pr = max(0, min(100, row["solde_reel"]/row["poids_total"]*100)) if row["poids_total"] > 0 else 0
+        pc = "#10B981" if pr > 30 else ("#F59E0B" if pr > 10 else "#EF4444")
+
+        if   row["solde_reel"] < 0:       badge = '<span class="pill pill-red">DEPASSEMENT</span>'
+        elif row["solde_reel"] < 19591.2: badge = '<span class="pill pill-red">CRITIQUE</span>'
+        elif row["solde_reel"] < 58773.6: badge = '<span class="pill pill-orange">ATTENTION</span>'
+        else:                              badge = '<span class="pill pill-green">OK</span>'
+
+        pdf_exists = os.path.exists(licence_pdf_path(row["licence"]))
+        pdf_badge  = ('<span class="pill pill-blue">📄 PDF</span>' if pdf_exists
+                      else '<span class="pill" style="background:#F3F4F6;color:#9CA3AF">📄 Pas de PDF</span>')
+
+        st.markdown(
+            '<div class="card">'
+            '<div style="display:flex;justify-content:space-between;align-items:flex-start;'
+            'flex-wrap:wrap;gap:8px;margin-bottom:16px">'
+            '<div>'
+            '<div style="font-size:16px;font-weight:800;color:#111827">'+str(row["nom"])+'</div>'
+            '<div style="font-size:12px;color:#9CA3AF;margin-top:3px">'
+            'Licence '+str(row["licence"])+' · '+str(row["pays"])+'</div>'
+            '</div>'
+            '<div style="display:flex;gap:8px;align-items:center">'+pdf_badge+badge+'</div>'
+            '</div>'
+            '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">'
+            '<div style="background:#F9FAFB;border-radius:10px;padding:14px">'
+            '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">Poids total</div>'
+            '<div style="font-size:18px;font-weight:800;color:#111827">'+"{:,.0f}".format(row["poids_total"])+' <span style="font-size:11px;color:#9CA3AF">kgs</span></div></div>'
+            '<div style="background:#EEF2FF;border-radius:10px;padding:14px">'
+            '<div style="font-size:9px;color:#4361EE;text-transform:uppercase;font-weight:700;margin-bottom:4px">Solde reel</div>'
+            '<div style="font-size:18px;font-weight:800;color:#4361EE">'+"{:,.0f}".format(row["solde_reel"])+' <span style="font-size:11px">kgs</span></div></div>'
+            '<div style="background:#FEF3C7;border-radius:10px;padding:14px">'
+            '<div style="font-size:9px;color:#D97706;text-transform:uppercase;font-weight:700;margin-bottom:4px">Solde prev.</div>'
+            '<div style="font-size:18px;font-weight:800;color:#D97706">'+"{:,.0f}".format(row["solde_prev"])+' <span style="font-size:11px">kgs</span></div></div>'
+            '</div>'
+            '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">'
+            '<div style="background:#EEF2FF;border-radius:10px;padding:12px;text-align:center">'
+            '<div style="font-size:9px;color:#4361EE;text-transform:uppercase;font-weight:700;margin-bottom:4px">CNT reel CR</div>'
+            '<div style="font-size:16px;font-weight:900;color:#4361EE">'+str(round(row["cnt_reel_cr"],1))+'</div></div>'
+            '<div style="background:#EEF2FF;border-radius:10px;padding:12px;text-align:center">'
+            '<div style="font-size:9px;color:#4361EE;text-transform:uppercase;font-weight:700;margin-bottom:4px">CNT reel COL</div>'
+            '<div style="font-size:16px;font-weight:900;color:#4361EE">'+str(round(row["cnt_reel_col"],1))+'</div></div>'
+            '<div style="background:#FEF3C7;border-radius:10px;padding:12px;text-align:center">'
+            '<div style="font-size:9px;color:#D97706;text-transform:uppercase;font-weight:700;margin-bottom:4px">CNT prev CR</div>'
+            '<div style="font-size:16px;font-weight:900;color:#D97706">'+str(round(row["cnt_prev_cr"],1))+'</div></div>'
+            '<div style="background:#FEF3C7;border-radius:10px;padding:12px;text-align:center">'
+            '<div style="font-size:9px;color:#D97706;text-transform:uppercase;font-weight:700;margin-bottom:4px">CNT prev COL</div>'
+            '<div style="font-size:16px;font-weight:900;color:#D97706">'+str(round(row["cnt_prev_col"],1))+'</div></div>'
+            '</div>'
+            '<div style="margin-bottom:14px">'
+            '<div style="display:flex;justify-content:space-between;margin-bottom:6px">'
+            '<span style="font-size:11px;color:#6B7280;font-weight:600">Solde disponible</span>'
+            '<span style="font-size:11px;font-weight:700;color:'+pc+'">'+str(int(pr))+'%</span>'
+            '</div>'
+            '<div class="prog-track">'
+            '<div class="prog-fill" style="background:'+pc+';width:'+str(int(pr))+'%"></div>'
+            '</div></div>',
+            unsafe_allow_html=True)
+
+        if pdf_exists:
+            lc1, _ = st.columns([1, 4])
+            with lc1:
+                with open(licence_pdf_path(row["licence"]), "rb") as f:
+                    st.download_button("📄 Telecharger licence", f.read(),
+                        file_name=licence_to_filename(row["licence"]),
+                        key="dllic_"+str(row["licence"]),
+                        use_container_width=True)
+        else:
+            lc1, lc2 = st.columns([2, 3])
+            with lc1:
+                up_lic = st.file_uploader("", type=["pdf"],
+                    key="uplic_"+str(row["licence"]),
+                    label_visibility="collapsed")
+            with lc2:
+                if up_lic and st.button("✅ Uploader licence",
+                    key="uplicconf_"+str(row["licence"]), type="primary"):
+                    os.makedirs("licences", exist_ok=True)
+                    with open(licence_pdf_path(row["licence"]), "wb") as f:
+                        f.write(up_lic.getbuffer())
+                    st.success("Licence uploadee !")
+                    st.rerun()
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PLANNING CLIENT
+# ══════════════════════════════════════════════════════════════════════════════
+elif page == "planning":
+    st.markdown(
+        '<div style="background:#fff;border-bottom:1px solid #E5E7EB;padding:18px 36px;'
+        'position:sticky;top:0;z-index:100;font-size:20px;font-weight:800;color:#111827">'
+        'Planning client</div>',
+        unsafe_allow_html=True)
+    st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
+
+    cli_sel = st.selectbox(
+        "Choisir un client",
+        ["— Selectionner —"] + sorted(clients["nom"].dropna().tolist()),
+        label_visibility="collapsed")
+
+    if cli_sel == "— Selectionner —":
+        st.markdown(
+            '<div style="text-align:center;padding:60px 20px">'
+            '<div style="font-size:48px;margin-bottom:16px">👤</div>'
+            '<div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:8px">'
+            'Selectionnez un client</div>'
+            '<div style="font-size:13px;color:#9CA3AF">'
+            'Choisissez un client pour voir son planning et ses statistiques.</div>'
+            '</div>',
+            unsafe_allow_html=True)
+    else:
+        cli_row  = clients[clients["nom"] == cli_sel].iloc[0]
+        cli_cmds = commandes[commandes["client"] == cli_sel].copy()
+
+        pr = max(0, min(100, cli_row["solde_reel"]/cli_row["poids_total"]*100)) if cli_row["poids_total"] > 0 else 0
+        pc = "#10B981" if pr > 30 else ("#F59E0B" if pr > 10 else "#EF4444")
+        if   cli_row["solde_reel"] < 0:       badge = '<span class="pill pill-red">DEPASSEMENT</span>'
+        elif cli_row["solde_reel"] < 19591.2: badge = '<span class="pill pill-red">CRITIQUE</span>'
+        elif cli_row["solde_reel"] < 58773.6: badge = '<span class="pill pill-orange">ATTENTION</span>'
+        else:                                  badge = '<span class="pill pill-green">OK</span>'
+
+        st.markdown(
+            '<div class="card" style="margin-bottom:20px">'
+            '<div style="display:flex;justify-content:space-between;align-items:flex-start;'
+            'flex-wrap:wrap;gap:12px;margin-bottom:18px">'
+            '<div>'
+            '<div style="font-size:20px;font-weight:900;color:#111827">'+cli_sel+'</div>'
+            '<div style="font-size:12px;color:#9CA3AF;margin-top:4px">'
+            'Licence '+str(cli_row["licence"])+' · '+str(cli_row["pays"])+'</div>'
+            '</div>'+badge+'</div>'
+            '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">'
+            '<div style="background:#F9FAFB;border-radius:10px;padding:14px">'
+            '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">Poids licence</div>'
+            '<div style="font-size:16px;font-weight:800;color:#111827">'+"{:,.0f}".format(cli_row["poids_total"])+'</div>'
+            '<div style="font-size:10px;color:#9CA3AF">kgs</div></div>'
+            '<div style="background:#EEF2FF;border-radius:10px;padding:14px">'
+            '<div style="font-size:9px;color:#4361EE;text-transform:uppercase;font-weight:700;margin-bottom:4px">Solde reel</div>'
+            '<div style="font-size:16px;font-weight:800;color:#4361EE">'+"{:,.0f}".format(cli_row["solde_reel"])+'</div>'
+            '<div style="font-size:10px;color:#9CA3AF">kgs</div></div>'
+            '<div style="background:#FEF3C7;border-radius:10px;padding:14px">'
+            '<div style="font-size:9px;color:#D97706;text-transform:uppercase;font-weight:700;margin-bottom:4px">Solde prev.</div>'
+            '<div style="font-size:16px;font-weight:800;color:#D97706">'+"{:,.0f}".format(cli_row["solde_prev"])+'</div>'
+            '<div style="font-size:10px;color:#9CA3AF">kgs</div></div>'
+            '<div style="background:#D1FAE5;border-radius:10px;padding:14px">'
+            '<div style="font-size:9px;color:#059669;text-transform:uppercase;font-weight:700;margin-bottom:4px">CNT expedies</div>'
+            '<div style="font-size:16px;font-weight:800;color:#059669">'+str(int(cli_cmds["nb_cnt"].sum()))+'</div>'
+            '<div style="font-size:10px;color:#9CA3AF">conteneurs</div></div>'
+            '</div>'
+            '<div style="margin-bottom:8px">'
+            '<div style="display:flex;justify-content:space-between;margin-bottom:6px">'
+            '<span style="font-size:11px;color:#6B7280;font-weight:600">Licence consommee</span>'
+            '<span style="font-size:11px;font-weight:700;color:'+pc+'">'+str(int(pr))+'%</span>'
+            '</div>'
+            '<div class="prog-track">'
+            '<div class="prog-fill" style="background:'+pc+';width:'+str(int(pr))+'%"></div>'
+            '</div></div></div>',
+            unsafe_allow_html=True)
+
+        st.markdown(
+            '<div class="sec-hdr">'
+            '<span class="sec-title">Historique des commandes</span>'
+            '<span class="sec-sub">'+str(len(cli_cmds))+' commandes</span>'
+            '</div>',
+            unsafe_allow_html=True)
+
+        if cli_cmds.empty:
+            st.info("Aucune commande pour ce client.")
+        else:
+            for _, crow in cli_cmds.iterrows():
+                cpill = "pill-green" if "GENERE" in str(crow["statut"]) else "pill-orange"
+                st.markdown(
+                    '<div class="cmd-row">'
+                    '<div style="min-width:120px">'
+                    '<div style="font-size:12px;font-weight:700;color:#4361EE">'+str(crow["semaine"])+'</div>'
+                    '<div style="font-size:11px;color:#9CA3AF;margin-top:2px">'+str(crow["booking"])+'</div>'
+                    '</div>'
+                    '<div style="text-align:center">'
+                    '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;margin-bottom:2px">Navire</div>'
+                    '<div style="font-size:11px;font-weight:600;color:#374151">'+str(crow["navire"])+'</div>'
+                    '</div>'
+                    '<div style="text-align:center">'
+                    '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;margin-bottom:2px">POL</div>'
+                    '<div style="font-size:11px;font-weight:700;color:#111827">'+str(crow["pol"])+'</div>'
+                    '</div>'
+                    '<div style="text-align:center">'
+                    '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;margin-bottom:2px">CNT</div>'
+                    '<div style="font-size:20px;font-weight:900;color:#4361EE">'+str(crow["nb_cnt"])+'</div>'
+                    '</div>'
+                    '<div style="text-align:center">'
+                    '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;margin-bottom:2px">Depart</div>'
+                    '<div style="font-size:11px;font-weight:600;color:#374151">'+str(crow["depart"])+'</div>'
+                    '</div>'
+                    '<span class="pill '+cpill+'">'+str(crow["statut"])+'</span>'
+                    '</div>',
+                    unsafe_allow_html=True)
+
+            st.markdown(
+                '<div class="sec-hdr" style="margin-top:24px">'
+                '<span class="sec-title">Volume par semaine</span>'
+                '</div>',
+                unsafe_allow_html=True)
+            df_cli_sem = cli_cmds.groupby("semaine")["nb_cnt"].sum().reset_index()
+            fig3 = px.bar(df_cli_sem, x="semaine", y="nb_cnt",
+                          color_discrete_sequence=["#4361EE"],
+                          labels={"semaine":"","nb_cnt":"CNT"})
+            fig3.update_traces(marker_cornerradius=6, marker_line_width=0)
+            fig3 = apply_chart_style(fig3)
+            st.plotly_chart(fig3, use_container_width=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# NOUVELLE COMMANDE (admin)
+# ══════════════════════════════════════════════════════════════════════════════
+elif page == "new_cmd":
+    if st.session_state.role != "admin":
+        st.error("Acces reserve aux administrateurs.")
+        st.stop()
+
+    st.markdown(
+        '<div style="background:#fff;border-bottom:1px solid #E5E7EB;padding:18px 36px;'
+        'position:sticky;top:0;z-index:100;font-size:20px;font-weight:800;color:#111827">'
+        'Nouvelle commande</div>',
+        unsafe_allow_html=True)
+    st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
+
+    with st.form("new_cmd_form"):
+        c1, c2 = st.columns(2)
+        with c1:
+            nc_semaine = st.text_input("Semaine (ex: S-20)", placeholder="S-20")
+            nc_client  = st.selectbox("Client", clients["nom"].dropna().tolist())
+            nc_booking = st.text_input("Booking", placeholder="LHV1234567")
+            nc_licence = st.text_input("Licence", placeholder="N-XXX-XXXX")
+            nc_navire  = st.text_input("Navire",  placeholder="MSC BANANA")
+            nc_voyage  = st.text_input("Voyage",  placeholder="001W")
+        with c2:
+            nc_pol    = st.selectbox("POL", ["MOIN(COSTA RICA)","TURBO(COLOMBIA)"])
+            nc_depart = st.text_input("Depart (JJ/MM/AAAA)", placeholder="15/05/2026")
+            nc_eta    = st.text_input("ETA (JJ/MM/AAAA)",    placeholder="05/06/2026")
+            nc_cnt    = st.number_input("Nombre CNT", min_value=1, max_value=20, value=1, step=1)
+            nc_produit= st.text_input("Produit", placeholder="BANANES FRAICHES")
+            nc_statut = st.selectbox("Statut", ["A GENERER","GENERE"])
+
+        submitted = st.form_submit_button("✅ Enregistrer la commande",
+                                          type="primary", use_container_width=True)
+
+    if submitted:
+        if not nc_semaine or not nc_booking or not nc_client:
+            st.error("Semaine, booking et client sont obligatoires.")
+        else:
+            cli_info        = clients[clients["nom"] == nc_client]
+            adresse1        = str(cli_info["adresse1"].iloc[0]) if not cli_info.empty else ""
+            adresse2        = str(cli_info["adresse2"].iloc[0]) if not cli_info.empty else ""
+            ville           = str(cli_info["ville"].iloc[0])    if not cli_info.empty else ""
+            pays            = str(cli_info["pays"].iloc[0])     if not cli_info.empty else ""
+            poids_total_lic = float(cli_info["poids_total"].iloc[0]) if not cli_info.empty else 0
+            solde_avant     = float(cli_info["solde_reel"].iloc[0])  if not cli_info.empty else 0
+
+            new_row = {
+                "num":     len(commandes) + 1,
+                "semaine": nc_semaine.strip().upper(),
+                "client":  nc_client,
+                "booking": nc_booking.strip(),
+                "licence": nc_licence.strip(),
+                "navire":  nc_navire.strip(),
+                "voyage":  nc_voyage.strip(),
+                "pol":     nc_pol,
+                "depart":  nc_depart.strip(),
+                "eta":     nc_eta.strip(),
+                "nb_cnt":  int(nc_cnt),
+                "produit": nc_produit.strip(),
+                "statut":  nc_statut,
+            }
+            st.session_state.new_commandes.append(new_row)
+
+            conf_data = {
+                "booking":         nc_booking.strip(),
+                "semaine":         nc_semaine.strip().upper(),
+                "client":          nc_client,
+                "adresse1":        adresse1,
+                "adresse2":        adresse2,
+                "ville":           ville,
+                "pays":            pays,
+                "licence":         nc_licence.strip(),
+                "poids_total_lic": poids_total_lic,
+                "navire":          nc_navire.strip(),
+                "voyage":          nc_voyage.strip(),
+                "pol":             nc_pol,
+                "depart":          nc_depart.strip(),
+                "eta":             nc_eta.strip(),
+                "nb_cnt":          int(nc_cnt),
+                "produit":         nc_produit.strip() or "BANANES FRAICHES",
+                "solde_avant":     solde_avant,
+            }
+
+            excel_bytes = generate_conf_commande(conf_data)
+            filename    = "CONF-COMMANDE-"+nc_booking.strip()+".xlsx"
+
+            st.success("✅ Commande "+nc_booking+" enregistree !")
+            st.download_button(
+                label="📥 Telecharger la confirmation Excel",
+                data=excel_bytes,
+                file_name=filename,
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                type="primary",
+                use_container_width=True)
+            st.balloons()
+
+    st.markdown('</div>', unsafe_allow_html=True)
