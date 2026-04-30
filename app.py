@@ -1387,4 +1387,78 @@ elif page == "planning":
                     '<div style="text-align:center">'
                     '<div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">Depart</div>'
                     '<div style="font-weight:500;color:#374151;font-size:11px">'+str(crow["depart"])+'</div></div>'
-                    '<span
+                                        '<span class="pill '+cpill+'">'+str(crow["statut"])+'</span>'
+                    '</div>',
+                    unsafe_allow_html=True)
+
+            if not cli_cmds.empty:
+                st.markdown('<div class="sec-hdr"><span class="sec-title">Volume par semaine</span></div>',
+                            unsafe_allow_html=True)
+                df_cli_sem = cli_cmds.groupby("semaine")["nb_cnt"].sum().reset_index()
+                fig3 = px.bar(df_cli_sem, x="semaine", y="nb_cnt",
+                              color_discrete_sequence=["#4361EE"],
+                              labels={"semaine":"","nb_cnt":"CNT"})
+                fig3.update_traces(marker_cornerradius=6, marker_line_width=0)
+                fig3 = apply_chart_style(fig3)
+                st.plotly_chart(fig3, use_container_width=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# NOUVELLE COMMANDE (admin)
+# ══════════════════════════════════════════════════════════════════════════════
+elif page == "new_cmd":
+    if st.session_state.role != "admin":
+        st.error("Acces reserve aux administrateurs.")
+        st.stop()
+
+    st.markdown(
+        '<div style="background:#fff;border-bottom:1px solid #E5E7EB;padding:18px 36px;'
+        'position:sticky;top:0;z-index:100;font-size:20px;font-weight:800;color:#111827">'
+        'Nouvelle commande</div>',
+        unsafe_allow_html=True)
+    st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
+
+    with st.form("new_cmd_form"):
+        c1, c2 = st.columns(2)
+        with c1:
+            nc_semaine = st.text_input("Semaine (ex: S-20)", placeholder="S-20")
+            nc_client  = st.selectbox("Client", clients["nom"].dropna().tolist())
+            nc_booking = st.text_input("Booking", placeholder="LHV1234567")
+            nc_licence = st.text_input("Licence", placeholder="N-XXX-XXXX")
+            nc_navire  = st.text_input("Navire", placeholder="MSC BANANA")
+            nc_voyage  = st.text_input("Voyage", placeholder="001W")
+        with c2:
+            nc_pol    = st.selectbox("POL", ["MOIN(COSTA RICA)", "TURBO(COLOMBIA)"])
+            nc_depart = st.text_input("Depart (JJ/MM/AAAA)", placeholder="15/05/2026")
+            nc_eta    = st.text_input("ETA (JJ/MM/AAAA)", placeholder="05/06/2026")
+            nc_cnt    = st.number_input("Nombre CNT", min_value=1, max_value=20, value=1, step=1)
+            nc_produit= st.text_input("Produit", placeholder="BANANES FRAICHES")
+            nc_statut = st.selectbox("Statut", ["A GENERER", "GENERE"])
+
+        submitted = st.form_submit_button("✅ Enregistrer la commande", type="primary", use_container_width=True)
+
+    if submitted:
+        if not nc_semaine or not nc_booking or not nc_client:
+            st.error("Semaine, booking et client sont obligatoires.")
+        else:
+            new_row = {
+                "num": len(commandes) + 1,
+                "semaine": nc_semaine.strip().upper(),
+                "client":  nc_client,
+                "booking": nc_booking.strip(),
+                "licence": nc_licence.strip(),
+                "navire":  nc_navire.strip(),
+                "voyage":  nc_voyage.strip(),
+                "pol":     nc_pol,
+                "depart":  nc_depart.strip(),
+                "eta":     nc_eta.strip(),
+                "nb_cnt":  int(nc_cnt),
+                "produit": nc_produit.strip(),
+                "statut":  nc_statut,
+            }
+            st.session_state.new_commandes.append(new_row)
+            st.success("Commande "+nc_booking+" enregistree avec succes !")
+            st.balloons()
+
+    st.markdown('</div>', unsafe_allow_html=True)
