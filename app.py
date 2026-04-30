@@ -889,26 +889,20 @@ elif page == "tracking":
     st.markdown('<div class="topbar"><div style="display:flex;align-items:center;gap:14px"><div class="topbar-title">Tracking maritime</div><div class="topbar-badge">🌊 En temps réel</div></div></div>', unsafe_allow_html=True)
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
 
-    # Calculer les stats de tracking
     df_track = commandes[commandes["depart"].notna()].copy()
-    
     en_attente_list, en_mer_list, arrives_list = [], [], []
     active_ships_for_map = []
 
     for _, row in df_track.iterrows():
         s_idx, prog, days_el, eta_calc = get_tracking_info(row["depart"])
-        if s_idx == 0 and (days_el is None or days_el < 0):
+        if days_el is not None and days_el < 0:
             en_attente_list.append(row)
         elif s_idx >= 5:
             arrives_list.append(row)
         else:
             en_mer_list.append(row)
-            active_ships_for_map.append({
-                "progress": prog,
-                "label": str(row["client"])[:10]
-            })
+            active_ships_for_map.append({"progress": prog, "label": str(row["client"])[:10]})
 
-    # KPI
     st.markdown(f"""
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px">
       <div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7">
@@ -925,7 +919,6 @@ elif page == "tracking":
       </div>
     </div>""", unsafe_allow_html=True)
 
-    # Carte SVG de la route
     if active_ships_for_map or en_attente_list or arrives_list:
         map_svg = render_route_map_svg(active_ships_for_map)
         st.markdown(f"""
@@ -938,7 +931,6 @@ elif page == "tracking":
           {map_svg}
         </div>""", unsafe_allow_html=True)
 
-    # ── Filtre rapide ─────────────────────────────────────────────────────────
     filter_track = st.selectbox("",
         ["🌊 Tous", "⏳ En attente", "🚢 En mer", "⚓ Arrivés"],
         label_visibility="collapsed")
@@ -950,21 +942,366 @@ elif page == "tracking":
     elif filter_track == "⚓ Arrivés":
         rows_to_show = arrives_list
     else:
-        rows_to_show = [r for r in en_mer_list] + [r for r in en_attente_list] + [r for r in arrives_list]
+        rows_to_show = en_mer_list + en_attente_list + arrives_list
 
     if not rows_to_show:
         st.info("Aucune commande dans cette catégorie.")
     else:
         for row in rows_to_show:
-            if hasattr(row, 'to_dict'):
-                row = row
             s_idx, prog, days_el, eta_calc = get_tracking_info(row["depart"])
-            current_s = TRANSIT_STAGES[min(s_idx, len(TRANSIT_STAGES)-1)]
+            current_s = TRANSIT_STAGES[min(s_idx, len(TRANSIT_STAGES) - 1)]
 
-            # Couleurs selon statut
             if s_idx >= 5:
-                card_color = "#10B981"; card_bg = "#D1FAE5"; status_txt = "⚓ Arrivé à Ghazaouet"
+                card_color = "#10B981"
+                card_bg    = "#D1FAE5"
+                status_txt = "⚓ Arrivé à Ghazaouet"
             elif s_idx >= 2:
-                card_color = "#3B82F6"; card_bg = "#DBEAFE"; status_txt = f"🚢 {current_s['label']}"
+                card_color = "#3B82F6"
+                card_bg    = "#DBEAFE"
+                status_txt = f"🚢 {current_s['label']}"
             elif s_idx == 1:
-                card_color = "#4361EE"; card_bg = "#EEF2FF"; status_txt =
+                card_color = "#4361EE"
+                card_bg    = "#EEF2FF"
+                status_txt = "⚓ Port de départ"
+            else:
+                card_color = "#F59E0B"
+                card_bg    = "#FEF3C7"
+                status_txt = "⏳ Avant départ"
+
+            days_label = f"J+{days_el}" if days_el is not None and days_el >= 0 else (
+                         f"Départ dans {abs(days_el)}j" if days_el is not None else "—")
+            eta_label  = eta_calc.strftime("%d/%m/%Y") if eta_calc else "—"
+            timeline_html = build_stage_timeline_html(s_idx, prog, str(row["pol"]))
+
+            bkey = str(row["booking"]).replace(" ", "_")
+            is_open = bkey in st.session_state.expanded_track
+
+            st.markdown(f"""
+            <div class="track-card" style="border-top:3px solid {card_color}">
+              <div class="track-header">
+                <div>
+                  <div style="font-size:15px;font-weight:800;color:#111827">{row['client']}</div>
+                  <div style="font-size:11px;color:#9CA3AF;margin-top:3px">
+                    {row['navire']} · {row['booking']} · {row['pol'].split('(')[0].strip()}
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                  <div style="text-align:center">
+                    <div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;margin-bottom:2px">Départ</div>
+                    <div style="font-size:12px;font-weight:700;color:#374151">{row['depart']}</div>
+                  </div>
+                  <div style="text-align:center">
+                    <div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;margin-bottom:2px">ETA Ghaz.</div>
+                    <div style="font-size:12px;font-weight:700;color:#374151">{eta_label}</div>
+                  </div>
+                  <div style="text-align:center">
+                    <div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;margin-bottom:2px">Progression</div>
+                    <div style="font-size:16px;font-weight:900;color:{card_color}">{prog:.0f}%</div>
+                  </div>
+                  <span class="pill" style="background:{card_bg};color:{card_color}">{status_txt}</span>
+                  <span style="font-size:11px;font-weight:700;color:{card_color};background:{card_bg};
+                    padding:4px 10px;border-radius:20px">{days_label}</span>
+                </div>
+              </div>
+              <div style="padding:0 22px 6px">
+                <div class="prog-track" style="height:6px">
+                  <div class="prog-fill" style="background:linear-gradient(90deg,{card_color},{card_color}88);width:{prog}%"></div>
+                </div>
+              </div>
+            </div>""", unsafe_allow_html=True)
+
+            btn_lbl = "🔼 Masquer étapes" if is_open else "🔽 Voir étapes détaillées"
+            if st.button(btn_lbl, key=f"track_toggle_{bkey}", use_container_width=False):
+                if is_open:
+                    st.session_state.expanded_track.discard(bkey)
+                else:
+                    st.session_state.expanded_track.add(bkey)
+                st.rerun()
+
+            if is_open:
+                st.markdown(f"""
+                <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;
+                     padding:18px 22px;margin-bottom:10px;overflow-x:auto">
+                  <div style="font-size:11px;color:#9CA3AF;font-weight:700;
+                       text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">
+                    Étapes — {row['booking']}
+                  </div>
+                  {timeline_html}
+                  <div style="margin-top:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+                    <div style="background:#fff;border-radius:10px;padding:12px;border:1px solid #E5E7EB">
+                      <div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">CNT</div>
+                      <div style="font-size:18px;font-weight:900;color:#4361EE">{row['nb_cnt']}</div>
+                    </div>
+                    <div style="background:#fff;border-radius:10px;padding:12px;border:1px solid #E5E7EB">
+                      <div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">Total kgs</div>
+                      <div style="font-size:14px;font-weight:800;color:#111827">{row['total_kgs']:,.0f}</div>
+                    </div>
+                    <div style="background:#fff;border-radius:10px;padding:12px;border:1px solid #E5E7EB">
+                      <div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">Semaine</div>
+                      <div style="font-size:14px;font-weight:800;color:#111827">{row['semaine']}</div>
+                    </div>
+                    <div style="background:#fff;border-radius:10px;padding:12px;border:1px solid #E5E7EB">
+                      <div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">Produit</div>
+                      <div style="font-size:14px;font-weight:800;color:#111827">{row['produit']}</div>
+                    </div>
+                  </div>
+                </div>""", unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# DOCUMENTS
+# ══════════════════════════════════════════════════════════════════════════════
+elif page == "documents":
+    st.markdown('<div class="topbar"><div class="topbar-title">Documents</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
+
+    all_b  = commandes["booking"].dropna().unique()
+    tdocs  = sum(len(list_docs(b)) for b in all_b)
+    c_avec = sum(1 for b in all_b if len(list_docs(b)) > 0)
+    c_sans = len(all_b) - c_avec
+
+    st.markdown(f"""
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:26px">
+      <div class="kpi-card" style="--card-color:#3B82F6;--card-bg:#DBEAFE"><div class="icon-wrap">📁</div><div class="kpi-lbl">Total documents</div><div class="kpi-val" style="color:#2563EB">{tdocs}</div></div>
+      <div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5"><div class="icon-wrap">✅</div><div class="kpi-lbl">Documentées</div><div class="kpi-val" style="color:#059669">{c_avec}</div><div class="kpi-sub">avec docs</div></div>
+      <div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7"><div class="icon-wrap">⚠️</div><div class="kpi-lbl">Sans documents</div><div class="kpi-val" style="color:#D97706">{c_sans}</div><div class="kpi-sub">à compléter</div></div>
+    </div>""", unsafe_allow_html=True)
+
+    search = st.text_input("", placeholder="🔍 Rechercher par booking ou client...", label_visibility="collapsed")
+
+    for _, row in commandes.iterrows():
+        if search and search.lower() not in str(row["booking"]).lower() and search.lower() not in str(row["client"]).lower():
+            continue
+        docs = list_docs(row["booking"])
+        n    = len(docs)
+        clr  = "#10B981" if n >= 3 else ("#F59E0B" if n >= 1 else "#EF4444")
+        lbl  = f"✅ {n} doc{'s' if n>1 else ''}" if n else "⚠️ Aucun"
+        st.markdown(f"""
+        <div class="cmd-row" style="border-left:3px solid {clr}">
+          <div style="min-width:220px"><div style="font-size:13px;font-weight:700;color:#111827">{row['client']}</div>
+          <div style="font-size:11px;color:#9CA3AF">{row['booking']} · {row['semaine']}</div></div>
+          <span style="color:{clr};font-weight:700;font-size:12px">{lbl}</span>
+          <div style="flex:1;display:flex;flex-wrap:wrap;gap:3px">
+            {"".join([f'<span class="doc-chip">📄 {d}</span>' for d in docs]) if docs else '<span style="color:#9CA3AF;font-size:11px;font-style:italic">Aucun fichier</span>'}
+          </div>
+        </div>""", unsafe_allow_html=True)
+
+        with st.expander(f"📤 Upload · {row['booking']}", expanded=False):
+            u1,u2 = st.columns([3,1])
+            with u1:
+                upf = st.file_uploader("", type=["pdf","xlsx","xls","docx","jpg","png"],
+                                       key=f"gup_{row['booking']}", label_visibility="collapsed")
+            with u2:
+                dtype = st.selectbox("", DOC_TYPES, key=f"gdtype_{row['booking']}", label_visibility="collapsed")
+            if upf and st.button("✅ Uploader", key=f"gupconf_{row['booking']}", type="primary"):
+                upf.name = f"{dtype.replace(' ','_')}_{upf.name}"
+                save_doc(row["booking"], upf)
+                st.success("✅ Uploadé !")
+                st.rerun()
+            if docs:
+                for doc_name in docs:
+                    dp = os.path.join(docs_path(row["booking"]), doc_name)
+                    c1, c2 = st.columns([4, 1])
+                    with c1: st.markdown(f"`{doc_name}`")
+                    with c2:
+                        with open(dp, "rb") as f:
+                            st.download_button("⬇️", f.read(), file_name=doc_name,
+                                key=f"gdl_{row['booking']}_{doc_name}", use_container_width=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# LICENCES
+# ══════════════════════════════════════════════════════════════════════════════
+elif page == "licences":
+    st.markdown('<div class="topbar"><div class="topbar-title">Licences DPVCT</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
+
+    for _, row in clients.iterrows():
+        pr = max(0, min(100, row["solde_reel"]/row["poids_total"]*100)) if row["poids_total"] > 0 else 0
+        pp = max(0, min(100, row["solde_prev"]/row["poids_total"]*100)) if row["poids_total"] > 0 else 0
+        pc = "#10B981" if pr > 30 else ("#F59E0B" if pr > 10 else "#EF4444")
+
+        if   row["solde_reel"] < 0:       badge = '<span class="pill pill-red">❌ DÉPASSEMENT</span>'
+        elif row["solde_reel"] < 19591.2: badge = '<span class="pill pill-red">🔴 CRITIQUE</span>'
+        elif row["solde_reel"] < 58773.6: badge = '<span class="pill pill-orange">⚠️ ATTENTION</span>'
+        else:                              badge = '<span class="pill pill-green">✅ OK</span>'
+
+        pdf_path   = licence_pdf_path(row["licence"])
+        pdf_exists = os.path.exists(pdf_path)
+
+        st.markdown(f"""
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+            <div><div style="font-size:16px;font-weight:800;color:#111827">{row['nom']}</div>
+            <div style="font-size:12px;color:#9CA3AF;margin-top:3px">🔑 {row['licence']} · {row['pays']}</div></div>
+            {badge}
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+            <div style="background:#F9FAFB;border-radius:10px;padding:14px">
+              <div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">Poids total</div>
+              <div style="font-size:19px;font-weight:800;color:#111827">{row['poids_total']:,.0f} <span style="font-size:12px;color:#9CA3AF">kgs</span></div>
+            </div>
+            <div style="background:#EEF2FF;border-radius:10px;padding:14px">
+              <div style="font-size:9px;color:#4361EE;text-transform:uppercase;font-weight:700;margin-bottom:4px">Solde réel</div>
+              <div style="font-size:19px;font-weight:800;color:#4361EE">{row['solde_reel']:,.0f} <span style="font-size:12px">kgs</span></div>
+            </div>
+            <div style="background:#FEF3C7;border-radius:10px;padding:14px">
+              <div style="font-size:9px;color:#D97706;text-transform:uppercase;font-weight:700;margin-bottom:4px">Solde prévi.</div>
+              <div style="font-size:19px;font-weight:800;color:#D97706">{row['solde_prev']:,.0f} <span style="font-size:12px">kgs</span></div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">
+            <div style="background:#EEF2FF;border-radius:10px;padding:12px;text-align:center">
+              <div style="font-size:9px;color:#4361EE;font-weight:700;text-transform:uppercase;margin-bottom:4px">🇨🇷 CR Réel</div>
+              <div style="font-size:20px;font-weight:900;color:#4361EE">{row['cnt_reel_cr']:.1f}</div>
+              <div style="font-size:9px;color:#9CA3AF">CNT</div>
+            </div>
+            <div style="background:#FEF3C7;border-radius:10px;padding:12px;text-align:center">
+              <div style="font-size:9px;color:#D97706;font-weight:700;text-transform:uppercase;margin-bottom:4px">🇨🇷 CR Prév.</div>
+              <div style="font-size:20px;font-weight:900;color:#D97706">{row['cnt_prev_cr']:.1f}</div>
+              <div style="font-size:9px;color:#9CA3AF">CNT</div>
+            </div>
+            <div style="background:#EEF2FF;border-radius:10px;padding:12px;text-align:center">
+              <div style="font-size:9px;color:#4361EE;font-weight:700;text-transform:uppercase;margin-bottom:4px">🇨🇴 COL Réel</div>
+              <div style="font-size:20px;font-weight:900;color:#4361EE">{row['cnt_reel_col']:.1f}</div>
+              <div style="font-size:9px;color:#9CA3AF">CNT</div>
+            </div>
+            <div style="background:#FEF3C7;border-radius:10px;padding:12px;text-align:center">
+              <div style="font-size:9px;color:#D97706;font-weight:700;text-transform:uppercase;margin-bottom:4px">🇨🇴 COL Prév.</div>
+              <div style="font-size:20px;font-weight:900;color:#D97706">{row['cnt_prev_col']:.1f}</div>
+              <div style="font-size:9px;color:#9CA3AF">CNT</div>
+            </div>
+          </div>
+          <div style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span style="font-size:11px;color:#6B7280">Solde réel</span>
+              <span style="font-size:11px;font-weight:700;color:{pc}">{pr:.0f}%</span>
+            </div>
+            <div class="prog-track"><div class="prog-fill" style="background:{pc};width:{pr}%"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span style="font-size:11px;color:#6B7280">Solde prévisionnel</span>
+              <span style="font-size:11px;font-weight:700;color:#D97706">{pp:.0f}%</span>
+            </div>
+            <div class="prog-track"><div class="prog-fill" style="background:#F59E0B;width:{pp}%"></div></div>
+          </div>
+        </div>""", unsafe_allow_html=True)
+
+        if pdf_exists:
+            with open(pdf_path, "rb") as f:
+                pdf_data = f.read()
+            c, _ = st.columns([2, 5])
+            with c:
+                st.download_button(f"📄 {row['licence']}", pdf_data,
+                    file_name=licence_to_filename(row["licence"]),
+                    mime="application/pdf", key=f"pdf_{row['licence']}", use_container_width=True)
+        else:
+            st.caption(f"⚠️ PDF manquant → `{pdf_path}`")
+        st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PLANNING CLIENT
+# ══════════════════════════════════════════════════════════════════════════════
+elif page == "planning":
+    st.markdown('<div class="topbar"><div class="topbar-title">Planning client</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
+
+    client_sel = st.selectbox("", sorted(commandes["client"].dropna().unique().tolist()),
+                               label_visibility="collapsed")
+    if client_sel:
+        df_c = commandes[commandes["client"] == client_sel].copy()
+
+        st.markdown(f"""
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px">
+          <div class="kpi-card" style="--card-color:#4361EE;--card-bg:#EEF2FF"><div class="kpi-lbl">Total CNT</div><div class="kpi-val" style="color:#4361EE">{int(df_c["nb_cnt"].sum())}</div></div>
+          <div class="kpi-card" style="--card-color:#8B5CF6;--card-bg:#EDE9FE"><div class="kpi-lbl">Total kgs</div><div class="kpi-val" style="color:#7C3AED;font-size:1.5rem">{df_c["total_kgs"].sum():,.0f}</div></div>
+          <div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7"><div class="kpi-lbl">⏳ En cours</div><div class="kpi-val" style="color:#D97706">{len(df_c[df_c["statut"].str.contains("À GÉNÉRER", na=False)])}</div></div>
+          <div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5"><div class="kpi-lbl">✅ Confirmées</div><div class="kpi-val" style="color:#059669">{len(df_c[df_c["statut"].str.contains("GÉNÉRÉ", na=False)])}</div></div>
+        </div>""", unsafe_allow_html=True)
+
+        for _, row in df_c.sort_values("semaine", ascending=False).iterrows():
+            pc = "pill-green" if "GÉNÉRÉ" in str(row["statut"]) else "pill-orange"
+            nd = len(list_docs(row["booking"]))
+            st.markdown(f"""
+            <div class="cmd-row">
+              <div><div style="font-size:13px;font-weight:700;color:#111827">{row['booking']}</div>
+              <div style="font-size:11px;color:#9CA3AF">{row['semaine']} · {row['licence']}</div></div>
+              <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">POL</div><div style="font-weight:700;color:#111827">{row['pol']}</div></div>
+              <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">CNT</div><div style="font-weight:900;color:#4361EE;font-size:20px">{row['nb_cnt']}</div></div>
+              <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">Départ</div><div style="font-weight:500;color:#374151;font-size:12px">{row['depart']}</div></div>
+              <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">ETA</div><div style="font-weight:500;color:#374151;font-size:12px">{row['eta']}</div></div>
+              <span class="pill pill-blue">📁 {nd}</span>
+              <span class="pill {pc}">{row['statut']}</span>
+            </div>""", unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# NOUVELLE COMMANDE
+# ══════════════════════════════════════════════════════════════════════════════
+elif page == "new_cmd":
+    if st.session_state.role != "admin":
+        st.error("⛔ Accès réservé aux administrateurs")
+        st.stop()
+
+    st.markdown('<div class="topbar"><div class="topbar-title">Nouvelle commande</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
+
+    with st.form("form_cmd", clear_on_submit=True):
+        f1, f2 = st.columns(2)
+        with f1:
+            sem        = st.text_input("Semaine *", placeholder="S-26")
+            client_sel = st.selectbox("Client *", sorted(clients["nom"].unique().tolist()))
+            booking    = st.text_input("Booking *", placeholder="LHV4005547")
+            lic_dispo  = clients[clients["nom"] == client_sel]["licence"].tolist()
+            lic_sel    = st.selectbox("Licence *", lic_dispo)
+        with f2:
+            navire  = st.text_input("Navire *", placeholder="CMA CGM EXCELLENCE")
+            voyage  = st.text_input("Voyage *", placeholder="0DVOPN1MA")
+            pol_sel = st.selectbox("POL *", list(CRTNS.keys()))
+            nb_cnt  = st.number_input("CNT *", min_value=1, max_value=100, value=1)
+
+        f3, f4, f5 = st.columns(3)
+        with f3: depart  = st.date_input("Départ *", value=date.today())
+        with f4: eta     = st.date_input("ETA *",    value=date.today())
+        with f5: produit = st.selectbox("Produit *", ["BANANE","ANANAS","MANGUE","AUTRE"])
+
+        crtns_cnt   = CRTNS[pol_sel]
+        total_kgs   = round(nb_cnt * crtns_cnt * POIDS_UNIT, 2)
+        lic_row     = clients[(clients["nom"] == client_sel) & (clients["licence"] == lic_sel)]
+        solde_avant = float(lic_row["solde_reel"].values[0]) if len(lic_row) > 0 else 0
+        solde_apres = round(solde_avant - total_kgs, 2)
+        cnt_a_cr    = round(solde_apres / KGS_PER_CNT["MOIN(COSTA RICA)"], 2)
+        cnt_a_col   = round(solde_apres / KGS_PER_CNT["TURBO(COLOMBIA)"], 2)
+
+        st.markdown("---")
+        p1, p2, p3, p4, p5, p6 = st.columns(6)
+        p1.metric("Cartons/CNT",     f"{crtns_cnt:,}")
+        p2.metric("Total cartons",   f"{nb_cnt * crtns_cnt:,}")
+        p3.metric("Total kgs",       f"{total_kgs:,.0f}")
+        p4.metric("Solde après",     f"{solde_apres:,.0f}", delta=f"{-total_kgs:,.0f}", delta_color="inverse")
+        p5.metric("CNT restants 🇨🇷", f"{cnt_a_cr:.1f}")
+        p6.metric("CNT restants 🇨🇴", f"{cnt_a_col:.1f}")
+
+        if   solde_apres < 0:       st.markdown('<div class="alert alert-red">⚠️ Solde insuffisant</div>', unsafe_allow_html=True)
+        elif solde_apres < 19591.2: st.markdown('<div class="alert alert-warn">🟠 Solde critique</div>', unsafe_allow_html=True)
+        else:                        st.markdown('<div class="alert alert-ok">✅ Solde suffisant</div>', unsafe_allow_html=True)
+
+        if st.form_submit_button("✅ Enregistrer", use_container_width=True,
+                                 type="primary", disabled=(solde_apres < 0)):
+            st.session_state.new_commandes.append({
+                "num": "", "semaine": sem, "client": client_sel, "booking": booking,
+                "licence": lic_sel, "navire": navire, "voyage": voyage, "pol": pol_sel,
+                "depart": depart.strftime("%d/%m/%Y"), "eta": eta.strftime("%d/%m/%Y"),
+                "nb_cnt": nb_cnt, "produit": produit, "statut": "⏳ À GÉNÉRER"
+            })
+            st.cache_data.clear()
+            st.success(f"✅ Commande {booking} enregistrée !")
+            st.rerun()
+
+    st.markdown('</div>', unsafe_allow_html=True)
