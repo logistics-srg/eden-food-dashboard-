@@ -5,13 +5,13 @@ import plotly.express as px
 import base64
 import os
 import streamlit.components.v1 as components
+from openpyxl import Workbook
+from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
+from io import BytesIO
 
 st.set_page_config(page_title="EDEN FOOD", page_icon="🍌",
                    layout="wide", initial_sidebar_state="expanded")
 
-# ══════════════════════════════════════════════════════════════════════════════
-# CSS GLOBAL
-# ══════════════════════════════════════════════════════════════════════════════
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
@@ -31,10 +31,8 @@ header[data-testid="stHeader"],#MainMenu,.stAppDeployButton,footer{display:none!
   --transition:all 0.2s cubic-bezier(0.4,0,0.2,1);
 }
 section[data-testid="stSidebar"]{
-  background:#111111!important;
-  border-right:1px solid rgba(255,255,255,0.06)!important;
-  box-shadow:none!important;
-  min-width:220px!important;max-width:220px!important;
+  background:#111111!important;border-right:1px solid rgba(255,255,255,0.06)!important;
+  box-shadow:none!important;min-width:220px!important;max-width:220px!important;
   transform:none!important;visibility:visible!important;display:block!important;
 }
 section[data-testid="stSidebarCollapsedControl"]{display:none!important;width:0!important}
@@ -42,16 +40,13 @@ section[data-testid="stSidebarCollapsedControl"]{display:none!important;width:0!
 section[data-testid="stSidebar"] button[data-testid="baseButton-headerNoPadding"]{display:none!important}
 section[data-testid="stSidebar"] *{font-family:'Inter',sans-serif!important}
 section[data-testid="stSidebar"] .stButton>button{
-  background:transparent!important;border:none!important;
-  color:rgba(255,255,255,0.5)!important;
-  text-align:left!important;width:100%!important;
-  padding:9px 14px!important;border-radius:8px!important;
-  font-size:13px!important;font-weight:500!important;
+  background:transparent!important;border:none!important;color:rgba(255,255,255,0.5)!important;
+  text-align:left!important;width:100%!important;padding:9px 14px!important;
+  border-radius:8px!important;font-size:13px!important;font-weight:500!important;
   transition:all 0.18s ease!important;margin-bottom:2px!important;
 }
 section[data-testid="stSidebar"] .stButton>button:hover{
-  background:rgba(255,255,255,0.07)!important;
-  color:#fff!important;
+  background:rgba(255,255,255,0.07)!important;color:#fff!important;
 }
 .main-wrap{padding:28px 36px;max-width:1500px;margin:0 auto}
 .kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:28px}
@@ -137,7 +132,6 @@ USERS = {
     "srg":      {"password": "SRG@Trading1",    "role": "user"},
     "edenfood": {"password": "Edenfood@2026",   "role": "user"},
 }
-
 for k, v in {
     "authenticated": False, "username": "", "role": "",
     "page": "dashboard", "new_commandes": [],
@@ -186,11 +180,13 @@ def list_docs(booking):
 
 def save_doc(booking, uploaded_file):
     fp = os.path.join(docs_path(booking), uploaded_file.name)
-    with open(fp,"wb") as f: f.write(uploaded_file.getbuffer())
+    with open(fp,"wb") as f:
+        f.write(uploaded_file.getbuffer())
 
 def delete_doc(booking, filename):
     fp = os.path.join(docs_path(booking), filename)
-    if os.path.exists(fp): os.remove(fp)
+    if os.path.exists(fp):
+        os.remove(fp)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # ROUTING MARITIME
@@ -237,7 +233,8 @@ def parse_depart(depart_str):
 
 def get_tracking_info(depart_str, pol="MOIN(COSTA RICA)"):
     dep = parse_depart(depart_str)
-    if not dep: return 0, 0.0, None, None
+    if not dep:
+        return 0, 0.0, None, None
     routing    = get_routing(pol)
     total_days = routing["total_days"]
     stages     = routing["stages"]
@@ -248,9 +245,12 @@ def get_tracking_info(depart_str, pol="MOIN(COSTA RICA)"):
     for i, s in enumerate(stages):
         if days_el >= s["days"]:
             stage_idx = i
-    if days_el < 0:              progress = 0.0
-    elif days_el >= total_days:  progress = 100.0
-    else:                        progress = round(min(100.0, max(0.0, days_el/total_days*100)), 1)
+    if days_el < 0:
+        progress = 0.0
+    elif days_el >= total_days:
+        progress = 100.0
+    else:
+        progress = round(min(100.0, max(0.0, days_el/total_days*100)), 1)
     return stage_idx, progress, days_el, eta
 
 def build_stage_timeline_html(stage_idx, progress, pol):
@@ -342,24 +342,244 @@ def render_route_map_svg(active_ships):
         +'<circle cx="'+str(wp0[0])+'" cy="'+str(wp0[1])+'" r="5" fill="#F59E0B" filter="url(#ptg)"/>'
         +'<circle cx="'+str(wp4[0])+'" cy="'+str(wp4[1])+'" r="5" fill="#8B5CF6" filter="url(#ptg)"/>'
         +'<circle cx="'+str(wp6[0])+'" cy="'+str(wp6[1])+'" r="6" fill="#10B981" filter="url(#ptg)"/>'
-        +'<text x="'+str(wp0[0]-4)+'" y="'+str(wp0[1]+16)+'" font-size="8" fill="#F59E0B" font-family="Arial,sans-serif" font-weight="700">DEPART</text>'
-        +'<text x="'+str(wp6[0]-30)+'" y="'+str(wp6[1]+16)+'" font-size="8" fill="#10B981" font-family="Arial,sans-serif" font-weight="700">GHAZAOUET</text>'
-        +'<text x="'+str(wp4[0]-20)+'" y="'+str(wp4[1]-12)+'" font-size="7.5" fill="rgba(255,200,80,0.6)" font-family="Arial,sans-serif">ALGECIRAS</text>'
-        +ships
-        +'</svg>'
+        +'<text x="'+str(wp0[0]-4)+'" y="'+str(wp0[1]+16)+'" font-size="8" fill="#F59E0B" '
+        +'font-family="Arial,sans-serif" font-weight="700">DEPART</text>'
+        +'<text x="'+str(wp6[0]-30)+'" y="'+str(wp6[1]+16)+'" font-size="8" fill="#10B981" '
+        +'font-family="Arial,sans-serif" font-weight="700">GHAZAOUET</text>'
+        +'<text x="'+str(wp4[0]-20)+'" y="'+str(wp4[1]-12)+'" font-size="7.5" '
+        +'fill="rgba(255,200,80,0.6)" font-family="Arial,sans-serif">ALGECIRAS</text>'
+        +ships+'</svg>'
     )
     return svg
 
 # ══════════════════════════════════════════════════════════════════════════════
-# LOGIN PAGE
+# GENERATION CONFIRMATION COMMANDE EXCEL
+# ══════════════════════════════════════════════════════════════════════════════
+def generate_conf_commande(data):
+    from openpyxl.utils import get_column_letter
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "CONF COMMANDE"
+
+    col_widths = [18,14,18,14,4,22,4,14,4,14,4,14]
+    for i, w in enumerate(col_widths, 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+
+    row_heights = {1:8,2:8,3:32,4:10,5:18,6:20,7:18,8:40,9:10,10:18,
+                   11:22,12:10,13:18,14:22,15:18,16:22,17:22,18:10,
+                   19:20,20:18,21:22,22:10,23:32,24:22,25:10}
+    for r, h in row_heights.items():
+        ws.row_dimensions[r].height = h
+
+    BLUE_DARK  = "1A2B5C"
+    BLUE_MED   = "2E4699"
+    BLUE_LIGHT = "D6E0F5"
+    GOLD       = "C9A84C"
+    WHITE      = "FFFFFF"
+    GREY_LIGHT = "F5F7FC"
+    GREEN_OK   = "D1FAE5"
+    ORANGE_W   = "FEF3C7"
+    RED_CRIT   = "FEE2E2"
+
+    thin  = Side(style="thin",   color="B0B8D0")
+    med   = Side(style="medium", color=BLUE_MED)
+    b_all = Border(left=thin, right=thin, top=thin, bottom=thin)
+    b_med = Border(left=med,  right=med,  top=med,  bottom=med)
+
+    def st_cell(cell, bg=None, fg="000000", bold=False, size=10,
+                align="left", valign="center", wrap=False, brd=None, italic=False):
+        if bg:
+            cell.fill = PatternFill("solid", fgColor=bg)
+        cell.font      = Font(color=fg, bold=bold, size=size, name="Calibri", italic=italic)
+        cell.alignment = Alignment(horizontal=align, vertical=valign, wrap_text=wrap)
+        if brd:
+            cell.border = brd
+
+    def mg(r1,c1,r2,c2):
+        ws.merge_cells(start_row=r1, start_column=c1, end_row=r2, end_column=c2)
+
+    # HEADER
+    for c in range(1,13):
+        ws.cell(row=3, column=c).fill = PatternFill("solid", fgColor=BLUE_DARK)
+    mg(3,1,3,5);  ws["A3"] = "CONFIRMATION DE COMMANDE"
+    st_cell(ws["A3"], bg=BLUE_DARK, fg=WHITE, bold=True, size=14,
+            align="center", valign="center")
+    mg(3,6,3,12); ws["F3"] = "EDEN FOOD  |  Logistics Department"
+    st_cell(ws["F3"], bg=BLUE_DARK, fg=GOLD, bold=True, size=11,
+            align="center", valign="center")
+
+    # REFERENCE + DATE
+    mg(5,1,5,2); ws["A5"] = "RÉFÉRENCE"
+    st_cell(ws["A5"], bg=BLUE_LIGHT, fg=BLUE_DARK, bold=True, size=9,
+            align="center", brd=b_all)
+    ws["C5"] = "SEMAINE"
+    st_cell(ws["C5"], bg=BLUE_LIGHT, fg=BLUE_DARK, bold=True, size=9,
+            align="center", brd=b_all)
+    mg(5,8,5,9); ws["H5"] = "DATE D'EMISSION"
+    st_cell(ws["H5"], bg=BLUE_LIGHT, fg=BLUE_DARK, bold=True, size=9,
+            align="center", brd=b_all)
+
+    mg(6,1,6,2); ws["A6"] = data["booking"]
+    st_cell(ws["A6"], fg=BLUE_DARK, bold=True, size=12, align="center", brd=b_all)
+    ws["C6"] = data["semaine"]
+    st_cell(ws["C6"], fg=BLUE_MED, bold=True, size=11, align="center", brd=b_all)
+    mg(6,8,6,9); ws["H6"] = date.today().strftime("%d/%m/%Y")
+    st_cell(ws["H6"], fg="374151", size=10, align="center", brd=b_all)
+
+    # DESTINATAIRE
+    mg(7,1,7,5); ws["A7"] = "DESTINATAIRE"
+    st_cell(ws["A7"], bg=BLUE_MED, fg=WHITE, bold=True, size=9,
+            align="left", brd=b_all)
+    mg(7,8,7,12); ws["H7"] = "EDEN FOOD"
+    st_cell(ws["H7"], bg=BLUE_MED, fg=WHITE, bold=True, size=9,
+            align="left", brd=b_all)
+
+    adresse_full = (data["client"]+"\n"
+                    +data.get("adresse1","")+"\n"
+                    +data.get("adresse2","")+"\n"
+                    +data.get("ville","")+" "+data.get("pays",""))
+    mg(8,1,9,5); ws["A8"] = adresse_full.strip()
+    st_cell(ws["A8"], bg=GREY_LIGHT, fg="111827", size=9,
+            align="left", valign="top", wrap=True, brd=b_all)
+
+    eden_addr = ("Lake Central Tower\nBusiness Bay - Office 708\nDubai, UAE\n"
+                 "logistics@edenfoodtrading.com\nContact : Yann Gabguidi")
+    mg(8,8,9,12); ws["H8"] = eden_addr
+    st_cell(ws["H8"], bg=GREY_LIGHT, fg="111827", size=9,
+            align="left", valign="top", wrap=True, brd=b_all)
+
+    # LICENCE
+    mg(10,1,10,2); ws["A10"] = "LICENCE N"
+    st_cell(ws["A10"], bg=BLUE_LIGHT, fg=BLUE_DARK, bold=True, size=9,
+            align="center", brd=b_all)
+    mg(10,3,10,5); ws["C10"] = "POIDS INITIAL LICENCE (kgs)"
+    st_cell(ws["C10"], bg=BLUE_LIGHT, fg=BLUE_DARK, bold=True, size=9,
+            align="center", brd=b_all)
+    mg(11,1,11,2); ws["A11"] = data["licence"]
+    st_cell(ws["A11"], fg=BLUE_DARK, bold=True, size=11, align="center", brd=b_all)
+    mg(11,3,11,5)
+    ws["C11"] = float(str(data["poids_total_lic"]).replace(",","").replace(" ",""))
+    ws["C11"].number_format = '#,##0.00'
+    st_cell(ws["C11"], fg="374151", size=10, align="center", brd=b_all)
+
+    # NAVIRE
+    nav_labels = ["NAVIRE","N VOYAGE","POL","DATE DEPART","ETA ESTIMEE"]
+    nav_cols   = [1,3,6,9,11]
+    nav_merges = [(13,1,13,2),(13,3,13,4),(13,6,13,7),(13,9,13,9),(13,11,13,12)]
+    for m in nav_merges: mg(*m)
+    for lbl, c in zip(nav_labels, nav_cols):
+        ws.cell(row=13, column=c, value=lbl)
+        st_cell(ws.cell(row=13, column=c),
+                bg=BLUE_MED, fg=WHITE, bold=True, size=9,
+                align="center", brd=b_all)
+
+    nav_vals = [data["navire"],data["voyage"],data["pol"],data["depart"],data["eta"]]
+    for v, c, m in zip(nav_vals, nav_cols, nav_merges):
+        ws.cell(row=14, column=c, value=v)
+        st_cell(ws.cell(row=14, column=c),
+                fg="111827", bold=(c==1), size=10, align="center", brd=b_all)
+        mg(14, m[1], 14, m[3])
+
+    # DETAILS CNT
+    nb_cnt  = int(data["nb_cnt"])
+    pol_key = str(data["pol"]).upper()
+    crtns   = 1080 if ("TURBO" in pol_key or "COLOMBIA" in pol_key) else 1200
+    tot_crt = nb_cnt * crtns
+    pds_u   = 18.14
+    tot_kgs = round(tot_crt * pds_u, 2)
+
+    det_labels = ["NBR CNT","CRTNS/CNT","TOTAL CARTONS","POIDS UNIT.","TOTAL NET (kgs)","PRODUIT"]
+    det_cols   = [1,2,4,6,8,11]
+    det_merges = [(15,1,15,1),(15,2,15,2),(15,4,15,5),(15,6,15,7),(15,8,15,10),(15,11,15,12)]
+    for m in det_merges: mg(*m)
+    for lbl, c in zip(det_labels, det_cols):
+        ws.cell(row=15, column=c, value=lbl)
+        st_cell(ws.cell(row=15, column=c),
+                bg=BLUE_LIGHT, fg=BLUE_DARK, bold=True, size=8,
+                align="center", brd=b_all)
+
+    det_vals = [nb_cnt, crtns, tot_crt, pds_u, tot_kgs, data.get("produit","BANANES FRAICHES")]
+    det_mval = [(16,1,16,1),(16,2,16,2),(16,4,16,5),(16,6,16,7),(16,8,16,10),(16,11,16,12)]
+    for m in det_mval: mg(*m)
+    for v, c, m in zip(det_vals, det_cols, det_mval):
+        cell = ws.cell(row=16, column=c, value=v)
+        st_cell(cell, fg="111827", bold=(c in [1,8]),
+                size=11 if c in [1,8] else 10,
+                align="center", brd=b_all)
+        if c in [6,8]:
+            cell.number_format = '#,##0.00'
+
+    mg(17,1,17,12)
+    ws["A17"] = ("TOTAL :   "+str(nb_cnt)+" CONTENEUR(S)   |   "
+                 +"{:,}".format(tot_crt)+" CARTONS   |   "
+                 +"{:,.2f}".format(tot_kgs)+" kgs")
+    st_cell(ws["A17"], bg=BLUE_DARK, fg=GOLD, bold=True, size=11,
+            align="center", brd=b_all)
+
+    # SUIVI LICENCE
+    mg(19,1,19,12); ws["A19"] = "SUIVI LICENCE — Poids en kgs"
+    st_cell(ws["A19"], bg=BLUE_MED, fg=WHITE, bold=True, size=10,
+            align="center", brd=b_all)
+
+    slv_labels = ["SOLDE AVANT (kgs)","POIDS COMMANDE (kgs)",
+                  "SOLDE APRES (kgs)","CARTONS RESTANTS","STATUT LICENCE"]
+    slv_cols   = [1,3,5,7,10]
+    slv_mh     = [(20,1,20,2),(20,3,20,4),(20,5,20,6),(20,7,20,9),(20,10,20,12)]
+    for m in slv_mh: mg(*m)
+    for lbl, c in zip(slv_labels, slv_cols):
+        ws.cell(row=20, column=c, value=lbl)
+        st_cell(ws.cell(row=20, column=c),
+                bg=BLUE_LIGHT, fg=BLUE_DARK, bold=True, size=8,
+                align="center", brd=b_all)
+
+    solde_avant = float(str(data.get("solde_avant",0)).replace(",","").replace(" ",""))
+    solde_apres = round(solde_avant - tot_kgs, 2)
+    crtns_rest  = int(solde_apres / pds_u) if solde_apres > 0 else 0
+
+    if   solde_apres >= 58773.6: statut_txt = "OK"; bg_st = GREEN_OK
+    elif solde_apres >= 19591.2: statut_txt = "ATTENTION"; bg_st = ORANGE_W
+    elif solde_apres >= 0:       statut_txt = "RESTE FAIBLE"; bg_st = RED_CRIT
+    else:                         statut_txt = "DEPASSEMENT"; bg_st = RED_CRIT
+
+    slv_vals = [solde_avant, tot_kgs, solde_apres, crtns_rest, statut_txt]
+    slv_mv   = [(21,1,21,2),(21,3,21,4),(21,5,21,6),(21,7,21,9),(21,10,21,12)]
+    for m in slv_mv: mg(*m)
+    for v, c, m in zip(slv_vals, slv_cols, slv_mv):
+        cell = ws.cell(row=21, column=c, value=v)
+        bg   = bg_st if c == 10 else None
+        st_cell(cell, bg=bg, fg="111827", bold=(c in [5,10]),
+                size=11 if c in [1,3,5,7] else 10,
+                align="center", brd=b_all)
+        if c in [1,3,5]:
+            cell.number_format = '#,##0.00'
+
+    # MENTIONS LEGALES
+    mg(23,1,23,12)
+    ws["A23"] = ("Cette confirmation est etablie sous reserve de disponibilite des emplacements "
+                 "navire. Les quantites sont soumises a la licence phytosanitaire en cours de "
+                 "validite (Loi n87-17 - Decret n93-286). EDEN FOOD ne pourra etre tenu "
+                 "responsable de toute modification operee par la compagnie maritime.")
+    st_cell(ws["A23"], fg="6B7280", size=8,
+            align="justify", valign="top", wrap=True, italic=True)
+
+    mg(24,1,24,12)
+    ws["A24"] = "EDEN FOOD — Logistics Department  |  logistics@edenfoodtrading.com  |  +971 56 851 1818"
+    st_cell(ws["A24"], bg=BLUE_DARK, fg=GOLD, bold=True, size=10,
+            align="center", brd=b_all)
+
+    buf = BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf.getvalue()
+
+# ══════════════════════════════════════════════════════════════════════════════
+# LOGIN
 # ══════════════════════════════════════════════════════════════════════════════
 def login_page():
     logo_src  = img_to_b64("logo_eden_food.jpg") or img_to_b64("logo_eden_food.png")
-    logo_html = (
-        '<img src="'+logo_src+'" style="height:36px;border-radius:8px;display:block">'
-        if logo_src else
-        '<span style="font-size:22px;font-weight:900;color:#fff">EF</span>'
-    )
+    logo_html = ('<img src="'+logo_src+'" style="height:36px;border-radius:8px;display:block">'
+                 if logo_src else
+                 '<span style="font-size:22px;font-weight:900;color:#fff">EF</span>')
     st.markdown("""
     <style>
     section[data-testid="stSidebar"]{display:none!important}
@@ -376,28 +596,19 @@ def login_page():
       background:rgba(255,255,255,0.05)!important;border:1px solid rgba(255,255,255,0.1)!important;
       color:#fff!important;border-radius:10px!important;height:42px!important;font-size:13px!important;
     }
-    div[data-testid="stForm"] input:focus{
-      background:rgba(255,255,255,0.09)!important;border-color:rgba(255,255,255,0.28)!important;
-    }
     div[data-testid="stForm"] input::placeholder{color:rgba(255,255,255,0.28)!important}
     div[data-testid="stForm"] label{color:rgba(255,255,255,0)!important;height:0!important;margin:0!important}
     div[data-testid="stForm"] .stTextInput{margin-bottom:10px}
     div[data-testid="stForm"] .stButton>button{
       background:#fff!important;color:#000!important;font-weight:700!important;
-      border:none!important;border-radius:10px!important;height:44px!important;
-      font-size:14px!important;margin-top:6px!important;
-    }
-    div[data-testid="stForm"] .stButton>button:hover{
-      transform:scale(1.02)!important;box-shadow:0 0 40px rgba(255,255,255,0.18)!important;
+      border:none!important;border-radius:10px!important;height:44px!important;font-size:14px!important;margin-top:6px!important;
     }
     </style>
     """, unsafe_allow_html=True)
-
     components.html(
         '<!DOCTYPE html><html><head>'
-        '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">'
-        '<style>'
-        '*{margin:0;padding:0;box-sizing:border-box;font-family:\'Inter\',sans-serif}'
+        '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">'
+        '<style>*{margin:0;padding:0;box-sizing:border-box;font-family:Inter,sans-serif}'
         'html,body{height:100%;background:#000;overflow:hidden}'
         '.bg{position:fixed;inset:0;background:linear-gradient(180deg,rgba(168,85,247,.42) 0%,rgba(109,40,217,.48) 38%,#000 100%)}'
         '.glow{position:fixed;top:0;left:50%;transform:translateX(-50%);width:130vh;height:58vh;'
@@ -405,16 +616,12 @@ def login_page():
         'animation:pulse 8s ease-in-out infinite}'
         '@keyframes pulse{0%,100%{opacity:.7}50%{opacity:1}}'
         '.outer{position:relative;z-index:10;display:flex;align-items:center;justify-content:center;height:100%}'
-        '.card-wrap{width:380px}'
         '.card{position:relative;background:rgba(0,0,0,.48);backdrop-filter:blur(28px);'
-        'border-radius:20px 20px 0 0;border:1px solid rgba(255,255,255,.06);border-bottom:none;padding:30px 28px 24px}'
-        '.beams{position:absolute;inset:-1px;border-radius:20px 20px 0 0;overflow:hidden;pointer-events:none;z-index:2}'
-        '.beam-top{position:absolute;top:0;left:-50%;height:2px;width:50%;'
+        'border-radius:20px 20px 0 0;border:1px solid rgba(255,255,255,.06);border-bottom:none;padding:30px 28px 24px;width:380px}'
+        '.beam{position:absolute;top:0;left:-50%;height:2px;width:50%;'
         'background:linear-gradient(90deg,transparent,rgba(255,255,255,.85),transparent);'
-        'filter:blur(1.5px);animation:bTop 3.5s ease-in-out infinite}'
-        '@keyframes bTop{0%{left:-50%}65%{left:100%}100%{left:100%}}'
-        '.logo-wrap{width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,.12);'
-        'display:flex;align-items:center;justify-content:center;margin:0 auto 14px}'
+        'filter:blur(1.5px);animation:bm 3.5s ease-in-out infinite}'
+        '@keyframes bm{0%{left:-50%}65%{left:100%}100%{left:100%}}'
         'h1{text-align:center;font-size:22px;font-weight:800;'
         'background:linear-gradient(180deg,#fff,rgba(255,255,255,.78));'
         '-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:5px}'
@@ -424,23 +631,24 @@ def login_page():
         'padding:5px 14px;border-radius:20px;font-size:10px;font-weight:700}'
         '.dot{width:6px;height:6px;border-radius:50%;background:#10B981;animation:blink 2s ease-in-out infinite}'
         '@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}'
-        '.divider{height:1px;margin-top:18px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)}'
+        '.div{height:1px;margin-top:18px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)}'
+        '.logo{width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,.12);'
+        'display:flex;align-items:center;justify-content:center;margin:0 auto 14px}'
         '</style></head><body>'
         '<div class="bg"></div><div class="glow"></div>'
-        '<div class="outer"><div class="card-wrap"><div class="card">'
-        '<div class="beams"><div class="beam-top"></div></div>'
+        '<div class="outer"><div class="card">'
+        '<div style="position:absolute;inset:-1px;border-radius:20px 20px 0 0;overflow:hidden;pointer-events:none">'
+        '<div class="beam"></div></div>'
         '<div style="position:relative;z-index:3;text-align:center">'
-        '<div class="logo-wrap">'+logo_html+'</div>'
+        '<div class="logo">'+logo_html+'</div>'
         '<h1>Eden Food</h1>'
-        '<p class="sub">Logistics Platform &nbsp;·&nbsp; Acces securise</p>'
+        '<p class="sub">Logistics Platform &nbsp;&middot;&nbsp; Acces securise</p>'
         '<div style="display:flex;justify-content:center">'
         '<div class="badge"><div class="dot"></div>Systeme operationnel</div>'
-        '</div><div class="divider"></div>'
-        '</div></div></div></div>'
+        '</div><div class="div"></div>'
+        '</div></div></div>'
         '</body></html>',
-        height=268, scrolling=False
-    )
-
+        height=268, scrolling=False)
     col1, col2, col3 = st.columns([1,2.1,1])
     with col2:
         with st.form("login_form"):
@@ -457,16 +665,18 @@ def login_page():
 if not st.session_state.authenticated:
     login_page()
     st.stop()
-
-# ══════════════════════════════════════════════════════════════════════════════
+  # ══════════════════════════════════════════════════════════════════════════════
 # CONSTANTES + DATA
 # ══════════════════════════════════════════════════════════════════════════════
 POIDS_UNIT  = 18.14
 CRTNS       = {"TURBO(COLOMBIA)": 1080, "MOIN(COSTA RICA)": 1200}
 KGS_PER_CNT = {"MOIN(COSTA RICA)": 1200*18.14, "TURBO(COLOMBIA)": 1080*18.14}
 
-def licence_to_filename(lic): return str(lic).replace(" ","_").replace("/","_")+".pdf"
-def licence_pdf_path(lic):    return os.path.join("licences", licence_to_filename(lic))
+def licence_to_filename(lic):
+    return str(lic).replace(" ","_").replace("/","_")+".pdf"
+
+def licence_pdf_path(lic):
+    return os.path.join("licences", licence_to_filename(lic))
 
 @st.cache_data(ttl=60)
 def load_clients():
@@ -506,12 +716,12 @@ clients = clients_base.copy()
 clients["poids_total"] = pd.to_numeric(clients["poids_total"], errors="coerce").fillna(0)
 
 def get_solde_reel(nom, lic, poids):
-    mask = ((commandes["client"]==nom)&(commandes["licence"]==lic)&
+    mask = ((commandes["client"]==nom) & (commandes["licence"]==lic) &
             (~commandes["statut"].str.contains("A GENERER", na=False)))
     return round(poids - commandes.loc[mask,"total_kgs"].sum(), 2)
 
 def get_solde_prev(nom, lic, poids):
-    mask = (commandes["client"]==nom)&(commandes["licence"]==lic)
+    mask = (commandes["client"]==nom) & (commandes["licence"]==lic)
     return round(poids - commandes.loc[mask,"total_kgs"].sum(), 2)
 
 clients["solde_reel"]   = clients.apply(lambda r: get_solde_reel(r["nom"],r["licence"],r["poids_total"]), axis=1)
@@ -540,23 +750,14 @@ ICO = {
     "logout":    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
     "settings":  '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
 }
-
-# Emoji pour les boutons (st.button ne rend pas le HTML)
 EMO = {
-    "dashboard": "⊞",
-    "semaine":   "📅",
-    "commandes": "🚢",
-    "tracking":  "🗺️",
-    "documents": "📁",
-    "licences":  "📋",
-    "planning":  "👤",
-    "new_cmd":   "➕",
-    "logout":    "🚪",
+    "dashboard": "⊞", "semaine": "📅", "commandes": "🚢", "tracking": "🗺️",
+    "documents": "📁", "licences": "📋", "planning": "👤",
+    "new_cmd": "➕", "logout": "🚪",
 }
-
 NAV = [
     ("dashboard", "Overview"),
-    ("semaine",   "Semaine " + current_week_str),
+    ("semaine",   "Semaine "+current_week_str),
     ("commandes", "Commandes"),
     ("tracking",  "Tracking maritime"),
     ("documents", "Documents"),
@@ -565,43 +766,36 @@ NAV = [
 ]
 
 with st.sidebar:
-    # ── Logo + dot statut ─────────────────────────────────────────────────────
     logo_src = img_to_b64("logo_eden_food.jpg") or img_to_b64("logo_eden_food.png")
-    logo_tag = ('<img src="' + logo_src + '" style="height:26px">'
+    logo_tag = ('<img src="'+logo_src+'" style="height:26px">'
                 if logo_src else
                 '<span style="font-size:14px;font-weight:800;color:#fff">EDEN FOOD</span>')
     st.markdown(
         '<div style="padding:20px 16px 10px;display:flex;align-items:center;justify-content:space-between">'
-        '<div>' + logo_tag + '</div>'
-        '<div style="width:7px;height:7px;border-radius:50%;background:#10B981;'
-        'box-shadow:0 0 7px #10B981"></div>'
+        '<div>'+logo_tag+'</div>'
+        '<div style="width:7px;height:7px;border-radius:50%;background:#10B981;box-shadow:0 0 7px #10B981"></div>'
         '</div>'
         '<div style="height:1px;background:rgba(255,255,255,0.07);margin:4px 16px 12px"></div>'
         '<div style="padding:0 16px 6px;font-size:9px;color:rgba(255,255,255,0.28);'
         'text-transform:uppercase;letter-spacing:1.8px;font-weight:700">Menu</div>',
         unsafe_allow_html=True)
 
-    # ── NAV items ─────────────────────────────────────────────────────────────
     for pid, label in NAV:
         is_active = st.session_state.page == pid
         if is_active:
-            # Item actif : markdown avec SVG (HTML rendu correctement)
             st.markdown(
                 '<div style="background:rgba(255,255,255,0.1);border-radius:8px;'
                 'padding:9px 14px;margin-bottom:2px;display:flex;align-items:center;gap:10px;'
                 'border-left:2px solid #fff;cursor:default">'
-                '<span style="color:#fff;display:flex;align-items:center;flex-shrink:0">'
-                + ICO[pid] + '</span>'
-                '<span style="font-size:13px;font-weight:600;color:#fff">' + label + '</span>'
+                '<span style="color:#fff;display:flex;align-items:center;flex-shrink:0">'+ICO[pid]+'</span>'
+                '<span style="font-size:13px;font-weight:600;color:#fff">'+label+'</span>'
                 '</div>',
                 unsafe_allow_html=True)
         else:
-            # Item inactif : bouton avec emoji (pas de HTML dans st.button)
-            if st.button(EMO[pid] + "  " + label, key="nav_" + pid, use_container_width=True):
+            if st.button(EMO[pid]+"  "+label, key="nav_"+pid, use_container_width=True):
                 st.session_state.page = pid
                 st.rerun()
 
-    # ── Admin ─────────────────────────────────────────────────────────────────
     if st.session_state.role == "admin":
         st.markdown(
             '<div style="height:1px;background:rgba(255,255,255,0.07);margin:8px 16px"></div>'
@@ -614,44 +808,38 @@ with st.sidebar:
                 '<div style="background:rgba(255,255,255,0.1);border-radius:8px;'
                 'padding:9px 14px;margin-bottom:2px;display:flex;align-items:center;gap:10px;'
                 'border-left:2px solid #fff">'
-                '<span style="color:#fff;display:flex;align-items:center;flex-shrink:0">'
-                + ICO["new_cmd"] + '</span>'
+                '<span style="color:#fff;display:flex;align-items:center;flex-shrink:0">'+ICO["new_cmd"]+'</span>'
                 '<span style="font-size:13px;font-weight:600;color:#fff">Nouvelle commande</span>'
                 '</div>',
                 unsafe_allow_html=True)
         else:
-            if st.button(EMO["new_cmd"] + "  Nouvelle commande", key="nav_new_cmd",
-                         use_container_width=True):
+            if st.button(EMO["new_cmd"]+"  Nouvelle commande", key="nav_new_cmd", use_container_width=True):
                 st.session_state.page = "new_cmd"
                 st.rerun()
 
-    # ── Spacer ────────────────────────────────────────────────────────────────
     st.markdown('<div style="min-height:30px"></div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div style="height:1px;background:rgba(255,255,255,0.07);margin:0 16px 10px"></div>',
-        unsafe_allow_html=True)
+    st.markdown('<div style="height:1px;background:rgba(255,255,255,0.07);margin:0 16px 10px"></div>',
+                unsafe_allow_html=True)
 
-    # ── Profil card ───────────────────────────────────────────────────────────
     role_color = "#4361EE" if st.session_state.role == "admin" else "#374151"
     role_label = "Admin" if st.session_state.role == "admin" else "Utilisateur"
     initiale   = st.session_state.username[0].upper() if st.session_state.username else "?"
     st.markdown(
         '<div style="padding:10px 12px;display:flex;align-items:center;gap:10px;'
         'background:rgba(255,255,255,0.05);border-radius:10px;margin:0 8px 8px">'
-        '<div style="width:34px;height:34px;border-radius:50%;background:' + role_color + ';'
+        '<div style="width:34px;height:34px;border-radius:50%;background:'+role_color+';'
         'display:flex;align-items:center;justify-content:center;font-size:13px;'
-        'font-weight:700;color:#fff;flex-shrink:0">' + initiale + '</div>'
+        'font-weight:700;color:#fff;flex-shrink:0">'+initiale+'</div>'
         '<div style="min-width:0;flex:1">'
         '<div style="font-size:12px;font-weight:700;color:#fff;white-space:nowrap;'
-        'overflow:hidden;text-overflow:ellipsis">' + st.session_state.username.upper() + '</div>'
-        '<div style="font-size:10px;color:rgba(255,255,255,0.35)">' + role_label + '</div>'
+        'overflow:hidden;text-overflow:ellipsis">'+st.session_state.username.upper()+'</div>'
+        '<div style="font-size:10px;color:rgba(255,255,255,0.35)">'+role_label+'</div>'
         '</div>'
-        '<span style="color:rgba(255,255,255,0.3);flex-shrink:0">' + ICO["settings"] + '</span>'
+        '<span style="color:rgba(255,255,255,0.3);flex-shrink:0">'+ICO["settings"]+'</span>'
         '</div>',
         unsafe_allow_html=True)
 
-    # ── Déconnexion ───────────────────────────────────────────────────────────
-    if st.button(EMO["logout"] + "  Deconnexion", use_container_width=True, key="logout"):
+    if st.button(EMO["logout"]+"  Deconnexion", use_container_width=True, key="logout"):
         st.session_state.update(authenticated=False, username="")
         st.rerun()
 
@@ -665,7 +853,6 @@ if page == "dashboard":
     logo_src = img_to_b64("logo_eden_food.jpg") or img_to_b64("logo_eden_food.png")
     logo_ov  = ('<img src="'+logo_src+'" style="height:36px;margin-bottom:12px;display:block">'
                 if logo_src else "")
-
     if hero_src:
         st.markdown(
             '<div class="hero-wrap" style="background:url(\''+hero_src+'\') center/cover no-repeat;">'
@@ -698,33 +885,27 @@ if page == "dashboard":
     st.markdown(
         '<div class="kpi-grid">'
         '<div class="kpi-card" style="--card-color:#4361EE;--card-bg:#EEF2FF">'
-        '<div class="icon-wrap">🚢</div>'
-        '<div class="kpi-lbl">Expeditions</div>'
+        '<div class="icon-wrap">🚢</div><div class="kpi-lbl">Expeditions</div>'
         '<div class="kpi-val" style="color:#4361EE">'+str(len(commandes))+'</div>'
         '<div class="kpi-sub">enregistrees</div></div>'
         '<div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7">'
-        '<div class="icon-wrap">⏳</div>'
-        '<div class="kpi-lbl">A generer</div>'
+        '<div class="icon-wrap">⏳</div><div class="kpi-lbl">A generer</div>'
         '<div class="kpi-val" style="color:#D97706">'+str(len(todo))+'</div>'
         '<div class="kpi-sub">en attente</div></div>'
         '<div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">'
-        '<div class="icon-wrap">✅</div>'
-        '<div class="kpi-lbl">Confirmees</div>'
+        '<div class="icon-wrap">✅</div><div class="kpi-lbl">Confirmees</div>'
         '<div class="kpi-val" style="color:#059669">'+str(len(done))+'</div>'
         '<div class="kpi-sub">generees</div></div>'
         '<div class="kpi-card" style="--card-color:#8B5CF6;--card-bg:#EDE9FE">'
-        '<div class="icon-wrap">📦</div>'
-        '<div class="kpi-lbl">CNT planifies</div>'
+        '<div class="icon-wrap">📦</div><div class="kpi-lbl">CNT planifies</div>'
         '<div class="kpi-val" style="color:#7C3AED">'+str(int(todo["nb_cnt"].sum()))+'</div>'
         '<div class="kpi-sub">conteneurs</div></div>'
         '<div class="kpi-card" style="--card-color:#EF4444;--card-bg:#FEE2E2">'
-        '<div class="icon-wrap">🔴</div>'
-        '<div class="kpi-lbl">Alertes</div>'
+        '<div class="icon-wrap">🔴</div><div class="kpi-lbl">Alertes</div>'
         '<div class="kpi-val" style="color:#DC2626">'+str(len(alert))+'</div>'
         '<div class="kpi-sub">licences critiques</div></div>'
         '<div class="kpi-card" style="--card-color:#3B82F6;--card-bg:#DBEAFE">'
-        '<div class="icon-wrap">📁</div>'
-        '<div class="kpi-lbl">Documents</div>'
+        '<div class="icon-wrap">📁</div><div class="kpi-lbl">Documents</div>'
         '<div class="kpi-val" style="color:#2563EB">'+str(tdocs)+'</div>'
         '<div class="kpi-sub">uploades</div></div>'
         '</div>',
@@ -762,8 +943,7 @@ if page == "dashboard":
                 '<span class="sec-sub">CNT par semaine</span></div>', unsafe_allow_html=True)
     if not commandes.empty:
         df_sem = commandes.groupby("semaine")["nb_cnt"].sum().reset_index()
-        fig2   = px.bar(df_sem, x="semaine", y="nb_cnt",
-                        color_discrete_sequence=["#4361EE"],
+        fig2   = px.bar(df_sem, x="semaine", y="nb_cnt", color_discrete_sequence=["#4361EE"],
                         labels={"semaine":"","nb_cnt":"Conteneurs"})
         fig2.update_traces(marker_cornerradius=6, marker_line_width=0)
         fig2 = apply_chart_style(fig2)
@@ -782,7 +962,6 @@ elif page == "semaine":
         'font-size:11px;font-weight:700">'+current_week_str+'</div></div>',
         unsafe_allow_html=True)
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
-
     if commandes_semaine.empty:
         st.info("Aucune commande pour "+current_week_str+".")
     else:
@@ -936,7 +1115,8 @@ elif page == "commandes":
                         if st.session_state.role == "admin":
                             if st.button("🗑️", key="del_"+str(row["booking"])+"_"+doc_name,
                                          use_container_width=True):
-                                delete_doc(row["booking"], doc_name); st.rerun()
+                                delete_doc(row["booking"], doc_name)
+                                st.rerun()
             else:
                 st.caption("Aucun document — uploadez ci-dessous.")
             u1,u2 = st.columns([3,1])
@@ -948,7 +1128,9 @@ elif page == "commandes":
                                      key="dtype_"+str(row["booking"]), label_visibility="collapsed")
             if uploaded and st.button("✅ Uploader", key="upconf_"+str(row["booking"]), type="primary"):
                 uploaded.name = dtype.replace(" ","_")+"_"+uploaded.name
-                save_doc(row["booking"], uploaded); st.success("Uploade !"); st.rerun()
+                save_doc(row["booking"], uploaded)
+                st.success("Uploade !")
+                st.rerun()
             st.markdown("")
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -984,18 +1166,15 @@ elif page == "tracking":
     st.markdown(
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px">'
         '<div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7">'
-        '<div class="icon-wrap">⏳</div>'
-        '<div class="kpi-lbl">En attente depart</div>'
+        '<div class="icon-wrap">⏳</div><div class="kpi-lbl">En attente depart</div>'
         '<div class="kpi-val" style="color:#D97706">'+str(len(en_attente_list))+'</div>'
         '<div class="kpi-sub">pas encore partis</div></div>'
         '<div class="kpi-card" style="--card-color:#3B82F6;--card-bg:#DBEAFE">'
-        '<div class="icon-wrap">🚢</div>'
-        '<div class="kpi-lbl">En mer</div>'
+        '<div class="icon-wrap">🚢</div><div class="kpi-lbl">En mer</div>'
         '<div class="kpi-val" style="color:#2563EB">'+str(len(en_mer_list))+'</div>'
         '<div class="kpi-sub">en transit actif</div></div>'
         '<div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">'
-        '<div class="icon-wrap">⚓</div>'
-        '<div class="kpi-lbl">Arrives Ghazaouet</div>'
+        '<div class="icon-wrap">⚓</div><div class="kpi-lbl">Arrives Ghazaouet</div>'
         '<div class="kpi-val" style="color:#059669">'+str(len(arrives_list))+'</div>'
         '<div class="kpi-sub">a destination</div></div>'
         '</div>',
@@ -1039,9 +1218,12 @@ elif page == "tracking":
             else:
                 card_color="#F59E0B"; card_bg="#FEF3C7"; status_txt="Avant depart"
 
-            if days_el is not None and days_el >= 0: days_label = "J+"+str(days_el)
-            elif days_el is not None:                 days_label = "Depart dans "+str(abs(days_el))+"j"
-            else:                                     days_label = "—"
+            if days_el is not None and days_el >= 0:
+                days_label = "J+"+str(days_el)
+            elif days_el is not None:
+                days_label = "Depart dans "+str(abs(days_el))+"j"
+            else:
+                days_label = "—"
 
             eta_label     = eta_calc.strftime("%d/%m/%Y") if eta_calc else "—"
             timeline_html = build_stage_timeline_html(s_idx, prog, str(row["pol"]))
@@ -1080,15 +1262,13 @@ elif page == "tracking":
                 unsafe_allow_html=True)
 
             if st.button("Masquer etapes" if is_open else "Voir etapes", key="tt_"+bkey):
-                if is_open: st.session_state.expanded_track.discard(bkey)
-                else:       st.session_state.expanded_track.add(bkey)
+                if is_open:
+                    st.session_state.expanded_track.discard(bkey)
+                else:
+                    st.session_state.expanded_track.add(bkey)
                 st.rerun()
 
             if is_open:
-                cnt_val  = str(row["nb_cnt"])
-                kgs_val  = "{:,.0f}".format(row["total_kgs"])
-                sem_val  = str(row["semaine"])
-                stat_val = str(row["statut"])
                 st.markdown(
                     '<div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;'
                     'padding:18px 22px;margin-bottom:10px;overflow-x:auto">'
@@ -1098,21 +1278,20 @@ elif page == "tracking":
                     '<div style="margin-top:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px">'
                     '<div style="background:#fff;border-radius:10px;padding:12px;border:1px solid #E5E7EB">'
                     '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">CNT</div>'
-                    '<div style="font-size:18px;font-weight:900;color:#4361EE">'+cnt_val+'</div></div>'
+                    '<div style="font-size:18px;font-weight:900;color:#4361EE">'+str(row["nb_cnt"])+'</div></div>'
                     '<div style="background:#fff;border-radius:10px;padding:12px;border:1px solid #E5E7EB">'
                     '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">Total kgs</div>'
-                    '<div style="font-size:14px;font-weight:800;color:#111827">'+kgs_val+'</div></div>'
+                    '<div style="font-size:14px;font-weight:800;color:#111827">'+"{:,.0f}".format(row["total_kgs"])+'</div></div>'
                     '<div style="background:#fff;border-radius:10px;padding:12px;border:1px solid #E5E7EB">'
                     '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">Semaine</div>'
-                    '<div style="font-size:14px;font-weight:800;color:#111827">'+sem_val+'</div></div>'
+                    '<div style="font-size:14px;font-weight:800;color:#111827">'+str(row["semaine"])+'</div></div>'
                     '<div style="background:#fff;border-radius:10px;padding:12px;border:1px solid #E5E7EB">'
                     '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">Statut</div>'
-                    '<div style="font-size:11px;font-weight:700;color:'+card_color+'">'+stat_val+'</div></div>'
+                    '<div style="font-size:11px;font-weight:700;color:'+card_color+'">'+str(row["statut"])+'</div></div>'
                     '</div></div>',
                     unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
-
-# ══════════════════════════════════════════════════════════════════════════════
+  # ══════════════════════════════════════════════════════════════════════════════
 # DOCUMENTS
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "documents":
@@ -1124,446 +1303,4 @@ elif page == "documents":
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
 
     all_bookings = commandes["booking"].dropna().unique().tolist()
-    total_docs   = sum(len(list_docs(b)) for b in all_bookings)
-    avec_docs    = sum(1 for b in all_bookings if list_docs(b))
-
-    st.markdown(
-        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px">'
-        '<div class="kpi-card" style="--card-color:#3B82F6;--card-bg:#DBEAFE">'
-        '<div class="icon-wrap">📁</div>'
-        '<div class="kpi-lbl">Total documents</div>'
-        '<div class="kpi-val" style="color:#2563EB">'+str(total_docs)+'</div></div>'
-        '<div class="kpi-card" style="--card-color:#8B5CF6;--card-bg:#EDE9FE">'
-        '<div class="icon-wrap">🚢</div>'
-        '<div class="kpi-lbl">Bookings</div>'
-        '<div class="kpi-val" style="color:#7C3AED">'+str(len(all_bookings))+'</div></div>'
-        '<div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">'
-        '<div class="icon-wrap">✅</div>'
-        '<div class="kpi-lbl">Avec documents</div>'
-        '<div class="kpi-val" style="color:#059669">'+str(avec_docs)+'</div></div>'
-        '</div>',
-        unsafe_allow_html=True)
-
-    search_doc = st.text_input("", placeholder="Rechercher booking ou client...",
-                               label_visibility="collapsed")
-    df_docs = commandes.copy()
-    if search_doc:
-        df_docs = df_docs[
-            df_docs["booking"].str.contains(search_doc, case=False, na=False) |
-            df_docs["client"].str.contains(search_doc, case=False, na=False)
-        ]
-
-    for _, row in df_docs.iterrows():
-        docs = list_docs(row["booking"])
-        nd   = len(docs)
-        dp   = ('<span class="pill pill-blue">📁 '+str(nd)+'</span>' if nd
-                else '<span class="pill" style="background:#F3F4F6;color:#9CA3AF">📁 0</span>')
-        bkey = str(row["booking"]).replace(" ","_").replace("/","_")
-        is_open = ("doc_"+bkey) in st.session_state.expanded_track
-
-        st.markdown(
-            '<div class="cmd-row">'
-            '<div style="min-width:200px">'
-            '<div style="font-size:13px;font-weight:700;color:#111827">'+str(row["client"])+'</div>'
-            '<div style="font-size:11px;color:#9CA3AF;margin-top:2px">'
-            +str(row["booking"])+' · '+str(row["semaine"])+'</div></div>'
-            '<div style="text-align:center">'
-            '<div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">POL</div>'
-            '<div style="font-weight:700;color:#111827;font-size:12px">'+str(row["pol"])+'</div></div>'
-            '<div style="text-align:center">'
-            '<div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">Navire</div>'
-            '<div style="font-weight:500;color:#374151;font-size:11px">'+str(row["navire"])+'</div></div>'
-            '<div style="display:flex;gap:6px;align-items:center">'+dp+'</div>'
-            '</div>',
-            unsafe_allow_html=True)
-
-        cb, _ = st.columns([1,4])
-        with cb:
-            if st.button("Fermer" if is_open else "📁 Gerer documents",
-                         key="docpage_"+bkey, use_container_width=True):
-                k = "doc_"+bkey
-                if is_open: st.session_state.expanded_track.discard(k)
-                else:       st.session_state.expanded_track.add(k)
-                st.rerun()
-
-        if is_open:
-            st.markdown(
-                '<div class="doc-zone">'
-                '<div style="font-size:12px;font-weight:700;color:#111827;margin-bottom:12px">'
-                '📁 '+str(row["booking"])+'</div></div>',
-                unsafe_allow_html=True)
-            if docs:
-                for doc_name in docs:
-                    doc_path = os.path.join(docs_path(row["booking"]), doc_name)
-                    d1,d2,d3 = st.columns([4,1,1])
-                    with d1:
-                        st.markdown('<div class="doc-chip">📄 '+doc_name+'</div>',
-                                    unsafe_allow_html=True)
-                    with d2:
-                        with open(doc_path,"rb") as f:
-                            st.download_button("⬇️", f.read(), file_name=doc_name,
-                                key="dldoc_"+bkey+"_"+doc_name, use_container_width=True)
-                    with d3:
-                        if st.session_state.role == "admin":
-                            if st.button("🗑️", key="deldoc_"+bkey+"_"+doc_name,
-                                         use_container_width=True):
-                                delete_doc(row["booking"], doc_name); st.rerun()
-            else:
-                st.caption("Aucun document.")
-            u1,u2 = st.columns([3,1])
-            with u1:
-                up2 = st.file_uploader("", type=["pdf","xlsx","xls","docx","jpg","png"],
-                                       key="updoc_"+bkey, label_visibility="collapsed")
-            with u2:
-                dt2 = st.selectbox("", DOC_TYPES, key="dtdoc_"+bkey, label_visibility="collapsed")
-            if up2 and st.button("✅ Uploader", key="upconfdoc_"+bkey, type="primary"):
-                up2.name = dt2.replace(" ","_")+"_"+up2.name
-                save_doc(row["booking"], up2); st.success("Uploade !"); st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ══════════════════════════════════════════════════════════════════════════════
-# LICENCES
-# ══════════════════════════════════════════════════════════════════════════════
-elif page == "licences":
-    st.markdown(
-        '<div style="background:#fff;border-bottom:1px solid #E5E7EB;padding:18px 36px;'
-        'position:sticky;top:0;z-index:100;font-size:20px;font-weight:800;color:#111827">'
-        'Licences DPVCT</div>',
-        unsafe_allow_html=True)
-    st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
-
-    # ── KPIs globaux ──────────────────────────────────────────────────────────
-    total_clients  = len(clients)
-    clients_ok     = len(clients[clients["solde_reel"] >= 58773.6])
-    clients_warn   = len(clients[(clients["solde_reel"] >= 19591.2) & (clients["solde_reel"] < 58773.6)])
-    clients_crit   = len(clients[clients["solde_reel"] < 19591.2])
-
-    st.markdown(
-        '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px">'
-        '<div class="kpi-card" style="--card-color:#4361EE;--card-bg:#EEF2FF">'
-        '<div class="icon-wrap">📋</div>'
-        '<div class="kpi-lbl">Total clients</div>'
-        '<div class="kpi-val" style="color:#4361EE">'+str(total_clients)+'</div></div>'
-        '<div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">'
-        '<div class="icon-wrap">✅</div>'
-        '<div class="kpi-lbl">OK</div>'
-        '<div class="kpi-val" style="color:#059669">'+str(clients_ok)+'</div></div>'
-        '<div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7">'
-        '<div class="icon-wrap">⚠️</div>'
-        '<div class="kpi-lbl">Attention</div>'
-        '<div class="kpi-val" style="color:#D97706">'+str(clients_warn)+'</div></div>'
-        '<div class="kpi-card" style="--card-color:#EF4444;--card-bg:#FEE2E2">'
-        '<div class="icon-wrap">🔴</div>'
-        '<div class="kpi-lbl">Critique</div>'
-        '<div class="kpi-val" style="color:#DC2626">'+str(clients_crit)+'</div></div>'
-        '</div>',
-        unsafe_allow_html=True)
-
-    # ── FILTRES ───────────────────────────────────────────────────────────────
-    f1, f2, f3 = st.columns([3, 2, 2])
-    with f1:
-        search_lic = st.selectbox(
-            "Rechercher un client",
-            ["Tous les clients"] + sorted(clients["nom"].dropna().tolist()),
-            label_visibility="collapsed"
-        )
-    with f2:
-        filter_statut = st.selectbox(
-            "Statut licence",
-            ["Tous", "OK", "Attention", "Critique", "Depassement"],
-            label_visibility="collapsed"
-        )
-    with f3:
-        sort_by = st.selectbox(
-            "Trier par",
-            ["Nom (A→Z)", "Solde reel ↑", "Solde reel ↓", "% restant ↑", "% restant ↓"],
-            label_visibility="collapsed"
-        )
-
-    # ── Application des filtres ───────────────────────────────────────────────
-    df_lic = clients.copy()
-
-    # Filtre par nom
-    if search_lic != "Tous les clients":
-        df_lic = df_lic[df_lic["nom"] == search_lic]
-
-    # Filtre par statut
-    if filter_statut == "OK":
-        df_lic = df_lic[df_lic["solde_reel"] >= 58773.6]
-    elif filter_statut == "Attention":
-        df_lic = df_lic[(df_lic["solde_reel"] >= 19591.2) & (df_lic["solde_reel"] < 58773.6)]
-    elif filter_statut == "Critique":
-        df_lic = df_lic[(df_lic["solde_reel"] >= 0) & (df_lic["solde_reel"] < 19591.2)]
-    elif filter_statut == "Depassement":
-        df_lic = df_lic[df_lic["solde_reel"] < 0]
-
-    # Tri
-    if sort_by == "Nom (A→Z)":
-        df_lic = df_lic.sort_values("nom")
-    elif sort_by == "Solde reel ↑":
-        df_lic = df_lic.sort_values("solde_reel", ascending=True)
-    elif sort_by == "Solde reel ↓":
-        df_lic = df_lic.sort_values("solde_reel", ascending=False)
-    elif sort_by == "% restant ↑":
-        df_lic = df_lic.sort_values("solde_reel", ascending=True)
-    elif sort_by == "% restant ↓":
-        df_lic = df_lic.sort_values("solde_reel", ascending=False)
-
-    # Compteur résultats
-    st.markdown(
-        '<div style="font-size:12px;color:#6B7280;margin-bottom:16px">'
-        '<b style="color:#111827">'+str(len(df_lic))+'</b> client(s) affiché(s)</div>',
-        unsafe_allow_html=True)
-
-    # ── Cartes licences ───────────────────────────────────────────────────────
-    for _, row in df_lic.iterrows():
-        pr = max(0, min(100, row["solde_reel"] / row["poids_total"] * 100)) if row["poids_total"] > 0 else 0
-        pc = "#10B981" if pr > 30 else ("#F59E0B" if pr > 10 else "#EF4444")
-
-        if   row["solde_reel"] < 0:        badge = '<span class="pill pill-red">DEPASSEMENT</span>'
-        elif row["solde_reel"] < 19591.2:  badge = '<span class="pill pill-red">CRITIQUE</span>'
-        elif row["solde_reel"] < 58773.6:  badge = '<span class="pill pill-orange">ATTENTION</span>'
-        else:                               badge = '<span class="pill pill-green">OK</span>'
-
-        pdf_path   = licence_pdf_path(row["licence"])
-        pdf_exists = os.path.exists(pdf_path)
-        pdf_badge  = ('<span class="pill pill-blue">📄 PDF</span>' if pdf_exists
-                      else '<span class="pill" style="background:#F3F4F6;color:#9CA3AF">📄 Pas de PDF</span>')
-
-        poids_fmt     = "{:,.0f}".format(row["poids_total"])
-        solde_r_fmt   = "{:,.0f}".format(row["solde_reel"])
-        solde_p_fmt   = "{:,.0f}".format(row["solde_prev"])
-        cnt_r_cr_fmt  = str(row["cnt_reel_cr"])
-        cnt_r_col_fmt = str(row["cnt_reel_col"])
-        cnt_p_cr_fmt  = str(row["cnt_prev_cr"])
-        cnt_p_col_fmt = str(row["cnt_prev_col"])
-        pr_int        = str(int(pr))
-
-        st.markdown(
-            '<div class="card">'
-            '<div style="display:flex;justify-content:space-between;align-items:flex-start;'
-            'flex-wrap:wrap;gap:8px;margin-bottom:16px">'
-            '<div>'
-            '<div style="font-size:16px;font-weight:800;color:#111827">'+str(row["nom"])+'</div>'
-            '<div style="font-size:12px;color:#9CA3AF;margin-top:3px">'
-            'Licence '+str(row["licence"])+' · '+str(row["pays"])+'</div>'
-            '</div>'
-            '<div style="display:flex;gap:8px;align-items:center">'+pdf_badge+badge+'</div>'
-            '</div>'
-            '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">'
-            '<div style="background:#F9FAFB;border-radius:10px;padding:14px">'
-            '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">Poids total</div>'
-            '<div style="font-size:18px;font-weight:800;color:#111827">'+poids_fmt+' <span style="font-size:11px;color:#9CA3AF">kgs</span></div></div>'
-            '<div style="background:#EEF2FF;border-radius:10px;padding:14px">'
-            '<div style="font-size:9px;color:#4361EE;text-transform:uppercase;font-weight:700;margin-bottom:4px">Solde reel</div>'
-            '<div style="font-size:18px;font-weight:800;color:#4361EE">'+solde_r_fmt+' <span style="font-size:11px">kgs</span></div></div>'
-            '<div style="background:#FEF3C7;border-radius:10px;padding:14px">'
-            '<div style="font-size:9px;color:#D97706;text-transform:uppercase;font-weight:700;margin-bottom:4px">Solde prev.</div>'
-            '<div style="font-size:18px;font-weight:800;color:#D97706">'+solde_p_fmt+' <span style="font-size:11px">kgs</span></div></div>'
-            '</div>'
-            '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">'
-            '<div style="background:#EEF2FF;border-radius:10px;padding:12px;text-align:center">'
-            '<div style="font-size:9px;color:#4361EE;text-transform:uppercase;font-weight:700;margin-bottom:4px">CNT reel CR</div>'
-            '<div style="font-size:16px;font-weight:900;color:#4361EE">'+cnt_r_cr_fmt+'</div></div>'
-            '<div style="background:#EEF2FF;border-radius:10px;padding:12px;text-align:center">'
-            '<div style="font-size:9px;color:#4361EE;text-transform:uppercase;font-weight:700;margin-bottom:4px">CNT reel COL</div>'
-            '<div style="font-size:16px;font-weight:900;color:#4361EE">'+cnt_r_col_fmt+'</div></div>'
-            '<div style="background:#FEF3C7;border-radius:10px;padding:12px;text-align:center">'
-            '<div style="font-size:9px;color:#D97706;text-transform:uppercase;font-weight:700;margin-bottom:4px">CNT prev CR</div>'
-            '<div style="font-size:16px;font-weight:900;color:#D97706">'+cnt_p_cr_fmt+'</div></div>'
-            '<div style="background:#FEF3C7;border-radius:10px;padding:12px;text-align:center">'
-            '<div style="font-size:9px;color:#D97706;text-transform:uppercase;font-weight:700;margin-bottom:4px">CNT prev COL</div>'
-            '<div style="font-size:16px;font-weight:900;color:#D97706">'+cnt_p_col_fmt+'</div></div>'
-            '</div>'
-            '<div style="margin-bottom:14px">'
-            '<div style="display:flex;justify-content:space-between;margin-bottom:6px">'
-            '<span style="font-size:11px;color:#6B7280;font-weight:600">Solde disponible</span>'
-            '<span style="font-size:11px;font-weight:700;color:'+pc+'">'+pr_int+'%</span>'
-            '</div>'
-            '<div class="prog-track">'
-            '<div class="prog-fill" style="background:'+pc+';width:'+pr_int+'%"></div>'
-            '</div></div>',
-            unsafe_allow_html=True)
-
-        if pdf_exists:
-            lc1, lc2 = st.columns([1, 4])
-            with lc1:
-                with open(pdf_path, "rb") as f:
-                    st.download_button("📄 Telecharger licence", f.read(),
-                        file_name=licence_to_filename(row["licence"]),
-                        key="dllic_"+str(row["licence"]), use_container_width=True)
-        else:
-            lc1, lc2 = st.columns([2, 3])
-            with lc1:
-                up_lic = st.file_uploader("", type=["pdf"],
-                    key="uplic_"+str(row["licence"]), label_visibility="collapsed")
-            with lc2:
-                if up_lic and st.button("✅ Uploader licence",
-                    key="uplicconf_"+str(row["licence"]), type="primary"):
-                    os.makedirs("licences", exist_ok=True)
-                    with open(pdf_path, "wb") as f: f.write(up_lic.getbuffer())
-                    st.success("Licence uploadee !"); st.rerun()
-
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ══════════════════════════════════════════════════════════════════════════════
-# PLANNING CLIENT
-# ══════════════════════════════════════════════════════════════════════════════
-elif page == "planning":
-    st.markdown(
-        '<div style="background:#fff;border-bottom:1px solid #E5E7EB;padding:18px 36px;'
-        'position:sticky;top:0;z-index:100;font-size:20px;font-weight:800;color:#111827">'
-        'Planning client</div>',
-        unsafe_allow_html=True)
-    st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
-
-    client_list = clients["nom"].dropna().tolist()
-    sel_client  = st.selectbox("Selectionner un client", client_list, label_visibility="visible")
-
-    if sel_client:
-        cli_row  = clients[clients["nom"] == sel_client].iloc[0]
-        cli_cmds = commandes[commandes["client"] == sel_client]
-
-        pr = max(0, min(100, cli_row["solde_reel"]/cli_row["poids_total"]*100)) if cli_row["poids_total"] > 0 else 0
-        pc = "#10B981" if pr > 30 else ("#F59E0B" if pr > 10 else "#EF4444")
-
-        poids_fmt   = "{:,.0f}".format(cli_row["poids_total"])
-        solde_r_fmt = "{:,.0f}".format(cli_row["solde_reel"])
-        solde_p_fmt = "{:,.0f}".format(cli_row["solde_prev"])
-
-        st.markdown(
-            '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;margin-top:18px">'
-            '<div class="kpi-card" style="--card-color:#4361EE;--card-bg:#EEF2FF">'
-            '<div class="kpi-lbl">Commandes</div>'
-            '<div class="kpi-val" style="color:#4361EE">'+str(len(cli_cmds))+'</div></div>'
-            '<div class="kpi-card" style="--card-color:#8B5CF6;--card-bg:#EDE9FE">'
-            '<div class="kpi-lbl">CNT total</div>'
-            '<div class="kpi-val" style="color:#7C3AED">'+str(int(cli_cmds["nb_cnt"].sum()))+'</div></div>'
-            '<div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">'
-            '<div class="kpi-lbl">Solde reel</div>'
-            '<div class="kpi-val" style="color:#059669;font-size:1.3rem">'+solde_r_fmt+'</div>'
-            '<div class="kpi-sub">kgs</div></div>'
-            '<div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7">'
-            '<div class="kpi-lbl">Solde prev.</div>'
-            '<div class="kpi-val" style="color:#D97706;font-size:1.3rem">'+solde_p_fmt+'</div>'
-            '<div class="kpi-sub">kgs</div></div>'
-            '</div>',
-            unsafe_allow_html=True)
-
-        st.markdown(
-            '<div style="background:#fff;border:1px solid #E5E7EB;border-radius:14px;'
-            'padding:20px 24px;margin-bottom:20px">'
-            '<div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:12px">'
-            'Utilisation de la licence</div>'
-            '<div style="display:flex;justify-content:space-between;margin-bottom:8px">'
-            '<span style="font-size:12px;color:#6B7280">'+str(int(pr))+'% utilise</span>'
-            '<span style="font-size:12px;font-weight:700;color:'+pc+'">'+solde_r_fmt+' kgs restants</span>'
-            '</div>'
-            '<div class="prog-track" style="height:10px">'
-            '<div class="prog-fill" style="background:'+pc+';width:'+str(int(100-pr))+'%"></div>'
-            '</div>'
-            '<div style="display:flex;justify-content:space-between;margin-top:8px">'
-            '<span style="font-size:10px;color:#9CA3AF">0</span>'
-            '<span style="font-size:10px;color:#9CA3AF">'+poids_fmt+' kgs total</span>'
-            '</div></div>',
-            unsafe_allow_html=True)
-
-        if not cli_cmds.empty:
-            st.markdown('<div class="sec-hdr"><span class="sec-title">Historique commandes</span></div>',
-                        unsafe_allow_html=True)
-            for _, crow in cli_cmds.iterrows():
-                cpill = "pill-green" if "GENERE" in str(crow["statut"]) else "pill-orange"
-                st.markdown(
-                    '<div class="cmd-row">'
-                    '<div style="min-width:160px">'
-                    '<div style="font-size:12px;font-weight:700;color:#111827">'+str(crow["booking"])+'</div>'
-                    '<div style="font-size:10px;color:#9CA3AF;margin-top:2px">'+str(crow["semaine"])+'</div></div>'
-                    '<div style="text-align:center">'
-                    '<div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">POL</div>'
-                    '<div style="font-weight:700;color:#111827;font-size:11px">'+str(crow["pol"])+'</div></div>'
-                    '<div style="text-align:center">'
-                    '<div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">CNT</div>'
-                    '<div style="font-weight:900;color:#4361EE;font-size:18px">'+str(crow["nb_cnt"])+'</div></div>'
-                    '<div style="text-align:center">'
-                    '<div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">Kgs</div>'
-                    '<div style="font-weight:600;color:#374151;font-size:11px">'+"{:,.0f}".format(crow["total_kgs"])+'</div></div>'
-                    '<div style="text-align:center">'
-                    '<div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">Depart</div>'
-                    '<div style="font-weight:500;color:#374151;font-size:11px">'+str(crow["depart"])+'</div></div>'
-                                        '<span class="pill '+cpill+'">'+str(crow["statut"])+'</span>'
-                    '</div>',
-                    unsafe_allow_html=True)
-
-            if not cli_cmds.empty:
-                st.markdown('<div class="sec-hdr"><span class="sec-title">Volume par semaine</span></div>',
-                            unsafe_allow_html=True)
-                df_cli_sem = cli_cmds.groupby("semaine")["nb_cnt"].sum().reset_index()
-                fig3 = px.bar(df_cli_sem, x="semaine", y="nb_cnt",
-                              color_discrete_sequence=["#4361EE"],
-                              labels={"semaine":"","nb_cnt":"CNT"})
-                fig3.update_traces(marker_cornerradius=6, marker_line_width=0)
-                fig3 = apply_chart_style(fig3)
-                st.plotly_chart(fig3, use_container_width=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ══════════════════════════════════════════════════════════════════════════════
-# NOUVELLE COMMANDE (admin)
-# ══════════════════════════════════════════════════════════════════════════════
-elif page == "new_cmd":
-    if st.session_state.role != "admin":
-        st.error("Acces reserve aux administrateurs.")
-        st.stop()
-
-    st.markdown(
-        '<div style="background:#fff;border-bottom:1px solid #E5E7EB;padding:18px 36px;'
-        'position:sticky;top:0;z-index:100;font-size:20px;font-weight:800;color:#111827">'
-        'Nouvelle commande</div>',
-        unsafe_allow_html=True)
-    st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
-
-    with st.form("new_cmd_form"):
-        c1, c2 = st.columns(2)
-        with c1:
-            nc_semaine = st.text_input("Semaine (ex: S-20)", placeholder="S-20")
-            nc_client  = st.selectbox("Client", clients["nom"].dropna().tolist())
-            nc_booking = st.text_input("Booking", placeholder="LHV1234567")
-            nc_licence = st.text_input("Licence", placeholder="N-XXX-XXXX")
-            nc_navire  = st.text_input("Navire", placeholder="MSC BANANA")
-            nc_voyage  = st.text_input("Voyage", placeholder="001W")
-        with c2:
-            nc_pol    = st.selectbox("POL", ["MOIN(COSTA RICA)", "TURBO(COLOMBIA)"])
-            nc_depart = st.text_input("Depart (JJ/MM/AAAA)", placeholder="15/05/2026")
-            nc_eta    = st.text_input("ETA (JJ/MM/AAAA)", placeholder="05/06/2026")
-            nc_cnt    = st.number_input("Nombre CNT", min_value=1, max_value=20, value=1, step=1)
-            nc_produit= st.text_input("Produit", placeholder="BANANES FRAICHES")
-            nc_statut = st.selectbox("Statut", ["A GENERER", "GENERE"])
-
-        submitted = st.form_submit_button("✅ Enregistrer la commande", type="primary", use_container_width=True)
-
-    if submitted:
-        if not nc_semaine or not nc_booking or not nc_client:
-            st.error("Semaine, booking et client sont obligatoires.")
-        else:
-            new_row = {
-                "num": len(commandes) + 1,
-                "semaine": nc_semaine.strip().upper(),
-                "client":  nc_client,
-                "booking": nc_booking.strip(),
-                "licence": nc_licence.strip(),
-                "navire":  nc_navire.strip(),
-                "voyage":  nc_voyage.strip(),
-                "pol":     nc_pol,
-                "depart":  nc_depart.strip(),
-                "eta":     nc_eta.strip(),
-                "nb_cnt":  int(nc_cnt),
-                "produit": nc_produit.strip(),
-                "statut":  nc_statut,
-            }
-            st.session_state.new_commandes.append(new_row)
-            st.success("Commande "+nc_booking+" enregistree avec succes !")
-            st.balloons()
-
-    st.markdown('</div>', unsafe_allow_html=True)
+    total_docs   
