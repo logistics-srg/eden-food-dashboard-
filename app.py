@@ -300,20 +300,16 @@ def build_stage_timeline_html(stage_idx, progress, pol):
 
 
 def render_route_map_svg(active_ships):
-    """SVG animé de la route maritime Atlantique → Méditerranée"""
-    # Waypoints simplifiés sur le SVG (viewBox 0 0 800 220)
-    # Départ (CR/COL) → Atlantique → Gibraltar → Méditerranée → Ghazaouet
     WAYPOINTS = [
-        (55,  155),   # Costa Rica / Colombia
-        (160, 145),   # Sortie Caraïbes
-        (310, 120),   # Atlantique centre
-        (480, 95),    # Approche Açores
-        (590, 80),    # Gibraltar
-        (660, 90),    # Mer Alboran
-        (730, 100),   # Ghazaouet
+        (55,  155),
+        (160, 145),
+        (310, 120),
+        (480, 95),
+        (590, 80),
+        (660, 90),
+        (730, 100),
     ]
 
-    # Construire un path SVG cubique
     path_d = f"M {WAYPOINTS[0][0]} {WAYPOINTS[0][1]}"
     for i in range(1, len(WAYPOINTS)):
         x0, y0 = WAYPOINTS[i-1]
@@ -321,91 +317,120 @@ def render_route_map_svg(active_ships):
         cx = (x0 + x1) / 2
         path_d += f" C {cx} {y0}, {cx} {y1}, {x1} {y1}"
 
-    # Navires animés sur la route
     ships_svg = ""
     for ship in active_ships:
-        pct = ship["progress"] / 100
-        # Interpolation linéaire sur les waypoints
+        pct = max(0.0, min(1.0, ship["progress"] / 100))
         total_segs = len(WAYPOINTS) - 1
         seg_f = pct * total_segs
         seg_i = min(int(seg_f), total_segs - 1)
         seg_t = seg_f - seg_i
         x0, y0 = WAYPOINTS[seg_i]
         x1, y1 = WAYPOINTS[min(seg_i + 1, total_segs)]
-        sx = x0 + (x1 - x0) * seg_t
-        sy = y0 + (y1 - y0) * seg_t
+        sx = round(x0 + (x1 - x0) * seg_t, 1)
+        sy = round(y0 + (y1 - y0) * seg_t, 1)
+        lbl = ship["label"][:9]
+
+        # Icone navire en SVG pur (pas d'emoji)
         ships_svg += f"""
-        <g transform="translate({sx-10},{sy-14})">
-          <text font-size="18" style="filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3))">🚢</text>
-          <text x="0" y="28" font-size="8" fill="#4361EE" font-weight="700" text-anchor="middle"
-            style="font-family:Inter,sans-serif">{ship['label'][:8]}</text>
+        <g transform="translate({sx},{sy})">
+          <filter id="shipglow_{lbl[:3]}">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+          </filter>
+          <ellipse cx="0" cy="3" rx="13" ry="5"
+            fill="#1D4ED8" opacity="0.85" filter="url(#shipglow_{lbl[:3]})"/>
+          <rect x="-9" y="-3" width="18" height="7" rx="3"
+            fill="#3B82F6"/>
+          <polygon points="9,-3 15,0 9,4"
+            fill="#60A5FA"/>
+          <rect x="-4" y="-9" width="3" height="8"
+            fill="#93C5FD" opacity="0.9"/>
+          <rect x="-4" y="-9" width="8" height="3" rx="1"
+            fill="#BFDBFE" opacity="0.7"/>
+          <circle cx="0" cy="0" r="2"
+            fill="#34D399" opacity="0.95"/>
+          <text x="0" y="20"
+            font-size="7" fill="#93C5FD" font-weight="700"
+            text-anchor="middle"
+            font-family="Arial,sans-serif">{lbl}</text>
         </g>"""
 
     svg = f"""
     <svg viewBox="0 0 800 220" xmlns="http://www.w3.org/2000/svg"
-         style="width:100%;height:170px;border-radius:12px;background:linear-gradient(180deg,#0F172A 0%,#0C2340 40%,#0F3460 100%)">
+         style="width:100%;height:190px;border-radius:12px;
+         background:linear-gradient(180deg,#0F172A 0%,#0C2340 40%,#0F3460 100%)">
 
-      <!-- Grille océan -->
       <defs>
         <pattern id="ocean-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>
+          <path d="M 40 0 L 0 0 0 40" fill="none"
+            stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>
         </pattern>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="3" result="blur"/>
-          <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-        </filter>
-      </defs>
-      <rect width="800" height="220" fill="url(#ocean-grid)"/>
-
-      <!-- Continents simplifiés -->
-      <!-- Amérique centrale / Caraïbes -->
-      <ellipse cx="40" cy="160" rx="38" ry="28" fill="#1E3A2F" opacity="0.7"/>
-      <text x="12" y="185" font-size="9" fill="rgba(255,255,255,0.4)" font-family="Inter,sans-serif">AMÉR. CENTRALE</text>
-
-      <!-- Europe (Gibraltar) -->
-      <ellipse cx="590" cy="58" rx="28" ry="18" fill="#1A2A4A" opacity="0.7"/>
-      <text x="568" y="52" font-size="8" fill="rgba(255,255,255,0.4)" font-family="Inter,sans-serif">ESPAGNE</text>
-
-      <!-- Maroc / Algérie -->
-      <rect x="560" y="108" width="240" height="50" rx="6" fill="#1E2A1A" opacity="0.7"/>
-      <text x="620" y="140" font-size="9" fill="rgba(255,255,255,0.4)" font-family="Inter,sans-serif">ALGÉRIE / MAROC</text>
-
-      <!-- Détroit Gibraltar label -->
-      <line x1="590" y1="76" x2="590" y2="108" stroke="rgba(255,255,255,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
-      <text x="596" y="95" font-size="8" fill="rgba(255,200,0,0.7)" font-family="Inter,sans-serif">GIBRALTAR</text>
-
-      <!-- Route principale — trait gris -->
-      <path d="{path_d}" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="2" stroke-dasharray="6,4"/>
-
-      <!-- Route active animée — gradient bleu -->
-      <path d="{path_d}" fill="none" stroke="url(#routeGrad)" stroke-width="2.5" stroke-linecap="round"/>
-      <defs>
         <linearGradient id="routeGrad" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%"   stop-color="#4361EE"/>
           <stop offset="50%"  stop-color="#3B82F6"/>
           <stop offset="100%" stop-color="#10B981"/>
         </linearGradient>
+        <filter id="ptglow">
+          <feGaussianBlur stdDeviation="2.5" result="blur"/>
+          <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+        </filter>
       </defs>
 
-      <!-- Points d'étape -->
-      <circle cx="{WAYPOINTS[0][0]}" cy="{WAYPOINTS[0][1]}" r="5" fill="#F59E0B" filter="url(#glow)"/>
-      <circle cx="{WAYPOINTS[4][0]}" cy="{WAYPOINTS[4][1]}" r="5" fill="#8B5CF6" filter="url(#glow)"/>
-      <circle cx="{WAYPOINTS[6][0]}" cy="{WAYPOINTS[6][1]}" r="6" fill="#10B981" filter="url(#glow)"/>
+      <rect width="800" height="220" fill="url(#ocean-grid)"/>
 
-      <!-- Labels étapes clés -->
-      <text x="{WAYPOINTS[0][0]-4}" y="{WAYPOINTS[0][1]+18}" font-size="8" fill="#F59E0B"
-        font-family="Inter,sans-serif" font-weight="700">DÉPART</text>
-      <text x="{WAYPOINTS[6][0]-24}" y="{WAYPOINTS[6][1]+18}" font-size="8" fill="#10B981"
-        font-family="Inter,sans-serif" font-weight="700">GHAZAOUET</text>
+      <!-- Amerique centrale -->
+      <ellipse cx="40" cy="160" rx="38" ry="26" fill="#1E3A2F" opacity="0.65"/>
+      <text x="8" y="183" font-size="8" fill="rgba(255,255,255,0.35)"
+        font-family="Arial,sans-serif">AMÉR. CENTRALE</text>
 
-      <!-- Navires actifs -->
+      <!-- Espagne / Gibraltar -->
+      <ellipse cx="592" cy="56" rx="28" ry="16" fill="#1A2A4A" opacity="0.65"/>
+      <text x="570" y="50" font-size="8" fill="rgba(255,255,255,0.35)"
+        font-family="Arial,sans-serif">ESPAGNE</text>
+
+      <!-- Algerie / Maroc -->
+      <rect x="558" y="108" width="242" height="48" rx="6"
+        fill="#1E2A1A" opacity="0.65"/>
+      <text x="615" y="138" font-size="9" fill="rgba(255,255,255,0.35)"
+        font-family="Arial,sans-serif">ALGÉRIE / MAROC</text>
+
+      <!-- Détroit Gibraltar -->
+      <line x1="590" y1="72" x2="590" y2="108"
+        stroke="rgba(255,200,80,0.25)" stroke-width="1" stroke-dasharray="3,3"/>
+      <text x="596" y="93" font-size="8" fill="rgba(255,200,80,0.6)"
+        font-family="Arial,sans-serif">GIBRALTAR</text>
+
+      <!-- Route en pointillés -->
+      <path d="{path_d}" fill="none"
+        stroke="rgba(255,255,255,0.1)" stroke-width="2" stroke-dasharray="6,4"/>
+
+      <!-- Route active gradient -->
+      <path d="{path_d}" fill="none"
+        stroke="url(#routeGrad)" stroke-width="2.5" stroke-linecap="round"/>
+
+      <!-- Points clés -->
+      <circle cx="{WAYPOINTS[0][0]}" cy="{WAYPOINTS[0][1]}" r="5"
+        fill="#F59E0B" filter="url(#ptglow)"/>
+      <circle cx="{WAYPOINTS[4][0]}" cy="{WAYPOINTS[4][1]}" r="5"
+        fill="#8B5CF6" filter="url(#ptglow)"/>
+      <circle cx="{WAYPOINTS[6][0]}" cy="{WAYPOINTS[6][1]}" r="6"
+        fill="#10B981" filter="url(#ptglow)"/>
+
+      <text x="{WAYPOINTS[0][0]-4}" y="{WAYPOINTS[0][1]+17}"
+        font-size="8" fill="#F59E0B" font-family="Arial,sans-serif" font-weight="700">DÉPART</text>
+      <text x="{WAYPOINTS[6][0]-28}" y="{WAYPOINTS[6][1]+17}"
+        font-size="8" fill="#10B981" font-family="Arial,sans-serif" font-weight="700">GHAZAOUET</text>
+
+      <!-- Navires -->
       {ships_svg}
 
-      <!-- Badge légende -->
-      <rect x="10" y="10" width="140" height="22" rx="6" fill="rgba(255,255,255,0.06)"/>
-      <circle cx="22" cy="21" r="4" fill="#10B981"/>
-      <text x="30" y="25" font-size="9" fill="rgba(255,255,255,0.7)" font-family="Inter,sans-serif">Route maritime active</text>
+      <!-- Légende -->
+      <rect x="10" y="8" width="148" height="22" rx="6" fill="rgba(255,255,255,0.06)"/>
+      <circle cx="22" cy="19" r="4" fill="#10B981"/>
+      <text x="31" y="23" font-size="9" fill="rgba(255,255,255,0.65)"
+        font-family="Arial,sans-serif">Route maritime active</text>
     </svg>"""
+
     return svg
 
 
