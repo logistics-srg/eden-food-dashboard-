@@ -30,7 +30,6 @@ header[data-testid="stHeader"],#MainMenu,.stAppDeployButton,footer{display:none!
   --radius-sm:8px;--radius-md:12px;--radius-lg:16px;--radius-xl:24px;--radius-full:9999px;
   --transition:all 0.2s cubic-bezier(0.4,0,0.2,1);
 }
-/* ── SIDEBAR DARK ── */
 section[data-testid="stSidebar"]{
   background:#111111!important;
   border-right:1px solid rgba(255,255,255,0.06)!important;
@@ -54,7 +53,6 @@ section[data-testid="stSidebar"] .stButton>button:hover{
   background:rgba(255,255,255,0.07)!important;
   color:#fff!important;
 }
-/* ── MAIN ── */
 .main-wrap{padding:28px 36px;max-width:1500px;margin:0 auto}
 .kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:28px}
 .kpi-card{background:var(--surface);border-radius:var(--radius-lg);padding:20px 18px;
@@ -155,7 +153,7 @@ def img_to_b64(path):
     try:
         ext  = path.split(".")[-1].lower()
         mime = "jpeg" if ext in ["jpg","jpeg"] else "png"
-        return "data:image/" + mime + ";base64," + base64.b64encode(open(path,"rb").read()).decode()
+        return "data:image/"+mime+";base64,"+base64.b64encode(open(path,"rb").read()).decode()
     except:
         return None
 
@@ -201,23 +199,23 @@ ROUTING = {
     "MOIN(COSTA RICA)": {
         "total_days": 21,
         "stages": [
-            {"id":"moin",       "icon":"⚓","label":"MOIN CR",      "days":0,  "color":"#F59E0B"},
-            {"id":"caraibes",   "icon":"🌊","label":"Caraibes",     "days":3,  "color":"#3B82F6"},
-            {"id":"atlantique", "icon":"🌊","label":"Atlantique",   "days":8,  "color":"#2563EB"},
-            {"id":"algeciras",  "icon":"🔄","label":"Algeciras",    "days":15, "color":"#8B5CF6"},
-            {"id":"alboran",    "icon":"🌊","label":"Mer Alboran",  "days":18, "color":"#0EA5E9"},
-            {"id":"ghazaouet",  "icon":"⚓","label":"Ghazaouet DZ","days":21, "color":"#10B981"},
+            {"id":"moin",       "icon":"⚓","label":"MOIN CR",       "days":0,  "color":"#F59E0B"},
+            {"id":"caraibes",   "icon":"🌊","label":"Caraibes",      "days":3,  "color":"#3B82F6"},
+            {"id":"atlantique", "icon":"🌊","label":"Atlantique",    "days":8,  "color":"#2563EB"},
+            {"id":"algeciras",  "icon":"🔄","label":"Algeciras",     "days":15, "color":"#8B5CF6"},
+            {"id":"alboran",    "icon":"🌊","label":"Mer Alboran",   "days":18, "color":"#0EA5E9"},
+            {"id":"ghazaouet",  "icon":"⚓","label":"Ghazaouet DZ", "days":21, "color":"#10B981"},
         ]
     },
     "TURBO(COLOMBIA)": {
         "total_days": 19,
         "stages": [
-            {"id":"turbo",      "icon":"⚓","label":"TURBO COL",    "days":0,  "color":"#F59E0B"},
-            {"id":"caraibes",   "icon":"🌊","label":"Caraibes",     "days":2,  "color":"#3B82F6"},
-            {"id":"atlantique", "icon":"🌊","label":"Atlantique",   "days":6,  "color":"#2563EB"},
-            {"id":"algeciras",  "icon":"🔄","label":"Algeciras",    "days":13, "color":"#8B5CF6"},
-            {"id":"alboran",    "icon":"🌊","label":"Mer Alboran",  "days":16, "color":"#0EA5E9"},
-            {"id":"ghazaouet",  "icon":"⚓","label":"Ghazaouet DZ","days":19, "color":"#10B981"},
+            {"id":"turbo",      "icon":"⚓","label":"TURBO COL",     "days":0,  "color":"#F59E0B"},
+            {"id":"caraibes",   "icon":"🌊","label":"Caraibes",      "days":2,  "color":"#3B82F6"},
+            {"id":"atlantique", "icon":"🌊","label":"Atlantique",    "days":6,  "color":"#2563EB"},
+            {"id":"algeciras",  "icon":"🔄","label":"Algeciras",     "days":13, "color":"#8B5CF6"},
+            {"id":"alboran",    "icon":"🌊","label":"Mer Alboran",   "days":16, "color":"#0EA5E9"},
+            {"id":"ghazaouet",  "icon":"⚓","label":"Ghazaouet DZ", "days":19, "color":"#10B981"},
         ]
     }
 }
@@ -250,9 +248,9 @@ def get_tracking_info(depart_str, pol="MOIN(COSTA RICA)"):
     for i, s in enumerate(stages):
         if days_el >= s["days"]:
             stage_idx = i
-    if days_el < 0:         progress = 0.0
-    elif days_el >= total_days: progress = 100.0
-    else:                   progress = round(min(100.0, max(0.0, days_el/total_days*100)), 1)
+    if days_el < 0:              progress = 0.0
+    elif days_el >= total_days:  progress = 100.0
+    else:                        progress = round(min(100.0, max(0.0, days_el/total_days*100)), 1)
     return stage_idx, progress, days_el, eta
 
 def build_stage_timeline_html(stage_idx, progress, pol):
@@ -308,28 +306,37 @@ def render_route_map_svg(active_ships):
         x0,y0=WP[si]; x1,y1=WP[min(si+1,segs)]
         sx=round(x0+(x1-x0)*st_,1); sy=round(y0+(y1-y0)*st_,1)
         lbl=ship["label"][:9]
-        fdefs += '<filter id="'+fid+'" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="blur"/><feComposite in="SourceGraphic" in2="blur" operator="over"/></filter>'
+        fdefs += ('<filter id="'+fid+'" x="-50%" y="-50%" width="200%" height="200%">'
+                  '<feGaussianBlur stdDeviation="2.5" result="blur"/>'
+                  '<feComposite in="SourceGraphic" in2="blur" operator="over"/></filter>')
         ships += ('<g transform="translate('+str(sx)+','+str(sy)+')">'
             +'<ellipse cx="0" cy="3" rx="13" ry="5" fill="#1D4ED8" opacity="0.85" filter="url(#'+fid+')"/>'
             +'<rect x="-9" y="-3" width="18" height="7" rx="3" fill="#3B82F6"/>'
             +'<polygon points="9,-3 15,0 9,4" fill="#60A5FA"/>'
             +'<rect x="-4" y="-9" width="3" height="8" fill="#93C5FD" opacity="0.9"/>'
             +'<circle cx="0" cy="0" r="2" fill="#34D399" opacity="0.95"/>'
-            +'<text x="0" y="22" font-size="7" fill="#93C5FD" font-weight="700" text-anchor="middle" font-family="Arial,sans-serif">'+lbl+'</text></g>')
+            +'<text x="0" y="22" font-size="7" fill="#93C5FD" font-weight="700" '
+            +'text-anchor="middle" font-family="Arial,sans-serif">'+lbl+'</text></g>')
     wp0=WP[0]; wp4=WP[4]; wp6=WP[6]
     svg = (
-        '<svg viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:190px;border-radius:12px;display:block;background:linear-gradient(180deg,#0F172A 0%,#0C2340 40%,#0F3460 100%)">'
-        +'<defs><pattern id="og" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/></pattern>'
-        +'<linearGradient id="rg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#4361EE"/><stop offset="50%" stop-color="#3B82F6"/><stop offset="100%" stop-color="#10B981"/></linearGradient>'
-        +'<filter id="ptg" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="blur"/><feComposite in="SourceGraphic" in2="blur" operator="over"/></filter>'
+        '<svg viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" '
+        'style="width:100%;height:190px;border-radius:12px;display:block;'
+        'background:linear-gradient(180deg,#0F172A 0%,#0C2340 40%,#0F3460 100%)">'
+        '<defs>'
+        '<pattern id="og" width="40" height="40" patternUnits="userSpaceOnUse">'
+        '<path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>'
+        '</pattern>'
+        '<linearGradient id="rg" x1="0" y1="0" x2="1" y2="0">'
+        '<stop offset="0%" stop-color="#4361EE"/>'
+        '<stop offset="50%" stop-color="#3B82F6"/>'
+        '<stop offset="100%" stop-color="#10B981"/>'
+        '</linearGradient>'
+        '<filter id="ptg" x="-50%" y="-50%" width="200%" height="200%">'
+        '<feGaussianBlur stdDeviation="2.5" result="blur"/>'
+        '<feComposite in="SourceGraphic" in2="blur" operator="over"/>'
+        '</filter>'
         +fdefs+'</defs>'
         +'<rect width="800" height="200" fill="url(#og)"/>'
-        +'<ellipse cx="'+str(wp0[0])+'" cy="'+str(wp0[1]+22)+'" rx="42" ry="24" fill="#1E3A2F" opacity="0.6"/>'
-        +'<text x="'+str(wp0[0]-30)+'" y="'+str(wp0[1]+44)+'" font-size="8" fill="rgba(255,255,255,0.3)" font-family="Arial,sans-serif">AMER. CENTRALE</text>'
-        +'<text x="'+str(wp4[0]-20)+'" y="'+str(wp4[1]-24)+'" font-size="8" fill="rgba(255,255,255,0.3)" font-family="Arial,sans-serif">ESPAGNE</text>'
-        +'<rect x="555" y="'+str(wp4[1]+10)+'" width="245" height="45" rx="6" fill="#1E2A1A" opacity="0.6"/>'
-        +'<text x="595" y="'+str(wp4[1]+36)+'" font-size="9" fill="rgba(255,255,255,0.3)" font-family="Arial,sans-serif">ALGERIE / MAROC</text>'
-        +'<text x="'+str(wp4[0]+4)+'" y="'+str(wp4[1]+9)+'" font-size="7.5" fill="rgba(255,200,80,0.55)" font-family="Arial,sans-serif">ALGECIRAS</text>'
         +'<path d="'+path_d+'" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2" stroke-dasharray="6,4"/>'
         +'<path d="'+path_d+'" fill="none" stroke="url(#rg)" stroke-width="2.5" stroke-linecap="round"/>'
         +'<circle cx="'+str(wp0[0])+'" cy="'+str(wp0[1])+'" r="5" fill="#F59E0B" filter="url(#ptg)"/>'
@@ -337,10 +344,8 @@ def render_route_map_svg(active_ships):
         +'<circle cx="'+str(wp6[0])+'" cy="'+str(wp6[1])+'" r="6" fill="#10B981" filter="url(#ptg)"/>'
         +'<text x="'+str(wp0[0]-4)+'" y="'+str(wp0[1]+16)+'" font-size="8" fill="#F59E0B" font-family="Arial,sans-serif" font-weight="700">DEPART</text>'
         +'<text x="'+str(wp6[0]-30)+'" y="'+str(wp6[1]+16)+'" font-size="8" fill="#10B981" font-family="Arial,sans-serif" font-weight="700">GHAZAOUET</text>'
+        +'<text x="'+str(wp4[0]-20)+'" y="'+str(wp4[1]-12)+'" font-size="7.5" fill="rgba(255,200,80,0.6)" font-family="Arial,sans-serif">ALGECIRAS</text>'
         +ships
-        +'<rect x="10" y="8" width="152" height="22" rx="6" fill="rgba(255,255,255,0.06)"/>'
-        +'<circle cx="22" cy="19" r="4" fill="#10B981"/>'
-        +'<text x="31" y="23" font-size="9" fill="rgba(255,255,255,0.6)" font-family="Arial,sans-serif">Route maritime active</text>'
         +'</svg>'
     )
     return svg
@@ -353,7 +358,7 @@ def login_page():
     logo_html = (
         '<img src="'+logo_src+'" style="height:36px;border-radius:8px;display:block">'
         if logo_src else
-        '<span style="font-size:22px;font-weight:900;background:linear-gradient(180deg,#fff,rgba(255,255,255,0.7));-webkit-background-clip:text;-webkit-text-fill-color:transparent">EF</span>'
+        '<span style="font-size:22px;font-weight:900;color:#fff">EF</span>'
     )
     st.markdown("""
     <style>
@@ -369,28 +374,21 @@ def login_page():
     }
     div[data-testid="stForm"] input{
       background:rgba(255,255,255,0.05)!important;border:1px solid rgba(255,255,255,0.1)!important;
-      color:#fff!important;border-radius:10px!important;padding-left:38px!important;
-      height:42px!important;font-size:13px!important;
+      color:#fff!important;border-radius:10px!important;height:42px!important;font-size:13px!important;
     }
     div[data-testid="stForm"] input:focus{
       background:rgba(255,255,255,0.09)!important;border-color:rgba(255,255,255,0.28)!important;
-      box-shadow:0 0 0 3px rgba(255,255,255,0.06)!important;
     }
     div[data-testid="stForm"] input::placeholder{color:rgba(255,255,255,0.28)!important}
     div[data-testid="stForm"] label{color:rgba(255,255,255,0)!important;height:0!important;margin:0!important}
     div[data-testid="stForm"] .stTextInput{margin-bottom:10px}
-    div[data-testid="stForm"] .stButton > button{
+    div[data-testid="stForm"] .stButton>button{
       background:#fff!important;color:#000!important;font-weight:700!important;
       border:none!important;border-radius:10px!important;height:44px!important;
       font-size:14px!important;margin-top:6px!important;
-      transition:all 0.25s cubic-bezier(0.4,0,0.2,1)!important;
     }
-    div[data-testid="stForm"] .stButton > button:hover{
+    div[data-testid="stForm"] .stButton>button:hover{
       transform:scale(1.02)!important;box-shadow:0 0 40px rgba(255,255,255,0.18)!important;
-    }
-    div[data-testid="stForm"] .stAlert{
-      background:rgba(239,68,68,0.15)!important;border:1px solid rgba(239,68,68,0.3)!important;
-      border-radius:10px!important;color:#FCA5A5!important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -401,69 +399,46 @@ def login_page():
         '<style>'
         '*{margin:0;padding:0;box-sizing:border-box;font-family:\'Inter\',sans-serif}'
         'html,body{height:100%;background:#000;overflow:hidden}'
-        '.bg{position:fixed;inset:0;background:linear-gradient(180deg,rgba(168,85,247,.42) 0%,rgba(109,40,217,.48) 38%,#000 100%);pointer-events:none}'
-        '.glow-top{position:fixed;top:0;left:50%;transform:translateX(-50%);width:130vh;height:58vh;border-radius:0 0 50% 50%;background:rgba(167,139,250,.22);filter:blur(80px);pointer-events:none;animation:pulseT 8s ease-in-out infinite}'
-        '.glow-bot{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:90vh;height:90vh;border-radius:50% 50% 0 0;background:rgba(167,139,250,.20);filter:blur(60px);pointer-events:none;animation:pulseB 6s ease-in-out infinite 1s}'
-        '.spot1{position:fixed;left:22%;top:22%;width:340px;height:340px;background:rgba(255,255,255,.04);border-radius:50%;filter:blur(90px);animation:pulseS 4s ease-in-out infinite}'
-        '.spot2{position:fixed;right:22%;bottom:22%;width:340px;height:340px;background:rgba(255,255,255,.04);border-radius:50%;filter:blur(90px);animation:pulseS 4s ease-in-out infinite 1.3s}'
-        '@keyframes pulseT{0%,100%{opacity:.7;transform:translateX(-50%) scale(1)}50%{opacity:1;transform:translateX(-50%) scale(1.03)}}'
-        '@keyframes pulseB{0%,100%{opacity:.55;transform:translateX(-50%) scale(1)}50%{opacity:1;transform:translateX(-50%) scale(1.1)}}'
-        '@keyframes pulseS{0%,100%{opacity:.5}50%{opacity:1}}'
+        '.bg{position:fixed;inset:0;background:linear-gradient(180deg,rgba(168,85,247,.42) 0%,rgba(109,40,217,.48) 38%,#000 100%)}'
+        '.glow{position:fixed;top:0;left:50%;transform:translateX(-50%);width:130vh;height:58vh;'
+        'border-radius:0 0 50% 50%;background:rgba(167,139,250,.22);filter:blur(80px);'
+        'animation:pulse 8s ease-in-out infinite}'
+        '@keyframes pulse{0%,100%{opacity:.7}50%{opacity:1}}'
         '.outer{position:relative;z-index:10;display:flex;align-items:center;justify-content:center;height:100%}'
-        '.card-wrap{width:380px;perspective:1500px}'
-        '.card-3d{transform-style:preserve-3d;transition:transform .05s linear}'
-        '.card{position:relative;background:rgba(0,0,0,.48);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border-radius:20px 20px 0 0;border:1px solid rgba(255,255,255,.06);border-bottom:none;padding:30px 28px 24px;overflow:hidden}'
-        '.card::before{content:\'\';position:absolute;inset:0;opacity:.03;background-image:linear-gradient(135deg,#fff .5px,transparent .5px),linear-gradient(45deg,#fff .5px,transparent .5px);background-size:30px 30px;pointer-events:none}'
+        '.card-wrap{width:380px}'
+        '.card{position:relative;background:rgba(0,0,0,.48);backdrop-filter:blur(28px);'
+        'border-radius:20px 20px 0 0;border:1px solid rgba(255,255,255,.06);border-bottom:none;padding:30px 28px 24px}'
         '.beams{position:absolute;inset:-1px;border-radius:20px 20px 0 0;overflow:hidden;pointer-events:none;z-index:2}'
-        '.beam-top{position:absolute;top:0;left:-50%;height:2px;width:50%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.85),transparent);filter:blur(1.5px);animation:bTop 3.5s ease-in-out infinite}'
-        '.beam-right{position:absolute;top:-50%;right:0;height:50%;width:2px;background:linear-gradient(180deg,transparent,rgba(255,255,255,.85),transparent);filter:blur(1.5px);animation:bRight 3.5s ease-in-out infinite .875s}'
+        '.beam-top{position:absolute;top:0;left:-50%;height:2px;width:50%;'
+        'background:linear-gradient(90deg,transparent,rgba(255,255,255,.85),transparent);'
+        'filter:blur(1.5px);animation:bTop 3.5s ease-in-out infinite}'
         '@keyframes bTop{0%{left:-50%}65%{left:100%}100%{left:100%}}'
-        '@keyframes bRight{0%{top:-50%}65%{top:100%}100%{top:100%}}'
-        '.corner{position:absolute;border-radius:50%;background:rgba(255,255,255,.5);filter:blur(1px);animation:cPulse 2s ease-in-out infinite alternate}'
-        '.c-tl{top:0;left:0;width:5px;height:5px}.c-tr{top:0;right:0;width:7px;height:7px;animation-delay:.5s}'
-        '@keyframes cPulse{0%{opacity:.2}100%{opacity:.55}}'
-        '.logo-wrap{width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(255,255,255,.1),rgba(255,255,255,.02));margin:0 auto 14px;position:relative;overflow:hidden}'
-        'h1{text-align:center;font-size:22px;font-weight:800;background:linear-gradient(180deg,#fff 0%,rgba(255,255,255,.78) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:5px}'
+        '.logo-wrap{width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,.12);'
+        'display:flex;align-items:center;justify-content:center;margin:0 auto 14px}'
+        'h1{text-align:center;font-size:22px;font-weight:800;'
+        'background:linear-gradient(180deg,#fff,rgba(255,255,255,.78));'
+        '-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:5px}'
         '.sub{text-align:center;font-size:12px;color:rgba(255,255,255,.45);margin-bottom:18px}'
-        '.badge{display:inline-flex;align-items:center;gap:7px;background:rgba(16,185,129,.13);border:1px solid rgba(16,185,129,.28);color:rgba(16,185,129,.95);padding:5px 14px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px}'
+        '.badge{display:inline-flex;align-items:center;gap:7px;background:rgba(16,185,129,.13);'
+        'border:1px solid rgba(16,185,129,.28);color:rgba(16,185,129,.95);'
+        'padding:5px 14px;border-radius:20px;font-size:10px;font-weight:700}'
         '.dot{width:6px;height:6px;border-radius:50%;background:#10B981;animation:blink 2s ease-in-out infinite}'
         '@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}'
         '.divider{height:1px;margin-top:18px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)}'
         '</style></head><body>'
-        '<div class="bg"></div><div class="glow-top"></div><div class="glow-bot"></div>'
-        '<div class="spot1"></div><div class="spot2"></div>'
-        '<div class="outer"><div class="card-wrap"><div class="card-3d" id="c3d"><div class="card">'
-        '<div class="beams"><div class="beam-top"></div><div class="beam-right"></div>'
-        '<div class="corner c-tl"></div><div class="corner c-tr"></div></div>'
+        '<div class="bg"></div><div class="glow"></div>'
+        '<div class="outer"><div class="card-wrap"><div class="card">'
+        '<div class="beams"><div class="beam-top"></div></div>'
         '<div style="position:relative;z-index:3;text-align:center">'
         '<div class="logo-wrap">'+logo_html+'</div>'
         '<h1>Eden Food</h1>'
         '<p class="sub">Logistics Platform &nbsp;·&nbsp; Acces securise</p>'
-        '<div style="display:flex;justify-content:center"><div class="badge"><div class="dot"></div>Systeme operationnel</div></div>'
-        '<div class="divider"></div>'
-        '</div></div></div></div></div>'
-        '<script>'
-        'const card=document.getElementById("c3d");const wrap=card.closest(".card-wrap");let ticking=false;'
-        'wrap.addEventListener("mousemove",function(e){if(!ticking){requestAnimationFrame(function(){'
-        'const r=wrap.getBoundingClientRect();const dx=(e.clientX-r.left-r.width/2)/180;const dy=(e.clientY-r.top-r.height/2)/180;'
-        'card.style.transform="rotateY("+dx*10+"deg) rotateX("+-dy*10+"deg)";ticking=false;});ticking=true;}});'
-        'wrap.addEventListener("mouseleave",function(){card.style.transition="transform .7s cubic-bezier(0.4,0,0.2,1)";'
-        'card.style.transform="rotateY(0deg) rotateX(0deg)";setTimeout(()=>card.style.transition="transform .05s linear",700);});'
-        '</script></body></html>',
+        '<div style="display:flex;justify-content:center">'
+        '<div class="badge"><div class="dot"></div>Systeme operationnel</div>'
+        '</div><div class="divider"></div>'
+        '</div></div></div></div>'
+        '</body></html>',
         height=268, scrolling=False
-    )
-
-    st.markdown(
-        '<div style="max-width:380px;margin:0 auto;position:relative;z-index:20;pointer-events:none">'
-        '<div style="position:absolute;left:42px;top:18px;z-index:99;color:rgba(255,255,255,0.35)">'
-        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
-        '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'
-        '</svg></div>'
-        '<div style="position:absolute;left:42px;top:74px;z-index:99;color:rgba(255,255,255,0.35)">'
-        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
-        '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'
-        '</svg></div></div>',
-        unsafe_allow_html=True
     )
 
     col1, col2, col3 = st.columns([1,2.1,1])
@@ -551,21 +526,19 @@ current_week_str  = "S-"+str(current_week_num)
 commandes_semaine = commandes[commandes["semaine"]==current_week_str]
 
 # ══════════════════════════════════════════════════════════════════════════════
-# SIDEBAR — DARK STYLE
+# SIDEBAR
 # ══════════════════════════════════════════════════════════════════════════════
-
-# SVG icons
 ICO = {
-    "dashboard":  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
-    "semaine":    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
-    "commandes":  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
-    "tracking":   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
-    "documents":  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
-    "licences":   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/></svg>',
-    "planning":   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
-    "new_cmd":    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
-    "logout":     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
-    "settings":   '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+    "dashboard": '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
+    "semaine":   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+    "commandes": '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+    "tracking":  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    "documents": '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+    "licences":  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/></svg>',
+    "planning":  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+    "new_cmd":   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+    "logout":    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
+    "settings":  '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
 }
 
 NAV = [
@@ -579,33 +552,26 @@ NAV = [
 ]
 
 with st.sidebar:
-    # ── Logo + dot statut ─────────────────────────────────────────────────────
     logo_src = img_to_b64("logo_eden_food.jpg") or img_to_b64("logo_eden_food.png")
     logo_tag = ('<img src="'+logo_src+'" style="height:26px">'
                 if logo_src else
                 '<span style="font-size:14px;font-weight:800;color:#fff">EDEN FOOD</span>')
     st.markdown(
         '<div style="padding:20px 16px 10px;display:flex;align-items:center;justify-content:space-between">'
-        '<div style="display:flex;align-items:center;gap:8px">'+logo_tag+'</div>'
-        '<div class="status-dot" style="width:7px;height:7px;border-radius:50%;background:#10B981;'
-        'box-shadow:0 0 7px #10B981"></div>'
-        '</div>',
-        unsafe_allow_html=True)
-
-    # ── Divider + label ───────────────────────────────────────────────────────
-    st.markdown(
+        '<div>'+logo_tag+'</div>'
+        '<div class="status-dot" style="width:7px;height:7px;border-radius:50%;background:#10B981"></div>'
+        '</div>'
         '<div style="height:1px;background:rgba(255,255,255,0.07);margin:4px 16px 12px"></div>'
         '<div style="padding:0 16px 6px;font-size:9px;color:rgba(255,255,255,0.28);'
         'text-transform:uppercase;letter-spacing:1.8px;font-weight:700">Menu</div>',
         unsafe_allow_html=True)
 
-    # ── NAV items ─────────────────────────────────────────────────────────────
     for pid, label in NAV:
         is_active = st.session_state.page == pid
         if is_active:
             st.markdown(
-                '<div style="background:rgba(255,255,255,0.1);border-radius:8px;padding:9px 14px;'
-                'margin-bottom:2px;display:flex;align-items:center;gap:10px;'
+                '<div style="background:rgba(255,255,255,0.1);border-radius:8px;'
+                'padding:9px 14px;margin-bottom:2px;display:flex;align-items:center;gap:10px;'
                 'border-left:2px solid #fff;cursor:default">'
                 '<span style="color:#fff;display:flex;align-items:center;flex-shrink:0">'+ICO[pid]+'</span>'
                 '<span style="font-size:13px;font-weight:600;color:#fff">'+label+'</span>'
@@ -615,33 +581,31 @@ with st.sidebar:
             if st.button(ICO[pid]+"  "+label, key="nav_"+pid, use_container_width=True):
                 st.session_state.page = pid; st.rerun()
 
-    # ── Admin section ─────────────────────────────────────────────────────────
     if st.session_state.role == "admin":
         st.markdown(
-            '<div style="height:1px;background:rgba(255,255,255,0.07);margin:8px 16px 8px"></div>'
+            '<div style="height:1px;background:rgba(255,255,255,0.07);margin:8px 16px"></div>'
             '<div style="padding:0 16px 6px;font-size:9px;color:rgba(255,255,255,0.28);'
-            'text-transform:uppercase;letter-spacing:1.8px;font-weight:700">Admin</div>',
+            'text-transform:uppercase;letter-spacing:1.8px;font-weight:700;margin-top:8px">Admin</div>',
             unsafe_allow_html=True)
         is_new = st.session_state.page == "new_cmd"
         if is_new:
             st.markdown(
-                '<div style="background:rgba(255,255,255,0.1);border-radius:8px;padding:9px 14px;'
-                'margin-bottom:2px;display:flex;align-items:center;gap:10px;border-left:2px solid #fff">'
+                '<div style="background:rgba(255,255,255,0.1);border-radius:8px;'
+                'padding:9px 14px;margin-bottom:2px;display:flex;align-items:center;gap:10px;'
+                'border-left:2px solid #fff">'
                 '<span style="color:#fff;display:flex;align-items:center;flex-shrink:0">'+ICO["new_cmd"]+'</span>'
                 '<span style="font-size:13px;font-weight:600;color:#fff">Nouvelle commande</span>'
                 '</div>',
-                unsafe_allow_True)
+                unsafe_allow_html=True)
         else:
             if st.button(ICO["new_cmd"]+"  Nouvelle commande", key="nav_new_cmd", use_container_width=True):
                 st.session_state.page = "new_cmd"; st.rerun()
 
-    # ── Spacer ────────────────────────────────────────────────────────────────
     st.markdown('<div style="min-height:30px"></div>', unsafe_allow_html=True)
     st.markdown(
         '<div style="height:1px;background:rgba(255,255,255,0.07);margin:0 16px 10px"></div>',
         unsafe_allow_html=True)
 
-    # ── Profil card ───────────────────────────────────────────────────────────
     role_color = "#4361EE" if st.session_state.role == "admin" else "#374151"
     role_label = "Admin" if st.session_state.role == "admin" else "Utilisateur"
     initiale   = st.session_state.username[0].upper() if st.session_state.username else "?"
@@ -660,7 +624,6 @@ with st.sidebar:
         '</div>',
         unsafe_allow_html=True)
 
-    # ── Déconnexion ───────────────────────────────────────────────────────────
     if st.button(ICO["logout"]+"  Deconnexion", use_container_width=True, key="logout"):
         st.session_state.update(authenticated=False, username="")
         st.rerun()
@@ -678,7 +641,7 @@ if page == "dashboard":
 
     if hero_src:
         st.markdown(
-            '<div class="hero-wrap" style="background:url(\''+hero_src+'\') center 50% / cover no-repeat;">'
+            '<div class="hero-wrap" style="background:url(\''+hero_src+'\') center/cover no-repeat;">'
             '<div class="hero-overlay"><div class="hero-text">'
             +logo_ov
             +'<h1>Fresh from the<br>plantation to the world</h1>'
@@ -700,7 +663,6 @@ if page == "dashboard":
             unsafe_allow_html=True)
 
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
-
     todo  = commandes[commandes["statut"].str.contains("GENERER", na=False)]
     done  = commandes[commandes["statut"].str.contains("GENERE",  na=False)]
     alert = clients[clients["solde_reel"] < 19591.2]
@@ -708,23 +670,35 @@ if page == "dashboard":
 
     st.markdown(
         '<div class="kpi-grid">'
-        '<div class="kpi-card" style="--card-color:#4361EE;--card-bg:#EEF2FF"><div class="icon-wrap">🚢</div>'
-        '<div class="kpi-lbl">Expeditions</div><div class="kpi-val" style="color:#4361EE">'+str(len(commandes))+'</div>'
+        '<div class="kpi-card" style="--card-color:#4361EE;--card-bg:#EEF2FF">'
+        '<div class="icon-wrap">🚢</div>'
+        '<div class="kpi-lbl">Expeditions</div>'
+        '<div class="kpi-val" style="color:#4361EE">'+str(len(commandes))+'</div>'
         '<div class="kpi-sub">enregistrees</div></div>'
-        '<div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7"><div class="icon-wrap">⏳</div>'
-        '<div class="kpi-lbl">A generer</div><div class="kpi-val" style="color:#D97706">'+str(len(todo))+'</div>'
+        '<div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7">'
+        '<div class="icon-wrap">⏳</div>'
+        '<div class="kpi-lbl">A generer</div>'
+        '<div class="kpi-val" style="color:#D97706">'+str(len(todo))+'</div>'
         '<div class="kpi-sub">en attente</div></div>'
-        '<div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5"><div class="icon-wrap">✅</div>'
-        '<div class="kpi-lbl">Confirmees</div><div class="kpi-val" style="color:#059669">'+str(len(done))+'</div>'
+        '<div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">'
+        '<div class="icon-wrap">✅</div>'
+        '<div class="kpi-lbl">Confirmees</div>'
+        '<div class="kpi-val" style="color:#059669">'+str(len(done))+'</div>'
         '<div class="kpi-sub">generees</div></div>'
-        '<div class="kpi-card" style="--card-color:#8B5CF6;--card-bg:#EDE9FE"><div class="icon-wrap">📦</div>'
-        '<div class="kpi-lbl">CNT planifies</div><div class="kpi-val" style="color:#7C3AED">'+str(int(todo["nb_cnt"].sum()))+'</div>'
+        '<div class="kpi-card" style="--card-color:#8B5CF6;--card-bg:#EDE9FE">'
+        '<div class="icon-wrap">📦</div>'
+        '<div class="kpi-lbl">CNT planifies</div>'
+        '<div class="kpi-val" style="color:#7C3AED">'+str(int(todo["nb_cnt"].sum()))+'</div>'
         '<div class="kpi-sub">conteneurs</div></div>'
-        '<div class="kpi-card" style="--card-color:#EF4444;--card-bg:#FEE2E2"><div class="icon-wrap">🔴</div>'
-        '<div class="kpi-lbl">Alertes</div><div class="kpi-val" style="color:#DC2626">'+str(len(alert))+'</div>'
+        '<div class="kpi-card" style="--card-color:#EF4444;--card-bg:#FEE2E2">'
+        '<div class="icon-wrap">🔴</div>'
+        '<div class="kpi-lbl">Alertes</div>'
+        '<div class="kpi-val" style="color:#DC2626">'+str(len(alert))+'</div>'
         '<div class="kpi-sub">licences critiques</div></div>'
-        '<div class="kpi-card" style="--card-color:#3B82F6;--card-bg:#DBEAFE"><div class="icon-wrap">📁</div>'
-        '<div class="kpi-lbl">Documents</div><div class="kpi-val" style="color:#2563EB">'+str(tdocs)+'</div>'
+        '<div class="kpi-card" style="--card-color:#3B82F6;--card-bg:#DBEAFE">'
+        '<div class="icon-wrap">📁</div>'
+        '<div class="kpi-lbl">Documents</div>'
+        '<div class="kpi-val" style="color:#2563EB">'+str(tdocs)+'</div>'
         '<div class="kpi-sub">uploades</div></div>'
         '</div>',
         unsafe_allow_html=True)
@@ -733,7 +707,8 @@ if page == "dashboard":
     with c1:
         st.markdown('<div class="sec-hdr"><span class="sec-title">Dernieres expeditions</span>'
                     '<span class="sec-sub">10 dernieres</span></div>', unsafe_allow_html=True)
-        st.dataframe(commandes.tail(10)[["semaine","client","booking","pol","nb_cnt","depart","statut"]],
+        st.dataframe(
+            commandes.tail(10)[["semaine","client","booking","pol","nb_cnt","depart","statut"]],
             use_container_width=True, hide_index=True, height=340,
             column_config={
                 "semaine": st.column_config.TextColumn("Sem."),
@@ -760,7 +735,8 @@ if page == "dashboard":
                 '<span class="sec-sub">CNT par semaine</span></div>', unsafe_allow_html=True)
     if not commandes.empty:
         df_sem = commandes.groupby("semaine")["nb_cnt"].sum().reset_index()
-        fig2   = px.bar(df_sem, x="semaine", y="nb_cnt", color_discrete_sequence=["#4361EE"],
+        fig2   = px.bar(df_sem, x="semaine", y="nb_cnt",
+                        color_discrete_sequence=["#4361EE"],
                         labels={"semaine":"","nb_cnt":"Conteneurs"})
         fig2.update_traces(marker_cornerradius=6, marker_line_width=0)
         fig2 = apply_chart_style(fig2)
@@ -788,13 +764,17 @@ elif page == "semaine":
         st.markdown(
             '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px">'
             '<div class="kpi-card" style="--card-color:#4361EE;--card-bg:#EEF2FF">'
-            '<div class="kpi-lbl">Total</div><div class="kpi-val" style="color:#4361EE">'+str(len(commandes_semaine))+'</div></div>'
+            '<div class="kpi-lbl">Total</div>'
+            '<div class="kpi-val" style="color:#4361EE">'+str(len(commandes_semaine))+'</div></div>'
             '<div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7">'
-            '<div class="kpi-lbl">A generer</div><div class="kpi-val" style="color:#D97706">'+str(len(todo_s))+'</div></div>'
+            '<div class="kpi-lbl">A generer</div>'
+            '<div class="kpi-val" style="color:#D97706">'+str(len(todo_s))+'</div></div>'
             '<div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">'
-            '<div class="kpi-lbl">Confirmees</div><div class="kpi-val" style="color:#059669">'+str(len(done_s))+'</div></div>'
+            '<div class="kpi-lbl">Confirmees</div>'
+            '<div class="kpi-val" style="color:#059669">'+str(len(done_s))+'</div></div>'
             '<div class="kpi-card" style="--card-color:#8B5CF6;--card-bg:#EDE9FE">'
-            '<div class="kpi-lbl">CNT total</div><div class="kpi-val" style="color:#7C3AED">'+str(int(commandes_semaine["nb_cnt"].sum()))+'</div></div>'
+            '<div class="kpi-lbl">CNT total</div>'
+            '<div class="kpi-val" style="color:#7C3AED">'+str(int(commandes_semaine["nb_cnt"].sum()))+'</div></div>'
             '</div>',
             unsafe_allow_html=True)
         for _, row in commandes_semaine.iterrows():
@@ -805,17 +785,22 @@ elif page == "semaine":
                 '<div class="cmd-row">'
                 '<div style="min-width:190px">'
                 '<div style="font-size:14px;font-weight:700;color:#111827">'+str(row["client"])+'</div>'
-                '<div style="font-size:11px;color:#9CA3AF;margin-top:3px">'+str(row["booking"])+' · '+str(row["licence"])+'</div></div>'
-                '<div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:3px;text-transform:uppercase">POL</div>'
+                '<div style="font-size:11px;color:#9CA3AF;margin-top:3px">'
+                +str(row["booking"])+' · '+str(row["licence"])+'</div></div>'
+                '<div style="text-align:center">'
+                '<div style="font-size:9px;color:#9CA3AF;margin-bottom:3px;text-transform:uppercase">POL</div>'
                 '<div style="font-weight:700;color:#111827;font-size:12px">'+str(row["pol"])+'</div></div>'
-                '<div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:3px;text-transform:uppercase">CNT</div>'
-                '<div style="font-weight:900;color:#4361EE;font-size:22px;letter-spacing:-1px">'+str(row["nb_cnt"])+'</div></div>'
-                '<div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:3px;text-transform:uppercase">Depart</div>'
+                '<div style="text-align:center">'
+                '<div style="font-size:9px;color:#9CA3AF;margin-bottom:3px;text-transform:uppercase">CNT</div>'
+                '<div style="font-weight:900;color:#4361EE;font-size:22px">'+str(row["nb_cnt"])+'</div></div>'
+                '<div style="text-align:center">'
+                '<div style="font-size:9px;color:#9CA3AF;margin-bottom:3px;text-transform:uppercase">Depart</div>'
                 '<div style="font-weight:600;color:#374151;font-size:12px">'+str(row["depart"])+'</div></div>'
-                '<div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:3px;text-transform:uppercase">ETA</div>'
+                '<div style="text-align:center">'
+                '<div style="font-size:9px;color:#9CA3AF;margin-bottom:3px;text-transform:uppercase">ETA</div>'
                 '<div style="font-weight:600;color:#374151;font-size:12px">'+str(row["eta"])+'</div></div>'
-                '<div style="display:flex;gap:6px;align-items:center">'+dp
-                +'<span class="pill '+pc+'">'+str(row["statut"])+'</span></div>'
+                '<div style="display:flex;gap:6px;align-items:center">'
+                +dp+'<span class="pill '+pc+'">'+str(row["statut"])+'</span></div>'
                 '</div>',
                 unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
@@ -826,7 +811,8 @@ elif page == "semaine":
 elif page == "commandes":
     st.markdown(
         '<div style="background:#fff;border-bottom:1px solid #E5E7EB;padding:18px 36px;'
-        'position:sticky;top:0;z-index:100;font-size:20px;font-weight:800;color:#111827">Commandes</div>',
+        'position:sticky;top:0;z-index:100;font-size:20px;font-weight:800;color:#111827">'
+        'Commandes</div>',
         unsafe_allow_html=True)
     st.markdown('<div style="background:#fff;border-bottom:1px solid #E5E7EB;padding:10px 36px">',
                 unsafe_allow_html=True)
@@ -848,7 +834,11 @@ elif page == "commandes":
     st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
 
-    df_filt = commandes[commandes["client"].isin(f_client)&commandes["pol"].isin(f_pol)&commandes["statut"].isin(f_statut)]
+    df_filt = commandes[
+        commandes["client"].isin(f_client) &
+        commandes["pol"].isin(f_pol) &
+        commandes["statut"].isin(f_statut)
+    ]
     if f_sem:
         df_filt = df_filt[df_filt["semaine"].str.contains(f_sem, case=False, na=False)]
 
@@ -868,19 +858,25 @@ elif page == "commandes":
             '<div class="cmd-row">'
             '<div style="min-width:200px">'
             '<div style="font-size:13px;font-weight:700;color:#111827">'+str(row["client"])+'</div>'
-            '<div style="font-size:11px;color:#9CA3AF;margin-top:2px">'+str(row["semaine"])+' · '+str(row["booking"])+'</div></div>'
-            '<div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase">Navire</div>'
+            '<div style="font-size:11px;color:#9CA3AF;margin-top:2px">'
+            +str(row["semaine"])+' · '+str(row["booking"])+'</div></div>'
+            '<div style="text-align:center">'
+            '<div style="font-size:9px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase">Navire</div>'
             '<div style="font-weight:500;color:#374151;font-size:11px">'+str(row["navire"])+'</div></div>'
-            '<div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase">POL</div>'
+            '<div style="text-align:center">'
+            '<div style="font-size:9px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase">POL</div>'
             '<div style="font-weight:700;color:#111827;font-size:12px">'+str(row["pol"])+'</div></div>'
-            '<div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase">CNT</div>'
+            '<div style="text-align:center">'
+            '<div style="font-size:9px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase">CNT</div>'
             '<div style="font-weight:900;color:#4361EE;font-size:20px">'+str(row["nb_cnt"])+'</div></div>'
-            '<div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase">Depart</div>'
+            '<div style="text-align:center">'
+            '<div style="font-size:9px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase">Depart</div>'
             '<div style="font-weight:500;color:#374151;font-size:11px">'+str(row["depart"])+'</div></div>'
-            '<div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase">ETA</div>'
+            '<div style="text-align:center">'
+            '<div style="font-size:9px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase">ETA</div>'
             '<div style="font-weight:500;color:#374151;font-size:11px">'+str(row["eta"])+'</div></div>'
-            '<div style="display:flex;gap:6px;align-items:center">'+dp
-            +'<span class="pill '+pc+'">'+str(row["statut"])+'</span></div>'
+            '<div style="display:flex;gap:6px;align-items:center">'
+            +dp+'<span class="pill '+pc+'">'+str(row["statut"])+'</span></div>'
             '</div>',
             unsafe_allow_html=True)
 
@@ -895,21 +891,24 @@ elif page == "commandes":
             st.markdown(
                 '<div class="doc-zone">'
                 '<div style="font-size:12px;font-weight:700;color:#111827;margin-bottom:12px">'
-                '📁 Documents — <span style="color:#4361EE">'+str(row["booking"])+'</span></div></div>',
+                '📁 Documents — <span style="color:#4361EE">'+str(row["booking"])+'</span>'
+                '</div></div>',
                 unsafe_allow_html=True)
             existing = list_docs(row["booking"])
             if existing:
                 for doc_name in existing:
                     doc_path = os.path.join(docs_path(row["booking"]), doc_name)
                     d1,d2,d3 = st.columns([4,1,1])
-                    with d1: st.markdown('<div class="doc-chip">📄 '+doc_name+'</div>', unsafe_allow_html=True)
+                    with d1:
+                        st.markdown('<div class="doc-chip">📄 '+doc_name+'</div>', unsafe_allow_html=True)
                     with d2:
                         with open(doc_path,"rb") as f:
                             st.download_button("⬇️", f.read(), file_name=doc_name,
                                 key="dl_"+str(row["booking"])+"_"+doc_name, use_container_width=True)
                     with d3:
                         if st.session_state.role == "admin":
-                            if st.button("🗑️", key="del_"+str(row["booking"])+"_"+doc_name, use_container_width=True):
+                            if st.button("🗑️", key="del_"+str(row["booking"])+"_"+doc_name,
+                                         use_container_width=True):
                                 delete_doc(row["booking"], doc_name); st.rerun()
             else:
                 st.caption("Aucun document — uploadez ci-dessous.")
@@ -918,7 +917,8 @@ elif page == "commandes":
                 uploaded = st.file_uploader("", type=["pdf","xlsx","xls","docx","jpg","png"],
                                             key="up_"+str(row["booking"]), label_visibility="collapsed")
             with u2:
-                dtype = st.selectbox("", DOC_TYPES, key="dtype_"+str(row["booking"]), label_visibility="collapsed")
+                dtype = st.selectbox("", DOC_TYPES,
+                                     key="dtype_"+str(row["booking"]), label_visibility="collapsed")
             if uploaded and st.button("✅ Uploader", key="upconf_"+str(row["booking"]), type="primary"):
                 uploaded.name = dtype.replace(" ","_")+"_"+uploaded.name
                 save_doc(row["booking"], uploaded); st.success("Uploade !"); st.rerun()
@@ -926,7 +926,7 @@ elif page == "commandes":
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TRACKING MARITIME
+# TRACKING
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "tracking":
     st.markdown(
@@ -957,15 +957,18 @@ elif page == "tracking":
     st.markdown(
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px">'
         '<div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7">'
-        '<div class="icon-wrap">⏳</div><div class="kpi-lbl">En attente depart</div>'
+        '<div class="icon-wrap">⏳</div>'
+        '<div class="kpi-lbl">En attente depart</div>'
         '<div class="kpi-val" style="color:#D97706">'+str(len(en_attente_list))+'</div>'
         '<div class="kpi-sub">pas encore partis</div></div>'
         '<div class="kpi-card" style="--card-color:#3B82F6;--card-bg:#DBEAFE">'
-        '<div class="icon-wrap">🚢</div><div class="kpi-lbl">En mer</div>'
+        '<div class="icon-wrap">🚢</div>'
+        '<div class="kpi-lbl">En mer</div>'
         '<div class="kpi-val" style="color:#2563EB">'+str(len(en_mer_list))+'</div>'
         '<div class="kpi-sub">en transit actif</div></div>'
         '<div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">'
-        '<div class="icon-wrap">⚓</div><div class="kpi-lbl">Arrives Ghazaouet</div>'
+        '<div class="icon-wrap">⚓</div>'
+        '<div class="kpi-lbl">Arrives Ghazaouet</div>'
         '<div class="kpi-val" style="color:#059669">'+str(len(arrives_list))+'</div>'
         '<div class="kpi-sub">a destination</div></div>'
         '</div>',
@@ -976,12 +979,13 @@ elif page == "tracking":
         '<div style="background:#0F172A;border-radius:16px;padding:16px;'
         'box-shadow:0 8px 32px rgba(0,0,0,0.3);margin-bottom:20px">'
         '<div style="font-size:11px;color:rgba(255,255,255,0.5);font-weight:700;'
-        'text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;font-family:Arial,sans-serif">'
-        'Route maritime — Ameriques vers Ghazaouet</div>'
+        'text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;'
+        'font-family:Arial,sans-serif">Route maritime — Ameriques vers Ghazaouet</div>'
         +map_svg+'</div>',
         height=250)
 
-    filter_track = st.selectbox("", ["Tous","En attente","En mer","Arrives"], label_visibility="collapsed")
+    filter_track = st.selectbox("", ["Tous","En attente","En mer","Arrives"],
+                                label_visibility="collapsed")
     if   filter_track == "En attente": rows_to_show = en_attente_list
     elif filter_track == "En mer":     rows_to_show = en_mer_list
     elif filter_track == "Arrives":    rows_to_show = arrives_list
@@ -1023,8 +1027,8 @@ elif page == "tracking":
                 '<div>'
                 '<div style="font-size:15px;font-weight:800;color:#111827">'+str(row["client"])+'</div>'
                 '<div style="font-size:11px;color:#9CA3AF;margin-top:3px">'
-                +str(row["navire"])+' · '+str(row["booking"])+' · '+str(row["pol"]).split("(")[0].strip()
-                +'</div></div>'
+                +str(row["navire"])+' · '+str(row["booking"])
+                +' · '+str(row["pol"]).split("(")[0].strip()+'</div></div>'
                 '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
                 '<div style="text-align:center">'
                 '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;margin-bottom:2px">Depart</div>'
@@ -1044,7 +1048,7 @@ elif page == "tracking":
                 '</div></div>'
                 '<div style="padding:0 22px 10px">'
                 '<div class="prog-track" style="height:6px">'
-                '<div class="prog-fill" style="background:linear-gradient(90deg,'+card_color+','+card_color+'88);width:'+str(prog)+'%"></div>'
+                '<div class="prog-fill" style="background:'+card_color+';width:'+str(prog)+'%"></div>'
                 '</div></div></div>',
                 unsafe_allow_html=True)
 
@@ -1054,30 +1058,30 @@ elif page == "tracking":
                 st.rerun()
 
             if is_open:
-                mini_cards = (
-                    '<div style="margin-top:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px">'
-                    '<div style="background:#fff;border-radius:10px;padding:12px;border:1px solid #E5E7EB">'
-                    '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">CNT</div>'
-                    '<div style="font-size:18px;font-weight:900;color:#4361EE">'+str(row["nb_cnt"])+'</div></div>'
-                    '<div style="background:#fff;border-radius:10px;padding:12px;border:1px solid #E5E7EB">'
-                    '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">Total kgs</div>'
-                    '<div style="font-size:14px;font-weight:800;color:#111827">'+"{:,.0f}".format(row["total_kgs"])+'</div></div>'
-                    '<div style="background:#fff;border-radius:10px;padding:12px;border:1px solid #E5E7EB">'
-                    '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">Semaine</div>'
-                    '<div style="font-size:14px;font-weight:800;color:#111827">'+str(row["semaine"])+'</div></div>'
-                    '<div style="background:#fff;border-radius:10px;padding:12px;border:1px solid #E5E7EB">'
-                    '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">Statut</div>'
-                    '<div style="font-size:11px;font-weight:700;color:'+card_color+'">'+str(row["statut"])+'</div></div>'
-                    '</div>'
-                )
+                cnt_val  = str(row["nb_cnt"])
+                kgs_val  = "{:,.0f}".format(row["total_kgs"])
+                sem_val  = str(row["semaine"])
+                stat_val = str(row["statut"])
                 st.markdown(
                     '<div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;'
                     'padding:18px 22px;margin-bottom:10px;overflow-x:auto">'
                     '<div style="font-size:11px;color:#9CA3AF;font-weight:700;text-transform:uppercase;'
                     'letter-spacing:1px;margin-bottom:14px">Etapes — '+str(row["booking"])+'</div>'
-                    +timeline_html
-                    +mini_cards
-                    +'</div>',
+                    +timeline_html+
+                    '<div style="margin-top:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px">'
+                    '<div style="background:#fff;border-radius:10px;padding:12px;border:1px solid #E5E7EB">'
+                    '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">CNT</div>'
+                    '<div style="font-size:18px;font-weight:900;color:#4361EE">'+cnt_val+'</div></div>'
+                    '<div style="background:#fff;border-radius:10px;padding:12px;border:1px solid #E5E7EB">'
+                    '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">Total kgs</div>'
+                    '<div style="font-size:14px;font-weight:800;color:#111827">'+kgs_val+'</div></div>'
+                    '<div style="background:#fff;border-radius:10px;padding:12px;border:1px solid #E5E7EB">'
+                    '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">Semaine</div>'
+                    '<div style="font-size:14px;font-weight:800;color:#111827">'+sem_val+'</div></div>'
+                    '<div style="background:#fff;border-radius:10px;padding:12px;border:1px solid #E5E7EB">'
+                    '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">Statut</div>'
+                    '<div style="font-size:11px;font-weight:700;color:'+card_color+'">'+stat_val+'</div></div>'
+                    '</div></div>',
                     unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -1087,27 +1091,34 @@ elif page == "tracking":
 elif page == "documents":
     st.markdown(
         '<div style="background:#fff;border-bottom:1px solid #E5E7EB;padding:18px 36px;'
-        'position:sticky;top:0;z-index:100;font-size:20px;font-weight:800;color:#111827">Documents</div>',
+        'position:sticky;top:0;z-index:100;font-size:20px;font-weight:800;color:#111827">'
+        'Documents</div>',
         unsafe_allow_html=True)
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
 
     all_bookings = commandes["booking"].dropna().unique().tolist()
     total_docs   = sum(len(list_docs(b)) for b in all_bookings)
+    avec_docs    = sum(1 for b in all_bookings if list_docs(b))
+
     st.markdown(
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px">'
         '<div class="kpi-card" style="--card-color:#3B82F6;--card-bg:#DBEAFE">'
-        '<div class="icon-wrap">📁</div><div class="kpi-lbl">Total documents</div>'
+        '<div class="icon-wrap">📁</div>'
+        '<div class="kpi-lbl">Total documents</div>'
         '<div class="kpi-val" style="color:#2563EB">'+str(total_docs)+'</div></div>'
         '<div class="kpi-card" style="--card-color:#8B5CF6;--card-bg:#EDE9FE">'
-        '<div class="icon-wrap">🚢</div><div class="kpi-lbl">Bookings</div>'
+        '<div class="icon-wrap">🚢</div>'
+        '<div class="kpi-lbl">Bookings</div>'
         '<div class="kpi-val" style="color:#7C3AED">'+str(len(all_bookings))+'</div></div>'
         '<div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">'
-        '<div class="icon-wrap">✅</div><div class="kpi-lbl">Avec documents</div>'
-        '<div class="kpi-val" style="color:#059669">'+str(sum(1 for b in all_bookings if list_docs(b)))+'</div></div>'
+        '<div class="icon-wrap">✅</div>'
+        '<div class="kpi-lbl">Avec documents</div>'
+        '<div class="kpi-val" style="color:#059669">'+str(avec_docs)+'</div></div>'
         '</div>',
         unsafe_allow_html=True)
 
-    search_doc = st.text_input("", placeholder="Rechercher un booking ou client...", label_visibility="collapsed")
+    search_doc = st.text_input("", placeholder="Rechercher booking ou client...",
+                               label_visibility="collapsed")
     df_docs = commandes.copy()
     if search_doc:
         df_docs = df_docs[
@@ -1127,19 +1138,22 @@ elif page == "documents":
             '<div class="cmd-row">'
             '<div style="min-width:200px">'
             '<div style="font-size:13px;font-weight:700;color:#111827">'+str(row["client"])+'</div>'
-            '<div style="font-size:11px;color:#9CA3AF;margin-top:2px">'+str(row["booking"])+' · '+str(row["semaine"])+'</div></div>'
-            '<div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">POL</div>'
+            '<div style="font-size:11px;color:#9CA3AF;margin-top:2px">'
+            +str(row["booking"])+' · '+str(row["semaine"])+'</div></div>'
+            '<div style="text-align:center">'
+            '<div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">POL</div>'
             '<div style="font-weight:700;color:#111827;font-size:12px">'+str(row["pol"])+'</div></div>'
-            '<div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">Navire</div>'
+            '<div style="text-align:center">'
+            '<div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">Navire</div>'
             '<div style="font-weight:500;color:#374151;font-size:11px">'+str(row["navire"])+'</div></div>'
             '<div style="display:flex;gap:6px;align-items:center">'+dp+'</div>'
             '</div>',
             unsafe_allow_html=True)
 
-        btn_lbl = "Fermer" if is_open else "📁 Gerer documents"
         cb, _ = st.columns([1,4])
         with cb:
-            if st.button(btn_lbl, key="docpage_"+bkey, use_container_width=True):
+            if st.button("Fermer" if is_open else "📁 Gerer documents",
+                         key="docpage_"+bkey, use_container_width=True):
                 k = "doc_"+bkey
                 if is_open: st.session_state.expanded_track.discard(k)
                 else:       st.session_state.expanded_track.add(k)
@@ -1155,14 +1169,17 @@ elif page == "documents":
                 for doc_name in docs:
                     doc_path = os.path.join(docs_path(row["booking"]), doc_name)
                     d1,d2,d3 = st.columns([4,1,1])
-                    with d1: st.markdown('<div class="doc-chip">📄 '+doc_name+'</div>', unsafe_allow_html=True)
+                    with d1:
+                        st.markdown('<div class="doc-chip">📄 '+doc_name+'</div>',
+                                    unsafe_allow_html=True)
                     with d2:
                         with open(doc_path,"rb") as f:
                             st.download_button("⬇️", f.read(), file_name=doc_name,
                                 key="dldoc_"+bkey+"_"+doc_name, use_container_width=True)
                     with d3:
                         if st.session_state.role == "admin":
-                            if st.button("🗑️", key="deldoc_"+bkey+"_"+doc_name, use_container_width=True):
+                            if st.button("🗑️", key="deldoc_"+bkey+"_"+doc_name,
+                                         use_container_width=True):
                                 delete_doc(row["booking"], doc_name); st.rerun()
             else:
                 st.caption("Aucun document.")
@@ -1183,41 +1200,191 @@ elif page == "documents":
 elif page == "licences":
     st.markdown(
         '<div style="background:#fff;border-bottom:1px solid #E5E7EB;padding:18px 36px;'
-        'position:sticky;top:0;z-index:100;font-size:20px;font-weight:800;color:#111827">Licences DPVCT</div>',
+        'position:sticky;top:0;z-index:100;font-size:20px;font-weight:800;color:#111827">'
+        'Licences DPVCT</div>',
         unsafe_allow_html=True)
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
 
     for _, row in clients.iterrows():
-        pr = max(0, min(100, row["solde_reel"]/row["poids_total"]*100)) if row["poids_total"]>0 else 0
-        pp = max(0, min(100, row["solde_prev"]/row["poids_total"]*100)) if row["poids_total"]>0 else 0
-        pc = "#10B981" if pr>30 else ("#F59E0B" if pr>10 else "#EF4444")
+        pr = max(0, min(100, row["solde_reel"]/row["poids_total"]*100)) if row["poids_total"] > 0 else 0
+        pc = "#10B981" if pr > 30 else ("#F59E0B" if pr > 10 else "#EF4444")
 
-        if   row["solde_reel"] < 0:       badge = '<span class="pill pill-red">DEPASSEMENT</span>'
-        elif row["solde_reel"] < 19591.2: badge = '<span class="pill pill-red">CRITIQUE</span>'
-        elif row["solde_reel"] < 58773.6: badge = '<span class="pill pill-orange">ATTENTION</span>'
-        else:                              badge = '<span class="pill pill-green">OK</span>'
+        if   row["solde_reel"] < 0:        badge = '<span class="pill pill-red">DEPASSEMENT</span>'
+        elif row["solde_reel"] < 19591.2:  badge = '<span class="pill pill-red">CRITIQUE</span>'
+        elif row["solde_reel"] < 58773.6:  badge = '<span class="pill pill-orange">ATTENTION</span>'
+        else:                               badge = '<span class="pill pill-green">OK</span>'
 
         pdf_path   = licence_pdf_path(row["licence"])
         pdf_exists = os.path.exists(pdf_path)
 
-        card = (
+        poids_fmt     = "{:,.0f}".format(row["poids_total"])
+        solde_r_fmt   = "{:,.0f}".format(row["solde_reel"])
+        solde_p_fmt   = "{:,.0f}".format(row["solde_prev"])
+        cnt_r_cr_fmt  = str(row["cnt_reel_cr"])
+        cnt_r_col_fmt = str(row["cnt_reel_col"])
+        cnt_p_cr_fmt  = str(row["cnt_prev_cr"])
+        cnt_p_col_fmt = str(row["cnt_prev_col"])
+        nom_val       = str(row["nom"])
+        lic_val       = str(row["licence"])
+        pays_val      = str(row["pays"])
+        pr_int        = str(int(pr))
+
+        st.markdown(
             '<div class="card">'
-            '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:16px">'
-            '<div><div style="font-size:16px;font-weight:800;color:#111827">'+str(row["nom"])+'</div>'
-            '<div style="font-size:12px;color:#9CA3AF;margin-top:3px">Licence '+str(row["licence"])+' · '+str(row["pays"])+'</div></div>'
-            +badge
-            +'</div>'
+            '<div style="display:flex;justify-content:space-between;align-items:flex-start;'
+            'flex-wrap:wrap;gap:8px;margin-bottom:16px">'
+            '<div>'
+            '<div style="font-size:16px;font-weight:800;color:#111827">'+nom_val+'</div>'
+            '<div style="font-size:12px;color:#9CA3AF;margin-top:3px">'
+            'Licence '+lic_val+' · '+pays_val+'</div>'
+            '</div>'
+            +badge+
+            '</div>'
             '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">'
             '<div style="background:#F9FAFB;border-radius:10px;padding:14px">'
-            '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">Poids total</div>'
-            '<div style="font-size:19px;font-weight:800;color:#111827">'+"{:,.0f}".format(row["poids_total"])+' <span style="font-size:12px;color:#9CA3AF">kgs</span></div></div>'
+            '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;'
+            'font-weight:700;margin-bottom:4px">Poids total</div>'
+            '<div style="font-size:18px;font-weight:800;color:#111827">'
+            +poids_fmt+' <span style="font-size:11px;color:#9CA3AF">kgs</span></div></div>'
             '<div style="background:#EEF2FF;border-radius:10px;padding:14px">'
-            '<div style="font-size:9px;color:#4361EE;text-transform:uppercase;font-weight:700;margin-bottom:4px">Solde reel</div>'
-            '<div style="font-size:19px;font-weight:800;color:#4361EE">'+"{:,.0f}".format(row["solde_reel"])+' <span style="font-size:12px">kgs</span></div></div>'
+            '<div style="font-size:9px;color:#4361EE;text-transform:uppercase;'
+            'font-weight:700;margin-bottom:4px">Solde reel</div>'
+            '<div style="font-size:18px;font-weight:800;color:#4361EE">'
+            +solde_r_fmt+' <span style="font-size:11px">kgs</span></div></div>'
             '<div style="background:#FEF3C7;border-radius:10px;padding:14px">'
-            '<div style="font-size:9px;color:#D97706;text-transform:uppercase;font-weight:700;margin-bottom:4px">Solde prev.</div>'
-            '<div style="font-size:19px;font-weight:800;color:#D97706">'+"{:,.0f}".format(row["solde_prev"])+' <span style="font-size:12px">kgs</span></div></div>'
+            '<div style="font-size:9px;color:#D97706;text-transform:uppercase;'
+            'font-weight:700;margin-bottom:4px">Solde prev.</div>'
+            '<div style="font-size:18px;font-weight:800;color:#D97706">'
+            +solde_p_fmt+' <span style="font-size:11px">kgs</span></div></div>'
             '</div>'
             '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">'
             '<div style="background:#EEF2FF;border-radius:10px;padding:12px;text-align:center">'
-            
+            '<div style="font-size:9px;color:#4361EE;text-transform:uppercase;font-weight:700;margin-bottom:4px">CNT reel CR</div>'
+            '<div style="font-size:16px;font-weight:900;color:#4361EE">'+cnt_r_cr_fmt+'</div></div>'
+            '<div style="background:#EEF2FF;border-radius:10px;padding:12px;text-align:center">'
+            '<div style="font-size:9px;color:#4361EE;text-transform:uppercase;font-weight:700;margin-bottom:4px">CNT reel COL</div>'
+            '<div style="font-size:16px;font-weight:900;color:#4361EE">'+cnt_r_col_fmt+'</div></div>'
+            '<div style="background:#FEF3C7;border-radius:10px;padding:12px;text-align:center">'
+            '<div style="font-size:9px;color:#D97706;text-transform:uppercase;font-weight:700;margin-bottom:4px">CNT prev CR</div>'
+            '<div style="font-size:16px;font-weight:900;color:#D97706">'+cnt_p_cr_fmt+'</div></div>'
+            '<div style="background:#FEF3C7;border-radius:10px;padding:12px;text-align:center">'
+            '<div style="font-size:9px;color:#D97706;text-transform:uppercase;font-weight:700;margin-bottom:4px">CNT prev COL</div>'
+            '<div style="font-size:16px;font-weight:900;color:#D97706">'+cnt_p_col_fmt+'</div></div>'
+            '</div>'
+            '<div style="margin-bottom:14px">'
+            '<div style="display:flex;justify-content:space-between;margin-bottom:6px">'
+            '<span style="font-size:11px;color:#6B7280;font-weight:600">Solde disponible</span>'
+            '<span style="font-size:11px;font-weight:700;color:'+pc+'">'+pr_int+'%</span>'
+            '</div>'
+            '<div class="prog-track">'
+            '<div class="prog-fill" style="background:'+pc+';width:'+pr_int+'%"></div>'
+            '</div></div>',
+            unsafe_allow_html=True)
+
+        if pdf_exists:
+            lc1, lc2 = st.columns([1,4])
+            with lc1:
+                with open(pdf_path,"rb") as f:
+                    st.download_button("📄 Telecharger licence", f.read(),
+                        file_name=licence_to_filename(row["licence"]),
+                        key="dllic_"+str(row["licence"]), use_container_width=True)
+        else:
+            lc1, lc2 = st.columns([2,3])
+            with lc1:
+                up_lic = st.file_uploader("", type=["pdf"],
+                    key="uplic_"+str(row["licence"]), label_visibility="collapsed")
+            with lc2:
+                if up_lic and st.button("✅ Uploader licence",
+                    key="uplicconf_"+str(row["licence"]), type="primary"):
+                    os.makedirs("licences", exist_ok=True)
+                    with open(pdf_path,"wb") as f: f.write(up_lic.getbuffer())
+                    st.success("Licence uploadee !"); st.rerun()
+
+        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PLANNING CLIENT
+# ══════════════════════════════════════════════════════════════════════════════
+elif page == "planning":
+    st.markdown(
+        '<div style="background:#fff;border-bottom:1px solid #E5E7EB;padding:18px 36px;'
+        'position:sticky;top:0;z-index:100;font-size:20px;font-weight:800;color:#111827">'
+        'Planning client</div>',
+        unsafe_allow_html=True)
+    st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
+
+    client_list = clients["nom"].dropna().tolist()
+    sel_client  = st.selectbox("Selectionner un client", client_list, label_visibility="visible")
+
+    if sel_client:
+        cli_row  = clients[clients["nom"] == sel_client].iloc[0]
+        cli_cmds = commandes[commandes["client"] == sel_client]
+
+        pr = max(0, min(100, cli_row["solde_reel"]/cli_row["poids_total"]*100)) if cli_row["poids_total"] > 0 else 0
+        pc = "#10B981" if pr > 30 else ("#F59E0B" if pr > 10 else "#EF4444")
+
+        poids_fmt   = "{:,.0f}".format(cli_row["poids_total"])
+        solde_r_fmt = "{:,.0f}".format(cli_row["solde_reel"])
+        solde_p_fmt = "{:,.0f}".format(cli_row["solde_prev"])
+
+        st.markdown(
+            '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;margin-top:18px">'
+            '<div class="kpi-card" style="--card-color:#4361EE;--card-bg:#EEF2FF">'
+            '<div class="kpi-lbl">Commandes</div>'
+            '<div class="kpi-val" style="color:#4361EE">'+str(len(cli_cmds))+'</div></div>'
+            '<div class="kpi-card" style="--card-color:#8B5CF6;--card-bg:#EDE9FE">'
+            '<div class="kpi-lbl">CNT total</div>'
+            '<div class="kpi-val" style="color:#7C3AED">'+str(int(cli_cmds["nb_cnt"].sum()))+'</div></div>'
+            '<div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">'
+            '<div class="kpi-lbl">Solde reel</div>'
+            '<div class="kpi-val" style="color:#059669;font-size:1.3rem">'+solde_r_fmt+'</div>'
+            '<div class="kpi-sub">kgs</div></div>'
+            '<div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7">'
+            '<div class="kpi-lbl">Solde prev.</div>'
+            '<div class="kpi-val" style="color:#D97706;font-size:1.3rem">'+solde_p_fmt+'</div>'
+            '<div class="kpi-sub">kgs</div></div>'
+            '</div>',
+            unsafe_allow_html=True)
+
+        st.markdown(
+            '<div style="background:#fff;border:1px solid #E5E7EB;border-radius:14px;'
+            'padding:20px 24px;margin-bottom:20px">'
+            '<div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:12px">'
+            'Utilisation de la licence</div>'
+            '<div style="display:flex;justify-content:space-between;margin-bottom:8px">'
+            '<span style="font-size:12px;color:#6B7280">'+str(int(pr))+'% utilise</span>'
+            '<span style="font-size:12px;font-weight:700;color:'+pc+'">'+solde_r_fmt+' kgs restants</span>'
+            '</div>'
+            '<div class="prog-track" style="height:10px">'
+            '<div class="prog-fill" style="background:'+pc+';width:'+str(int(100-pr))+'%"></div>'
+            '</div>'
+            '<div style="display:flex;justify-content:space-between;margin-top:8px">'
+            '<span style="font-size:10px;color:#9CA3AF">0</span>'
+            '<span style="font-size:10px;color:#9CA3AF">'+poids_fmt+' kgs total</span>'
+            '</div></div>',
+            unsafe_allow_html=True)
+
+        if not cli_cmds.empty:
+            st.markdown('<div class="sec-hdr"><span class="sec-title">Historique commandes</span></div>',
+                        unsafe_allow_html=True)
+            for _, crow in cli_cmds.iterrows():
+                cpill = "pill-green" if "GENERE" in str(crow["statut"]) else "pill-orange"
+                st.markdown(
+                    '<div class="cmd-row">'
+                    '<div style="min-width:160px">'
+                    '<div style="font-size:12px;font-weight:700;color:#111827">'+str(crow["booking"])+'</div>'
+                    '<div style="font-size:10px;color:#9CA3AF;margin-top:2px">'+str(crow["semaine"])+'</div></div>'
+                    '<div style="text-align:center">'
+                    '<div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">POL</div>'
+                    '<div style="font-weight:700;color:#111827;font-size:11px">'+str(crow["pol"])+'</div></div>'
+                    '<div style="text-align:center">'
+                    '<div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">CNT</div>'
+                    '<div style="font-weight:900;color:#4361EE;font-size:18px">'+str(crow["nb_cnt"])+'</div></div>'
+                    '<div style="text-align:center">'
+                    '<div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">Kgs</div>'
+                    '<div style="font-weight:600;color:#374151;font-size:11px">'+"{:,.0f}".format(crow["total_kgs"])+'</div></div>'
+                    '<div style="text-align:center">'
+                    '<div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">Depart</div>'
+                    '<div style="font-weight:500;color:#374151;font-size:11px">'+str(crow["depart"])+'</div></div>'
+                    '<span
