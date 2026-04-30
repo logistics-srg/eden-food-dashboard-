@@ -12,12 +12,10 @@ st.set_page_config(page_title="EDEN FOOD", page_icon="🍌",
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-
 header[data-testid="stHeader"],#MainMenu,.stAppDeployButton,footer{display:none!important}
 *{font-family:'Inter',sans-serif!important;box-sizing:border-box}
 .block-container{padding:0!important;max-width:100%!important}
 .stApp{background:#F4F6FB!important}
-
 :root{
   --primary:#4361EE;--primary-light:#EEF2FF;--success:#10B981;--success-light:#D1FAE5;
   --warning:#F59E0B;--warning-light:#FEF3C7;--danger:#EF4444;--danger-light:#FEE2E2;
@@ -29,7 +27,6 @@ header[data-testid="stHeader"],#MainMenu,.stAppDeployButton,footer{display:none!
   --radius-sm:8px;--radius-md:12px;--radius-lg:16px;--radius-xl:24px;--radius-full:9999px;
   --transition:all 0.2s cubic-bezier(0.4,0,0.2,1);
 }
-
 section[data-testid="stSidebar"]{
   transform:none!important;min-width:240px!important;max-width:240px!important;
   background:var(--surface)!important;border-right:1px solid var(--border)!important;
@@ -48,15 +45,12 @@ section[data-testid="stSidebar"] .stButton>button{
 section[data-testid="stSidebar"] .stButton>button:hover{
   background:var(--primary-light)!important;color:var(--primary)!important;transform:translateX(2px)!important;
 }
-
 .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:18px 36px;
   display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
 .topbar-title{font-size:20px;font-weight:800;color:var(--text-primary);letter-spacing:-0.5px}
 .topbar-badge{background:var(--primary-light);color:var(--primary);padding:4px 12px;
   border-radius:var(--radius-full);font-size:11px;font-weight:700;}
-
 .main-wrap{padding:28px 36px;max-width:1500px;margin:0 auto}
-
 .kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:28px}
 .kpi-card{background:var(--surface);border-radius:var(--radius-lg);padding:20px 18px;
   border:1px solid var(--border);box-shadow:var(--shadow-sm);position:relative;overflow:hidden;
@@ -70,12 +64,10 @@ section[data-testid="stSidebar"] .stButton>button:hover{
 .kpi-card .kpi-val{font-size:2rem;font-weight:900;letter-spacing:-1.5px;line-height:1;margin-bottom:3px}
 .kpi-card .kpi-lbl{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:4px}
 .kpi-card .kpi-sub{font-size:11px;color:var(--text-muted)}
-
 .sec-hdr{display:flex;align-items:center;justify-content:space-between;margin:28px 0 14px;
   padding-bottom:12px;border-bottom:1px solid var(--border);}
 .sec-title{font-size:14px;font-weight:700;color:var(--text-primary)}
 .sec-sub{font-size:12px;color:var(--text-muted)}
-
 .cmd-row{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);
   padding:14px 18px;margin-bottom:6px;display:flex;align-items:center;
   justify-content:space-between;flex-wrap:wrap;gap:10px;transition:var(--transition);position:relative;}
@@ -84,48 +76,34 @@ section[data-testid="stSidebar"] .stButton>button:hover{
   transition:all 0.35s cubic-bezier(0.4,0,0.2,1);}
 .cmd-row:hover{box-shadow:var(--shadow-md);border-color:rgba(67,97,238,0.2);transform:translateX(2px)}
 .cmd-row:hover::before{height:60%}
-
 .pill{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;
   border-radius:var(--radius-full);font-size:11px;font-weight:700;letter-spacing:0.2px}
 .pill-green{background:var(--success-light);color:#065F46}
 .pill-orange{background:var(--warning-light);color:#92400E}
 .pill-red{background:var(--danger-light);color:#991B1B}
 .pill-blue{background:var(--info-light);color:#1E40AF}
-
 .card{background:var(--surface);border-radius:var(--radius-lg);padding:22px 24px;
   border:1px solid var(--border);box-shadow:var(--shadow-sm);margin-bottom:12px;transition:var(--transition);}
 .card:hover{box-shadow:var(--shadow-md)}
-
-/* ── HERO — background-image approach (100% fiable Streamlit) ── */
-.hero-wrap{
-  position:relative;width:100%;height:320px;overflow:hidden;
-  background-size:cover!important;
-  background-position:center 50%!important;
-  background-repeat:no-repeat!important;
-}
-.hero-overlay{
-  position:absolute;inset:0;
+.hero-wrap{position:relative;width:100%;height:320px;overflow:hidden;
+  background-size:cover!important;background-position:center 50%!important;background-repeat:no-repeat!important;}
+.hero-overlay{position:absolute;inset:0;
   background:linear-gradient(110deg,rgba(10,15,30,0.88) 0%,rgba(67,97,238,0.42) 55%,rgba(0,0,0,0.1) 100%);
-  display:flex;align-items:center;padding:0 52px;
-}
+  display:flex;align-items:center;padding:0 52px;}
 .hero-text h1{font-size:34px;font-weight:900;color:#fff;letter-spacing:-1.2px;line-height:1.15;margin:0 0 10px}
 .hero-text p{font-size:14px;color:rgba(255,255,255,0.78);max-width:440px;line-height:1.65;margin:0 0 22px}
 .hero-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,0.12);
   backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.22);
   color:#fff;padding:7px 18px;border-radius:var(--radius-full);font-size:12px;font-weight:600;}
-
 .alert{padding:11px 15px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;margin:6px 0}
 .alert-ok{background:var(--success-light);border-left:3px solid var(--success);color:#065F46}
 .alert-warn{background:var(--warning-light);border-left:3px solid var(--warning);color:#92400E}
 .alert-red{background:var(--danger-light);border-left:3px solid var(--danger);color:#991B1B}
-
 .prog-track{background:#E5E7EB;border-radius:var(--radius-full);height:5px;overflow:hidden}
 .prog-fill{height:100%;border-radius:var(--radius-full)}
-
 .doc-zone{background:var(--surface-2);border:1.5px dashed #D1D5DB;border-radius:var(--radius-md);padding:18px}
 .doc-chip{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid var(--border);
   border-radius:6px;padding:5px 10px;font-size:11px;color:var(--text-secondary);font-weight:500;margin:3px;}
-
 div[data-testid="stForm"]{background:var(--surface)!important;border-radius:var(--radius-lg)!important;
   padding:26px!important;border:1px solid var(--border)!important;box-shadow:none!important;}
 div[data-testid="stDataFrame"]{border-radius:var(--radius-md)!important;overflow:hidden!important}
@@ -133,6 +111,19 @@ hr{border:none!important;border-top:1px solid var(--border)!important;margin:16p
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:#D1D5DB;border-radius:var(--radius-full)}
+
+/* ── TRACKING ── */
+.track-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);
+  box-shadow:var(--shadow-sm);margin-bottom:14px;overflow:hidden;transition:var(--transition);cursor:pointer;}
+.track-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px)}
+.track-header{padding:18px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.track-route{padding:0 22px 18px;overflow-x:auto}
+.stage-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:12px;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);flex-shrink:0}
+.stage-line{flex:1;height:2px;min-width:24px;position:relative;overflow:hidden}
+.stage-line-fill{position:absolute;left:0;top:0;height:100%;border-radius:2px;transition:width 1.2s cubic-bezier(0.4,0,0.2,1)}
+@keyframes shipPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.ship-active{animation:shipPulse 2s ease-in-out infinite}
 </style>
 """, unsafe_allow_html=True)
 
@@ -145,7 +136,8 @@ USERS = {
 }
 
 for k, v in {"authenticated": False, "username": "", "role": "",
-             "page": "dashboard", "new_commandes": [], "expanded_cmd": None}.items():
+             "page": "dashboard", "new_commandes": [], "expanded_cmd": None,
+             "expanded_track": set()}.items():
     if k not in st.session_state:
         st.session_state[k] = v
 
@@ -194,7 +186,231 @@ def delete_doc(booking, filename):
         os.remove(fp)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# LOGIN + SPARKLES (uniquement cette page)
+# TRACKING HELPERS
+# ══════════════════════════════════════════════════════════════════════════════
+# Étapes avec durée cumulée en jours depuis le départ
+TRANSIT_STAGES = [
+    {"id": "plantation",   "icon": "🌿", "label": "Plantation",     "days": -3,  "color": "#6B7280"},
+    {"id": "port_depart",  "icon": "⚓", "label": "Port départ",    "days": 0,   "color": "#4361EE"},
+    {"id": "atlantique",   "icon": "🌊", "label": "Atlantique",     "days": 3,   "color": "#3B82F6"},
+    {"id": "gibraltar",    "icon": "🏛️", "label": "Gibraltar",      "days": 14,  "color": "#8B5CF6"},
+    {"id": "mediterranee", "icon": "🌊", "label": "Méditerranée",   "days": 17,  "color": "#0EA5E9"},
+    {"id": "ghazaouet",    "icon": "⚓", "label": "Ghazaouet 🇩🇿",  "days": 21,  "color": "#10B981"},
+]
+TOTAL_DAYS = 21  # durée totale approximative
+
+
+def parse_depart(depart_str):
+    for fmt in ["%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y", "%Y/%m/%d"]:
+        try:
+            return datetime.strptime(str(depart_str).strip(), fmt).date()
+        except:
+            continue
+    return None
+
+
+def get_tracking_info(depart_str):
+    """Retourne (stage_idx, progress_pct, days_elapsed, eta_arrive)"""
+    dep = parse_depart(depart_str)
+    if not dep:
+        return 0, 0, None, None
+
+    today = date.today()
+    days_elapsed = (today - dep).days
+    eta = dep + __import__("datetime").timedelta(days=TOTAL_DAYS)
+
+    # Trouver l'étape actuelle
+    stage_idx = 0
+    for i, s in enumerate(TRANSIT_STAGES):
+        if days_elapsed >= s["days"]:
+            stage_idx = i
+
+    # Progression globale (0-100%)
+    if days_elapsed < TRANSIT_STAGES[0]["days"]:
+        progress = 0.0
+    elif days_elapsed >= TOTAL_DAYS:
+        progress = 100.0
+    else:
+        progress = min(100.0, max(0.0, days_elapsed / TOTAL_DAYS * 100))
+
+    return stage_idx, progress, days_elapsed, eta
+
+
+def build_stage_timeline_html(stage_idx, progress, pol):
+    """Génère le HTML de la timeline des étapes"""
+    html = '<div style="display:flex;align-items:center;padding:14px 0;gap:0;min-width:600px">'
+
+    for i, s in enumerate(TRANSIT_STAGES):
+        # Statut du dot
+        is_done    = i < stage_idx
+        is_current = i == stage_idx
+        is_future  = i > stage_idx
+
+        if is_done:
+            dot_bg    = "#10B981"
+            dot_border = "#10B981"
+            dot_shadow = ""
+            dot_content = "✓"
+            lbl_color  = "#10B981"
+            lbl_weight = "600"
+        elif is_current:
+            dot_bg    = s["color"]
+            dot_border = s["color"]
+            dot_shadow = f"box-shadow:0 0 0 4px {s['color']}22,0 0 12px {s['color']}44"
+            dot_content = s["icon"]
+            lbl_color  = s["color"]
+            lbl_weight = "800"
+        else:
+            dot_bg    = "#F9FAFB"
+            dot_border = "#E5E7EB"
+            dot_shadow = ""
+            dot_content = s["icon"]
+            lbl_color  = "#9CA3AF"
+            lbl_weight = "500"
+
+        label = s["label"]
+        if i == 0:
+            flag = "🇨🇷" if "COSTA" in pol.upper() else "🇨🇴"
+            label = f"{flag} {pol.split('(')[0].strip()[:5]}"
+
+        anim = 'class="ship-active"' if is_current and i not in [0, 5] else ""
+
+        html += f"""
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0">
+          <div {anim} class="stage-dot"
+            style="background:{dot_bg};border:2px solid {dot_border};{dot_shadow};color:{'#fff' if not is_future else '#9CA3AF'};font-size:{'13px' if is_done else '14px'}">
+            {dot_content}
+          </div>
+          <div style="font-size:9px;color:{lbl_color};font-weight:{lbl_weight};text-align:center;max-width:68px;line-height:1.3">
+            {label}
+          </div>
+        </div>"""
+
+        if i < len(TRANSIT_STAGES) - 1:
+            # Ligne entre les étapes
+            line_filled = 100 if is_done else 0
+            line_color  = "#10B981" if is_done else TRANSIT_STAGES[i]["color"]
+            html += f"""
+            <div class="stage-line" style="background:#E5E7EB;margin-bottom:16px">
+              <div class="stage-line-fill" style="background:{line_color};width:{line_filled}%"></div>
+            </div>"""
+
+    html += "</div>"
+    return html
+
+
+def render_route_map_svg(active_ships):
+    """SVG animé de la route maritime Atlantique → Méditerranée"""
+    # Waypoints simplifiés sur le SVG (viewBox 0 0 800 220)
+    # Départ (CR/COL) → Atlantique → Gibraltar → Méditerranée → Ghazaouet
+    WAYPOINTS = [
+        (55,  155),   # Costa Rica / Colombia
+        (160, 145),   # Sortie Caraïbes
+        (310, 120),   # Atlantique centre
+        (480, 95),    # Approche Açores
+        (590, 80),    # Gibraltar
+        (660, 90),    # Mer Alboran
+        (730, 100),   # Ghazaouet
+    ]
+
+    # Construire un path SVG cubique
+    path_d = f"M {WAYPOINTS[0][0]} {WAYPOINTS[0][1]}"
+    for i in range(1, len(WAYPOINTS)):
+        x0, y0 = WAYPOINTS[i-1]
+        x1, y1 = WAYPOINTS[i]
+        cx = (x0 + x1) / 2
+        path_d += f" C {cx} {y0}, {cx} {y1}, {x1} {y1}"
+
+    # Navires animés sur la route
+    ships_svg = ""
+    for ship in active_ships:
+        pct = ship["progress"] / 100
+        # Interpolation linéaire sur les waypoints
+        total_segs = len(WAYPOINTS) - 1
+        seg_f = pct * total_segs
+        seg_i = min(int(seg_f), total_segs - 1)
+        seg_t = seg_f - seg_i
+        x0, y0 = WAYPOINTS[seg_i]
+        x1, y1 = WAYPOINTS[min(seg_i + 1, total_segs)]
+        sx = x0 + (x1 - x0) * seg_t
+        sy = y0 + (y1 - y0) * seg_t
+        ships_svg += f"""
+        <g transform="translate({sx-10},{sy-14})">
+          <text font-size="18" style="filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3))">🚢</text>
+          <text x="0" y="28" font-size="8" fill="#4361EE" font-weight="700" text-anchor="middle"
+            style="font-family:Inter,sans-serif">{ship['label'][:8]}</text>
+        </g>"""
+
+    svg = f"""
+    <svg viewBox="0 0 800 220" xmlns="http://www.w3.org/2000/svg"
+         style="width:100%;height:170px;border-radius:12px;background:linear-gradient(180deg,#0F172A 0%,#0C2340 40%,#0F3460 100%)">
+
+      <!-- Grille océan -->
+      <defs>
+        <pattern id="ocean-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>
+        </pattern>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+        </filter>
+      </defs>
+      <rect width="800" height="220" fill="url(#ocean-grid)"/>
+
+      <!-- Continents simplifiés -->
+      <!-- Amérique centrale / Caraïbes -->
+      <ellipse cx="40" cy="160" rx="38" ry="28" fill="#1E3A2F" opacity="0.7"/>
+      <text x="12" y="185" font-size="9" fill="rgba(255,255,255,0.4)" font-family="Inter,sans-serif">AMÉR. CENTRALE</text>
+
+      <!-- Europe (Gibraltar) -->
+      <ellipse cx="590" cy="58" rx="28" ry="18" fill="#1A2A4A" opacity="0.7"/>
+      <text x="568" y="52" font-size="8" fill="rgba(255,255,255,0.4)" font-family="Inter,sans-serif">ESPAGNE</text>
+
+      <!-- Maroc / Algérie -->
+      <rect x="560" y="108" width="240" height="50" rx="6" fill="#1E2A1A" opacity="0.7"/>
+      <text x="620" y="140" font-size="9" fill="rgba(255,255,255,0.4)" font-family="Inter,sans-serif">ALGÉRIE / MAROC</text>
+
+      <!-- Détroit Gibraltar label -->
+      <line x1="590" y1="76" x2="590" y2="108" stroke="rgba(255,255,255,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+      <text x="596" y="95" font-size="8" fill="rgba(255,200,0,0.7)" font-family="Inter,sans-serif">GIBRALTAR</text>
+
+      <!-- Route principale — trait gris -->
+      <path d="{path_d}" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="2" stroke-dasharray="6,4"/>
+
+      <!-- Route active animée — gradient bleu -->
+      <path d="{path_d}" fill="none" stroke="url(#routeGrad)" stroke-width="2.5" stroke-linecap="round"/>
+      <defs>
+        <linearGradient id="routeGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%"   stop-color="#4361EE"/>
+          <stop offset="50%"  stop-color="#3B82F6"/>
+          <stop offset="100%" stop-color="#10B981"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Points d'étape -->
+      <circle cx="{WAYPOINTS[0][0]}" cy="{WAYPOINTS[0][1]}" r="5" fill="#F59E0B" filter="url(#glow)"/>
+      <circle cx="{WAYPOINTS[4][0]}" cy="{WAYPOINTS[4][1]}" r="5" fill="#8B5CF6" filter="url(#glow)"/>
+      <circle cx="{WAYPOINTS[6][0]}" cy="{WAYPOINTS[6][1]}" r="6" fill="#10B981" filter="url(#glow)"/>
+
+      <!-- Labels étapes clés -->
+      <text x="{WAYPOINTS[0][0]-4}" y="{WAYPOINTS[0][1]+18}" font-size="8" fill="#F59E0B"
+        font-family="Inter,sans-serif" font-weight="700">DÉPART</text>
+      <text x="{WAYPOINTS[6][0]-24}" y="{WAYPOINTS[6][1]+18}" font-size="8" fill="#10B981"
+        font-family="Inter,sans-serif" font-weight="700">GHAZAOUET</text>
+
+      <!-- Navires actifs -->
+      {ships_svg}
+
+      <!-- Badge légende -->
+      <rect x="10" y="10" width="140" height="22" rx="6" fill="rgba(255,255,255,0.06)"/>
+      <circle cx="22" cy="21" r="4" fill="#10B981"/>
+      <text x="30" y="25" font-size="9" fill="rgba(255,255,255,0.7)" font-family="Inter,sans-serif">Route maritime active</text>
+    </svg>"""
+    return svg
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# LOGIN
 # ══════════════════════════════════════════════════════════════════════════════
 def login_page():
     logo_src = img_to_b64("logo_eden_food.jpg") or img_to_b64("logo_eden_food.png")
@@ -228,7 +444,6 @@ def login_page():
       </div>
     </div>""", unsafe_allow_html=True)
 
-    # Sparkles UNIQUEMENT sur la page login
     components.html("""
     <script>
     (function(){
@@ -263,8 +478,7 @@ def login_page():
             ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
             ctx.fillStyle=p.col;ctx.globalAlpha=p.o;ctx.fill();
           });
-          ctx.globalAlpha=1;ctx.shadowBlur=0;
-          requestAnimationFrame(draw);
+          ctx.globalAlpha=1;ctx.shadowBlur=0;requestAnimationFrame(draw);
         }
         draw();
         parent.document.addEventListener('click',function(e){
@@ -298,13 +512,13 @@ if not st.session_state.authenticated:
     login_page()
     st.stop()
 
-# ── SUPPRESSION SPARKLES — exécuté sur TOUTES les pages authentifiées ─────────
+# ── Suppression sparkles sur toutes les pages authentifiées ───────────────────
 components.html("""
 <script>
 (function(){
   try{
-    const c = parent.document.getElementById('eden-sparkles');
-    if(c){ c.style.opacity='0'; setTimeout(()=>c.remove(), 400); }
+    const c=parent.document.getElementById('eden-sparkles');
+    if(c){c.style.opacity='0';setTimeout(()=>c.remove(),400);}
   }catch(e){}
 })();
 </script>
@@ -394,6 +608,7 @@ with st.sidebar:
         ("dashboard", "🏠", "Overview"),
         ("semaine",   "📅", f"Semaine {current_week_str}"),
         ("commandes", "🚢", "Commandes"),
+        ("tracking",  "🗺️", "Tracking maritime"),   # ← NOUVEAU
         ("documents", "📁", "Documents"),
         ("licences",  "📋", "Licences DPVCT"),
         ("planning",  "👤", "Planning client"),
@@ -442,7 +657,6 @@ if page == "dashboard":
     logo_ov  = f'<img src="{logo_src}" style="height:36px;margin-bottom:12px;display:block">' if logo_src else ""
 
     if hero_src:
-        # background-image CSS — cadrage garanti, pas de distorsion
         st.markdown(f"""
         <div class="hero-wrap" style="background:url('{hero_src}') center 50% / cover no-repeat;">
           <div class="hero-overlay">
@@ -669,257 +883,88 @@ elif page == "commandes":
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# DOCUMENTS
+# TRACKING MARITIME  ← NOUVEAU
 # ══════════════════════════════════════════════════════════════════════════════
-elif page == "documents":
-    st.markdown('<div class="topbar"><div class="topbar-title">Documents</div></div>', unsafe_allow_html=True)
+elif page == "tracking":
+    st.markdown('<div class="topbar"><div style="display:flex;align-items:center;gap:14px"><div class="topbar-title">Tracking maritime</div><div class="topbar-badge">🌊 En temps réel</div></div></div>', unsafe_allow_html=True)
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
 
-    all_b  = commandes["booking"].dropna().unique()
-    tdocs  = sum(len(list_docs(b)) for b in all_b)
-    c_avec = sum(1 for b in all_b if len(list_docs(b)) > 0)
-    c_sans = len(all_b) - c_avec
+    # Calculer les stats de tracking
+    df_track = commandes[commandes["depart"].notna()].copy()
+    
+    en_attente_list, en_mer_list, arrives_list = [], [], []
+    active_ships_for_map = []
 
+    for _, row in df_track.iterrows():
+        s_idx, prog, days_el, eta_calc = get_tracking_info(row["depart"])
+        if s_idx == 0 and (days_el is None or days_el < 0):
+            en_attente_list.append(row)
+        elif s_idx >= 5:
+            arrives_list.append(row)
+        else:
+            en_mer_list.append(row)
+            active_ships_for_map.append({
+                "progress": prog,
+                "label": str(row["client"])[:10]
+            })
+
+    # KPI
     st.markdown(f"""
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:26px">
-      <div class="kpi-card" style="--card-color:#3B82F6;--card-bg:#DBEAFE"><div class="icon-wrap">📁</div><div class="kpi-lbl">Total documents</div><div class="kpi-val" style="color:#2563EB">{tdocs}</div></div>
-      <div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5"><div class="icon-wrap">✅</div><div class="kpi-lbl">Documentées</div><div class="kpi-val" style="color:#059669">{c_avec}</div><div class="kpi-sub">avec docs</div></div>
-      <div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7"><div class="icon-wrap">⚠️</div><div class="kpi-lbl">Sans documents</div><div class="kpi-val" style="color:#D97706">{c_sans}</div><div class="kpi-sub">à compléter</div></div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px">
+      <div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7">
+        <div class="icon-wrap">⏳</div><div class="kpi-lbl">En attente départ</div>
+        <div class="kpi-val" style="color:#D97706">{len(en_attente_list)}</div><div class="kpi-sub">pas encore partis</div>
+      </div>
+      <div class="kpi-card" style="--card-color:#3B82F6;--card-bg:#DBEAFE">
+        <div class="icon-wrap">🚢</div><div class="kpi-lbl">En mer</div>
+        <div class="kpi-val" style="color:#2563EB">{len(en_mer_list)}</div><div class="kpi-sub">en transit actif</div>
+      </div>
+      <div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">
+        <div class="icon-wrap">⚓</div><div class="kpi-lbl">Arrivés Ghazaouet</div>
+        <div class="kpi-val" style="color:#059669">{len(arrives_list)}</div><div class="kpi-sub">à destination</div>
+      </div>
     </div>""", unsafe_allow_html=True)
 
-    search = st.text_input("", placeholder="🔍 Rechercher par booking ou client...", label_visibility="collapsed")
-
-    for _, row in commandes.iterrows():
-        if search and search.lower() not in str(row["booking"]).lower() and search.lower() not in str(row["client"]).lower():
-            continue
-        docs = list_docs(row["booking"])
-        n    = len(docs)
-        clr  = "#10B981" if n >= 3 else ("#F59E0B" if n >= 1 else "#EF4444")
-        lbl  = f"✅ {n} doc{'s' if n>1 else ''}" if n else "⚠️ Aucun"
+    # Carte SVG de la route
+    if active_ships_for_map or en_attente_list or arrives_list:
+        map_svg = render_route_map_svg(active_ships_for_map)
         st.markdown(f"""
-        <div class="cmd-row" style="border-left:3px solid {clr}">
-          <div style="min-width:220px"><div style="font-size:13px;font-weight:700;color:#111827">{row['client']}</div>
-          <div style="font-size:11px;color:#9CA3AF">{row['booking']} · {row['semaine']}</div></div>
-          <span style="color:{clr};font-weight:700;font-size:12px">{lbl}</span>
-          <div style="flex:1;display:flex;flex-wrap:wrap;gap:3px">
-            {"".join([f'<span class="doc-chip">📄 {d}</span>' for d in docs]) if docs else '<span style="color:#9CA3AF;font-size:11px;font-style:italic">Aucun fichier</span>'}
+        <div style="background:#0F172A;border-radius:16px;padding:16px;margin-bottom:24px;
+             box-shadow:0 8px 32px rgba(0,0,0,0.3)">
+          <div style="font-size:11px;color:rgba(255,255,255,0.5);font-weight:700;
+               text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">
+            🗺️ Route maritime — Amériques → Ghazaouet
           </div>
+          {map_svg}
         </div>""", unsafe_allow_html=True)
 
-        with st.expander(f"📤 Upload · {row['booking']}", expanded=False):
-            u1,u2 = st.columns([3,1])
-            with u1:
-                upf = st.file_uploader("", type=["pdf","xlsx","xls","docx","jpg","png"],
-                                       key=f"gup_{row['booking']}", label_visibility="collapsed")
-            with u2:
-                dtype = st.selectbox("", DOC_TYPES, key=f"gdtype_{row['booking']}", label_visibility="collapsed")
-            if upf and st.button("✅ Uploader", key=f"gupconf_{row['booking']}", type="primary"):
-                upf.name = f"{dtype.replace(' ','_')}_{upf.name}"
-                save_doc(row["booking"], upf)
-                st.success("✅ Uploadé !")
-                st.rerun()
-            if docs:
-                for doc_name in docs:
-                    dp = os.path.join(docs_path(row["booking"]), doc_name)
-                    c1,c2 = st.columns([4,1])
-                    with c1: st.markdown(f"`{doc_name}`")
-                    with c2:
-                        with open(dp,"rb") as f:
-                            st.download_button("⬇️", f.read(), file_name=doc_name,
-                                key=f"gdl_{row['booking']}_{doc_name}", use_container_width=True)
+    # ── Filtre rapide ─────────────────────────────────────────────────────────
+    filter_track = st.selectbox("",
+        ["🌊 Tous", "⏳ En attente", "🚢 En mer", "⚓ Arrivés"],
+        label_visibility="collapsed")
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    if filter_track == "⏳ En attente":
+        rows_to_show = en_attente_list
+    elif filter_track == "🚢 En mer":
+        rows_to_show = en_mer_list
+    elif filter_track == "⚓ Arrivés":
+        rows_to_show = arrives_list
+    else:
+        rows_to_show = [r for r in en_mer_list] + [r for r in en_attente_list] + [r for r in arrives_list]
 
-# ══════════════════════════════════════════════════════════════════════════════
-# LICENCES
-# ══════════════════════════════════════════════════════════════════════════════
-elif page == "licences":
-    st.markdown('<div class="topbar"><div class="topbar-title">Licences DPVCT</div></div>', unsafe_allow_html=True)
-    st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
+    if not rows_to_show:
+        st.info("Aucune commande dans cette catégorie.")
+    else:
+        for row in rows_to_show:
+            if hasattr(row, 'to_dict'):
+                row = row
+            s_idx, prog, days_el, eta_calc = get_tracking_info(row["depart"])
+            current_s = TRANSIT_STAGES[min(s_idx, len(TRANSIT_STAGES)-1)]
 
-    for _, row in clients.iterrows():
-        pr = max(0, min(100, row["solde_reel"]/row["poids_total"]*100)) if row["poids_total"] > 0 else 0
-        pp = max(0, min(100, row["solde_prev"]/row["poids_total"]*100)) if row["poids_total"] > 0 else 0
-        pc = "#10B981" if pr > 30 else ("#F59E0B" if pr > 10 else "#EF4444")
-
-        if   row["solde_reel"] < 0:       badge = '<span class="pill pill-red">❌ DÉPASSEMENT</span>'
-        elif row["solde_reel"] < 19591.2: badge = '<span class="pill pill-red">🔴 CRITIQUE</span>'
-        elif row["solde_reel"] < 58773.6: badge = '<span class="pill pill-orange">⚠️ ATTENTION</span>'
-        else:                              badge = '<span class="pill pill-green">✅ OK</span>'
-
-        pdf_path   = licence_pdf_path(row["licence"])
-        pdf_exists = os.path.exists(pdf_path)
-
-        st.markdown(f"""
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:16px">
-            <div><div style="font-size:16px;font-weight:800;color:#111827">{row['nom']}</div>
-            <div style="font-size:12px;color:#9CA3AF;margin-top:3px">🔑 {row['licence']} · {row['pays']}</div></div>
-            {badge}
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
-            <div style="background:#F9FAFB;border-radius:10px;padding:14px">
-              <div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">Poids total</div>
-              <div style="font-size:19px;font-weight:800;color:#111827">{row['poids_total']:,.0f} <span style="font-size:12px;color:#9CA3AF">kgs</span></div>
-            </div>
-            <div style="background:#EEF2FF;border-radius:10px;padding:14px">
-              <div style="font-size:9px;color:#4361EE;text-transform:uppercase;font-weight:700;margin-bottom:4px">Solde réel</div>
-              <div style="font-size:19px;font-weight:800;color:#4361EE">{row['solde_reel']:,.0f} <span style="font-size:12px">kgs</span></div>
-            </div>
-            <div style="background:#FEF3C7;border-radius:10px;padding:14px">
-              <div style="font-size:9px;color:#D97706;text-transform:uppercase;font-weight:700;margin-bottom:4px">Solde prévi.</div>
-              <div style="font-size:19px;font-weight:800;color:#D97706">{row['solde_prev']:,.0f} <span style="font-size:12px">kgs</span></div>
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">
-            <div style="background:#EEF2FF;border-radius:10px;padding:12px;text-align:center">
-              <div style="font-size:9px;color:#4361EE;font-weight:700;text-transform:uppercase;margin-bottom:4px">🇨🇷 CR Réel</div>
-              <div style="font-size:20px;font-weight:900;color:#4361EE">{row['cnt_reel_cr']:.1f}</div>
-              <div style="font-size:9px;color:#9CA3AF">CNT</div>
-            </div>
-            <div style="background:#FEF3C7;border-radius:10px;padding:12px;text-align:center">
-              <div style="font-size:9px;color:#D97706;font-weight:700;text-transform:uppercase;margin-bottom:4px">🇨🇷 CR Prév.</div>
-              <div style="font-size:20px;font-weight:900;color:#D97706">{row['cnt_prev_cr']:.1f}</div>
-              <div style="font-size:9px;color:#9CA3AF">CNT</div>
-            </div>
-            <div style="background:#EEF2FF;border-radius:10px;padding:12px;text-align:center">
-              <div style="font-size:9px;color:#4361EE;font-weight:700;text-transform:uppercase;margin-bottom:4px">🇨🇴 COL Réel</div>
-              <div style="font-size:20px;font-weight:900;color:#4361EE">{row['cnt_reel_col']:.1f}</div>
-              <div style="font-size:9px;color:#9CA3AF">CNT</div>
-            </div>
-            <div style="background:#FEF3C7;border-radius:10px;padding:12px;text-align:center">
-              <div style="font-size:9px;color:#D97706;font-weight:700;text-transform:uppercase;margin-bottom:4px">🇨🇴 COL Prév.</div>
-              <div style="font-size:20px;font-weight:900;color:#D97706">{row['cnt_prev_col']:.1f}</div>
-              <div style="font-size:9px;color:#9CA3AF">CNT</div>
-            </div>
-          </div>
-          <div style="margin-bottom:8px">
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-              <span style="font-size:11px;color:#6B7280">Solde réel</span>
-              <span style="font-size:11px;font-weight:700;color:{pc}">{pr:.0f}%</span>
-            </div>
-            <div class="prog-track"><div class="prog-fill" style="background:{pc};width:{pr}%"></div></div>
-          </div>
-          <div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-              <span style="font-size:11px;color:#6B7280">Solde prévisionnel</span>
-              <span style="font-size:11px;font-weight:700;color:#D97706">{pp:.0f}%</span>
-            </div>
-            <div class="prog-track"><div class="prog-fill" style="background:#F59E0B;width:{pp}%"></div></div>
-          </div>
-        </div>""", unsafe_allow_html=True)
-
-        if pdf_exists:
-            with open(pdf_path,"rb") as f: pdf_data = f.read()
-            c,_ = st.columns([2,5])
-            with c:
-                st.download_button(f"📄 {row['licence']}", pdf_data,
-                    file_name=licence_to_filename(row["licence"]),
-                    mime="application/pdf", key=f"pdf_{row['licence']}", use_container_width=True)
-        else:
-            st.caption(f"⚠️ PDF manquant → `{pdf_path}`")
-        st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ══════════════════════════════════════════════════════════════════════════════
-# PLANNING CLIENT
-# ══════════════════════════════════════════════════════════════════════════════
-elif page == "planning":
-    st.markdown('<div class="topbar"><div class="topbar-title">Planning client</div></div>', unsafe_allow_html=True)
-    st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
-
-    client_sel = st.selectbox("", sorted(commandes["client"].dropna().unique().tolist()),
-                               label_visibility="collapsed")
-    if client_sel:
-        df_c = commandes[commandes["client"]==client_sel].copy()
-
-        st.markdown(f"""
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px">
-          <div class="kpi-card" style="--card-color:#4361EE;--card-bg:#EEF2FF"><div class="kpi-lbl">Total CNT</div><div class="kpi-val" style="color:#4361EE">{int(df_c["nb_cnt"].sum())}</div></div>
-          <div class="kpi-card" style="--card-color:#8B5CF6;--card-bg:#EDE9FE"><div class="kpi-lbl">Total kgs</div><div class="kpi-val" style="color:#7C3AED;font-size:1.5rem">{df_c["total_kgs"].sum():,.0f}</div></div>
-          <div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7"><div class="kpi-lbl">⏳ En cours</div><div class="kpi-val" style="color:#D97706">{len(df_c[df_c["statut"].str.contains("À GÉNÉRER",na=False)])}</div></div>
-          <div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5"><div class="kpi-lbl">✅ Confirmées</div><div class="kpi-val" style="color:#059669">{len(df_c[df_c["statut"].str.contains("GÉNÉRÉ",na=False)])}</div></div>
-        </div>""", unsafe_allow_html=True)
-
-        for _, row in df_c.sort_values("semaine", ascending=False).iterrows():
-            pc = "pill-green" if "GÉNÉRÉ" in str(row["statut"]) else "pill-orange"
-            nd = len(list_docs(row["booking"]))
-            st.markdown(f"""
-            <div class="cmd-row">
-              <div><div style="font-size:13px;font-weight:700;color:#111827">{row['booking']}</div>
-              <div style="font-size:11px;color:#9CA3AF">{row['semaine']} · {row['licence']}</div></div>
-              <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">POL</div><div style="font-weight:700;color:#111827">{row['pol']}</div></div>
-              <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">CNT</div><div style="font-weight:900;color:#4361EE;font-size:20px">{row['nb_cnt']}</div></div>
-              <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">Départ</div><div style="font-weight:500;color:#374151;font-size:12px">{row['depart']}</div></div>
-              <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">ETA</div><div style="font-weight:500;color:#374151;font-size:12px">{row['eta']}</div></div>
-              <span class="pill pill-blue">📁 {nd}</span>
-              <span class="pill {pc}">{row['statut']}</span>
-            </div>""", unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ══════════════════════════════════════════════════════════════════════════════
-# NOUVELLE COMMANDE
-# ══════════════════════════════════════════════════════════════════════════════
-elif page == "new_cmd":
-    if st.session_state.role != "admin":
-        st.error("⛔ Accès réservé aux administrateurs")
-        st.stop()
-
-    st.markdown('<div class="topbar"><div class="topbar-title">Nouvelle commande</div></div>', unsafe_allow_html=True)
-    st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
-
-    with st.form("form_cmd", clear_on_submit=True):
-        f1,f2 = st.columns(2)
-        with f1:
-            sem        = st.text_input("Semaine *", placeholder="S-26")
-            client_sel = st.selectbox("Client *", sorted(clients["nom"].unique().tolist()))
-            booking    = st.text_input("Booking *", placeholder="LHV4005547")
-            lic_dispo  = clients[clients["nom"]==client_sel]["licence"].tolist()
-            lic_sel    = st.selectbox("Licence *", lic_dispo)
-        with f2:
-            navire  = st.text_input("Navire *", placeholder="CMA CGM EXCELLENCE")
-            voyage  = st.text_input("Voyage *", placeholder="0DVOPN1MA")
-            pol_sel = st.selectbox("POL *", list(CRTNS.keys()))
-            nb_cnt  = st.number_input("CNT *", min_value=1, max_value=100, value=1)
-
-        f3,f4,f5 = st.columns(3)
-        with f3: depart  = st.date_input("Départ *", value=date.today())
-        with f4: eta     = st.date_input("ETA *",    value=date.today())
-        with f5: produit = st.selectbox("Produit *", ["BANANE","ANANAS","MANGUE","AUTRE"])
-
-        crtns_cnt   = CRTNS[pol_sel]
-        total_kgs   = round(nb_cnt * crtns_cnt * POIDS_UNIT, 2)
-        lic_row     = clients[(clients["nom"]==client_sel)&(clients["licence"]==lic_sel)]
-        solde_avant = float(lic_row["solde_reel"].values[0]) if len(lic_row)>0 else 0
-        solde_apres = round(solde_avant - total_kgs, 2)
-        cnt_a_cr    = round(solde_apres/KGS_PER_CNT["MOIN(COSTA RICA)"], 2)
-        cnt_a_col   = round(solde_apres/KGS_PER_CNT["TURBO(COLOMBIA)"], 2)
-
-        st.markdown("---")
-        p1,p2,p3,p4,p5,p6 = st.columns(6)
-        p1.metric("Cartons/CNT",     f"{crtns_cnt:,}")
-        p2.metric("Total cartons",   f"{nb_cnt*crtns_cnt:,}")
-        p3.metric("Total kgs",       f"{total_kgs:,.0f}")
-        p4.metric("Solde après",     f"{solde_apres:,.0f}", delta=f"{-total_kgs:,.0f}", delta_color="inverse")
-        p5.metric("CNT restants 🇨🇷", f"{cnt_a_cr:.1f}")
-        p6.metric("CNT restants 🇨🇴", f"{cnt_a_col:.1f}")
-
-        if   solde_apres < 0:       st.markdown('<div class="alert alert-red">⚠️ Solde insuffisant</div>', unsafe_allow_html=True)
-        elif solde_apres < 19591.2: st.markdown('<div class="alert alert-warn">🟠 Solde critique</div>', unsafe_allow_html=True)
-        else:                        st.markdown('<div class="alert alert-ok">✅ Solde suffisant</div>', unsafe_allow_html=True)
-
-        if st.form_submit_button("✅ Enregistrer", use_container_width=True,
-                                 type="primary", disabled=(solde_apres < 0)):
-            st.session_state.new_commandes.append({
-                "num":"","semaine":sem,"client":client_sel,"booking":booking,
-                "licence":lic_sel,"navire":navire,"voyage":voyage,"pol":pol_sel,
-                "depart":depart.strftime("%d/%m/%Y"),"eta":eta.strftime("%d/%m/%Y"),
-                "nb_cnt":nb_cnt,"produit":produit,"statut":"⏳ À GÉNÉRER"
-            })
-            st.cache_data.clear()
-            st.success(f"✅ Commande {booking} enregistrée !")
-            st.rerun()
-
-    st.markdown('</div>', unsafe_allow_html=True)
+            # Couleurs selon statut
+            if s_idx >= 5:
+                card_color = "#10B981"; card_bg = "#D1FAE5"; status_txt = "⚓ Arrivé à Ghazaouet"
+            elif s_idx >= 2:
+                card_color = "#3B82F6"; card_bg = "#DBEAFE"; status_txt = f"🚢 {current_s['label']}"
+            elif s_idx == 1:
+                card_color = "#4361EE"; card_bg = "#EEF2FF"; status_txt =
