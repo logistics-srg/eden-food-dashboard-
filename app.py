@@ -96,10 +96,16 @@ section[data-testid="stSidebar"] .stButton>button:hover{
   border:1px solid var(--border);box-shadow:var(--shadow-sm);margin-bottom:12px;transition:var(--transition);}
 .card:hover{box-shadow:var(--shadow-md)}
 
-.hero-wrap{position:relative;width:100%;height:300px;overflow:hidden}
-.hero-wrap img{width:100%;height:100%;object-fit:cover;object-position:center 38%}
+/* ── HERO FIX — objet-fit correct ── */
+.hero-wrap{position:relative;width:100%;height:320px;overflow:hidden;border-radius:0}
+.hero-wrap img{
+  width:100%;height:100%;
+  object-fit:cover;
+  object-position:center 55%;
+  display:block;
+}
 .hero-overlay{position:absolute;inset:0;
-  background:linear-gradient(110deg,rgba(17,24,39,0.82) 0%,rgba(67,97,238,0.35) 60%,transparent 100%);
+  background:linear-gradient(110deg,rgba(10,15,30,0.85) 0%,rgba(67,97,238,0.4) 55%,rgba(0,0,0,0.15) 100%);
   display:flex;align-items:center;padding:0 52px;}
 .hero-text h1{font-size:34px;font-weight:900;color:#fff;letter-spacing:-1.2px;line-height:1.15;margin:0 0 10px}
 .hero-text p{font-size:14px;color:rgba(255,255,255,0.78);max-width:440px;line-height:1.65;margin:0 0 22px}
@@ -126,6 +132,9 @@ hr{border:none!important;border-top:1px solid var(--border)!important;margin:16p
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:#D1D5DB;border-radius:var(--radius-full)}
+
+/* ── HIDDEN FAB TRIGGERS ── */
+.fab-hidden{position:fixed;left:-9999px;width:0;height:0;overflow:hidden;opacity:0;pointer-events:none}
 </style>
 """, unsafe_allow_html=True)
 
@@ -186,7 +195,9 @@ def delete_doc(booking, filename):
     if os.path.exists(fp):
         os.remove(fp)
 
-# ── LOGIN + SPARKLES ──────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# LOGIN + SPARKLES (uniquement ici)
+# ══════════════════════════════════════════════════════════════════════════════
 def login_page():
     logo_src = img_to_b64("logo_eden_food.jpg") or img_to_b64("logo_eden_food.png")
     fond_src = img_to_b64("fond.png") or img_to_b64("fond.jpg")
@@ -201,7 +212,7 @@ def login_page():
     section[data-testid="stSidebar"]{{display:none!important}}
     section[data-testid="stSidebarCollapsedControl"]{{display:none!important}}
     @keyframes slideUp{{from{{opacity:0;transform:translateY(32px)}}to{{opacity:1;transform:translateY(0)}}}}
-    @keyframes pulse{{0%,100%{{box-shadow:0 24px 60px rgba(0,0,0,0.35)}}50%{{box-shadow:0 28px 70px rgba(67,97,238,0.25)}}}}
+    @keyframes pulse{{0%,100%{{box-shadow:0 24px 60px rgba(0,0,0,0.35)}}50%{{box-shadow:0 28px 70px rgba(67,97,238,0.3)}}}}
     </style>
     <div style="position:relative;z-index:10;display:flex;align-items:center;
         justify-content:center;min-height:85vh;padding:20px">
@@ -211,7 +222,7 @@ def login_page():
           animation:slideUp 0.5s cubic-bezier(0.34,1.56,0.64,1) both,pulse 4s ease-in-out 0.5s infinite">
         {logo_html}
         <p style="font-size:23px;font-weight:900;color:#111827;margin:0 0 5px;letter-spacing:-0.6px">Eden Food</p>
-        <p style="font-size:13px;color:#9CA3AF;margin:0 0 10px;font-weight:400">Logistics Platform · Accès sécurisé</p>
+        <p style="font-size:13px;color:#9CA3AF;margin:0 0 10px">Logistics Platform · Accès sécurisé</p>
         <div style="display:inline-flex;align-items:center;gap:6px;background:#D1FAE5;color:#065F46;
             padding:4px 14px;border-radius:20px;font-size:11px;font-weight:700;margin-bottom:24px">
           🟢 Système opérationnel</div>
@@ -219,95 +230,56 @@ def login_page():
       </div>
     </div>""", unsafe_allow_html=True)
 
-    # SparklesCore — Canvas JS natif (équivalent tsparticles)
+    # ── SparklesCore — Canvas JS (UNIQUEMENT page login) ──────────────────
     components.html("""
     <script>
     (function(){
-      try {
-        const old = parent.document.getElementById('eden-sparkles');
-        if (old) old.remove();
-
-        const cvs = parent.document.createElement('canvas');
-        cvs.id = 'eden-sparkles';
-        cvs.style.cssText = [
-          'position:fixed','top:0','left:0',
-          'width:100vw','height:100vh',
-          'pointer-events:none','z-index:2',
-          'opacity:0','transition:opacity 1.2s ease'
-        ].join(';');
+      try{
+        const old=parent.document.getElementById('eden-sparkles');
+        if(old)old.remove();
+        const cvs=parent.document.createElement('canvas');
+        cvs.id='eden-sparkles';
+        cvs.style.cssText='position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:2;opacity:0;transition:opacity 1.2s ease';
         parent.document.body.appendChild(cvs);
-
-        const ctx = cvs.getContext('2d');
-
-        function resize(){
-          cvs.width  = parent.window.innerWidth;
-          cvs.height = parent.window.innerHeight;
-        }
+        const ctx=cvs.getContext('2d');
+        function resize(){cvs.width=parent.window.innerWidth;cvs.height=parent.window.innerHeight;}
         resize();
-        parent.window.addEventListener('resize', resize);
-
-        setTimeout(() => { cvs.style.opacity = '1'; }, 120);
-
-        const N = 160;
-        const pts = Array.from({length: N}, () => ({
-          x:   Math.random() * cvs.width,
-          y:   Math.random() * cvs.height,
-          r:   Math.random() * 1.6 + 0.4,
-          o:   Math.random(),
-          os:  (Math.random() * 0.007 + 0.003) * (Math.random() > .5 ? 1 : -1),
-          vx:  (Math.random() - .5) * 0.4,
-          vy:  (Math.random() - .5) * 0.4,
-          col: Math.random() > .62 ? '#F5A623' : '#FFFFFF'
+        parent.window.addEventListener('resize',resize);
+        setTimeout(()=>{cvs.style.opacity='1';},120);
+        const N=160;
+        const pts=Array.from({length:N},()=>({
+          x:Math.random()*cvs.width,y:Math.random()*cvs.height,
+          r:Math.random()*1.6+0.4,o:Math.random(),
+          os:(Math.random()*0.007+0.003)*(Math.random()>.5?1:-1),
+          vx:(Math.random()-.5)*0.4,vy:(Math.random()-.5)*0.4,
+          col:Math.random()>.62?'#F5A623':'#FFFFFF'
         }));
-
         function draw(){
-          ctx.clearRect(0, 0, cvs.width, cvs.height);
-          pts.forEach(p => {
-            p.x += p.vx; p.y += p.vy;
-            p.o += p.os;
-            if (p.o >= 1 || p.o <= 0.04) p.os *= -1;
-            if (p.x < 0) p.x = cvs.width;
-            if (p.x > cvs.width)  p.x = 0;
-            if (p.y < 0) p.y = cvs.height;
-            if (p.y > cvs.height) p.y = 0;
-
-            if (p.col !== '#FFFFFF' && p.o > 0.7){
-              ctx.shadowBlur  = 7;
-              ctx.shadowColor = '#F5A623';
-            } else {
-              ctx.shadowBlur = 0;
-            }
-
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-            ctx.fillStyle   = p.col;
-            ctx.globalAlpha = p.o;
-            ctx.fill();
+          ctx.clearRect(0,0,cvs.width,cvs.height);
+          pts.forEach(p=>{
+            p.x+=p.vx;p.y+=p.vy;p.o+=p.os;
+            if(p.o>=1||p.o<=0.04)p.os*=-1;
+            if(p.x<0)p.x=cvs.width;if(p.x>cvs.width)p.x=0;
+            if(p.y<0)p.y=cvs.height;if(p.y>cvs.height)p.y=0;
+            if(p.col!=='#FFFFFF'&&p.o>0.7){ctx.shadowBlur=7;ctx.shadowColor='#F5A623';}
+            else{ctx.shadowBlur=0;}
+            ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+            ctx.fillStyle=p.col;ctx.globalAlpha=p.o;ctx.fill();
           });
-          ctx.globalAlpha = 1;
-          ctx.shadowBlur  = 0;
+          ctx.globalAlpha=1;ctx.shadowBlur=0;
           requestAnimationFrame(draw);
         }
         draw();
-
-        // onClick push — mode:"push" quantity:4
-        parent.document.addEventListener('click', function(e){
-          for (let i = 0; i < 4; i++){
-            pts.push({
-              x: e.clientX + (Math.random()-.5)*30,
-              y: e.clientY + (Math.random()-.5)*30,
-              r: Math.random()*2+0.5,
-              o: 1,
-              os: -(Math.random()*0.015+0.005),
-              vx: (Math.random()-.5)*1.5,
-              vy: (Math.random()-.5)*1.5,
-              col: Math.random()>.5 ? '#F5A623':'#FFFFFF'
-            });
-            if (pts.length > N + 40) pts.shift();
+        parent.document.addEventListener('click',function(e){
+          for(let i=0;i<4;i++){
+            pts.push({x:e.clientX+(Math.random()-.5)*30,y:e.clientY+(Math.random()-.5)*30,
+              r:Math.random()*2+0.5,o:1,os:-(Math.random()*0.015+0.005),
+              vx:(Math.random()-.5)*1.5,vy:(Math.random()-.5)*1.5,
+              col:Math.random()>.5?'#F5A623':'#FFFFFF'});
+            if(pts.length>N+40)pts.shift();
           }
         });
-
-      } catch(e){ console.warn('Sparkles:', e); }
+      }catch(e){console.warn('Sparkles:',e);}
     })();
     </script>
     """, height=1)
@@ -321,6 +293,7 @@ def login_page():
                 ul = u.strip().lower()
                 if ul in USERS and USERS[ul]["password"] == pwd:
                     st.session_state.update(authenticated=True, username=ul, role=USERS[ul]["role"])
+                    # Supprime le canvas sparkles après login
                     components.html("""
                     <script>
                     try{const c=parent.document.getElementById('eden-sparkles');if(c)c.remove();}catch(e){}
@@ -399,6 +372,185 @@ current_week_num  = datetime.now().isocalendar()[1]
 current_week_str  = f"S-{current_week_num}"
 commandes_semaine = commandes[commandes["semaine"]==current_week_str]
 
+# ══════════════════════════════════════════════════════════════════════════════
+# FLOATING ACTION MENU — traduction FloatingActionMenu React → JS natif
+# Animé avec spring cubic-bezier + blur, identique au composant fourni
+# ══════════════════════════════════════════════════════════════════════════════
+def inject_fab(role):
+    """
+    Traduit FloatingActionMenu (framer-motion React) en CSS/JS vanilla.
+    - Bouton + qui rotate 45° à l'ouverture (spring stiffness:300 damping:20)
+    - Options qui slide depuis la droite avec stagger delay index*0.05
+    - Backdrop blur + shadow identique au composant original
+    - Clic sur option → trouve et clique le bouton Streamlit caché correspondant
+    """
+    options_admin = [
+        ("➕", "Nouvelle commande", "__FAB_NEW_CMD__"),
+        ("📁", "Documents",         "__FAB_DOCUMENTS__"),
+        ("📋", "Licences",          "__FAB_LICENCES__"),
+        ("🚢", "Commandes",         "__FAB_COMMANDES__"),
+    ]
+    options_user = [
+        ("📁", "Documents",  "__FAB_DOCUMENTS__"),
+        ("📋", "Licences",   "__FAB_LICENCES__"),
+        ("🚢", "Commandes",  "__FAB_COMMANDES__"),
+    ]
+    opts = options_admin if role == "admin" else options_user
+    opts_json = str([[o[0], o[1], o[2]] for o in opts]).replace("'", '"')
+
+    components.html(f"""
+    <script>
+    (function(){{
+      const old = parent.document.getElementById('eden-fab-wrap');
+      if(old) old.remove();
+
+      const opts = {opts_json};
+
+      // ── CSS injection ──────────────────────────────────────────────────
+      const style = parent.document.createElement('style');
+      style.id = 'eden-fab-style';
+      const oldStyle = parent.document.getElementById('eden-fab-style');
+      if(oldStyle) oldStyle.remove();
+      style.textContent = `
+        #eden-fab-wrap {{
+          position:fixed; bottom:32px; right:32px; z-index:9999;
+          display:flex; flex-direction:column; align-items:flex-end; gap:8px;
+        }}
+        #eden-fab-menu {{
+          display:flex; flex-direction:column; align-items:flex-end; gap:8px;
+          margin-bottom:4px;
+          pointer-events:none;
+        }}
+        .fab-option {{
+          display:flex; align-items:center; gap:8px;
+          background:rgba(17,17,17,0.82);
+          color:#fff; border:none; border-radius:14px;
+          padding:9px 18px; font-size:13px; font-weight:600;
+          cursor:pointer; white-space:nowrap;
+          box-shadow:0 0 20px rgba(0,0,0,0.25);
+          backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+          opacity:0; transform:translateX(20px);
+          filter:blur(8px);
+          transition:
+            opacity 0.35s cubic-bezier(0.34,1.56,0.64,1),
+            transform 0.35s cubic-bezier(0.34,1.56,0.64,1),
+            filter 0.35s cubic-bezier(0.34,1.56,0.64,1),
+            background 0.15s ease;
+          pointer-events:none;
+        }}
+        .fab-option:hover {{
+          background:rgba(17,17,17,0.95);
+        }}
+        .fab-option.visible {{
+          opacity:1; transform:translateX(0); filter:blur(0);
+          pointer-events:all;
+        }}
+        #eden-fab-btn {{
+          width:44px; height:44px; border-radius:50%;
+          background:rgba(17,17,17,0.82);
+          border:none; cursor:pointer; color:#fff;
+          font-size:22px; font-weight:300;
+          display:flex; align-items:center; justify-content:center;
+          box-shadow:0 0 20px rgba(0,0,0,0.25);
+          backdrop-filter:blur(12px);
+          transition:background 0.15s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+        }}
+        #eden-fab-btn:hover {{ background:rgba(17,17,17,0.95); }}
+        #eden-fab-icon {{
+          display:inline-block;
+          transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+          line-height:1;
+        }}
+      `;
+      parent.document.head.appendChild(style);
+
+      // ── DOM construction ───────────────────────────────────────────────
+      const wrap = parent.document.createElement('div');
+      wrap.id = 'eden-fab-wrap';
+
+      const menu = parent.document.createElement('div');
+      menu.id = 'eden-fab-menu';
+
+      opts.forEach((opt, i) => {{
+        const btn = parent.document.createElement('button');
+        btn.className = 'fab-option';
+        btn.dataset.delay = i * 55;
+        btn.innerHTML = `<span>${{opt[0]}}</span><span>${{opt[1]}}</span>`;
+        btn.addEventListener('click', () => {{
+          clickHidden(opt[2]);
+        }});
+        menu.appendChild(btn);
+      }});
+
+      const mainBtn = parent.document.createElement('button');
+      mainBtn.id = 'eden-fab-btn';
+      mainBtn.innerHTML = '<span id="eden-fab-icon">+</span>';
+
+      wrap.appendChild(menu);
+      wrap.appendChild(mainBtn);
+      parent.document.body.appendChild(wrap);
+
+      // ── Toggle logic (identique à isOpen state React) ──────────────────
+      let isOpen = false;
+      mainBtn.addEventListener('click', () => {{
+        isOpen = !isOpen;
+        const icon = parent.document.getElementById('eden-fab-icon');
+        icon.style.transform = isOpen ? 'rotate(45deg)' : 'rotate(0deg)';
+
+        const items = menu.querySelectorAll('.fab-option');
+        if(isOpen) {{
+          menu.style.pointerEvents = 'all';
+          items.forEach((item, i) => {{
+            setTimeout(() => {{
+              item.classList.add('visible');
+            }}, i * 55);
+          }});
+        }} else {{
+          menu.style.pointerEvents = 'none';
+          items.forEach((item, i) => {{
+            setTimeout(() => {{
+              item.classList.remove('visible');
+            }}, i * 40);
+          }});
+        }}
+      }});
+
+      // ── Click hidden Streamlit button ──────────────────────────────────
+      function clickHidden(label) {{
+        isOpen = false;
+        const icon = parent.document.getElementById('eden-fab-icon');
+        if(icon) icon.style.transform = 'rotate(0deg)';
+        const items = menu.querySelectorAll('.fab-option');
+        items.forEach(item => item.classList.remove('visible'));
+        menu.style.pointerEvents = 'none';
+
+        // Cherche le bouton Streamlit caché par son texte
+        const allBtns = parent.document.querySelectorAll('button');
+        for(const btn of allBtns) {{
+          if(btn.textContent.trim() === label) {{
+            btn.click();
+            return;
+          }}
+        }}
+      }}
+    }})();
+    </script>
+    """, height=0)
+
+# ── Boutons Streamlit cachés pour le FAB ─────────────────────────────────────
+st.markdown('<div class="fab-hidden">', unsafe_allow_html=True)
+if st.button("__FAB_NEW_CMD__",   key="fab_new_cmd"):
+    st.session_state.page = "new_cmd";   st.rerun()
+if st.button("__FAB_DOCUMENTS__", key="fab_documents"):
+    st.session_state.page = "documents"; st.rerun()
+if st.button("__FAB_LICENCES__",  key="fab_licences"):
+    st.session_state.page = "licences";  st.rerun()
+if st.button("__FAB_COMMANDES__", key="fab_commandes"):
+    st.session_state.page = "commandes"; st.rerun()
+st.markdown('</div>', unsafe_allow_html=True)
+
+inject_fab(st.session_state.role)
+
 # ── SIDEBAR ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     logo_src = img_to_b64("logo_eden_food.jpg") or img_to_b64("logo_eden_food.png")
@@ -467,7 +619,7 @@ if page == "dashboard":
     if hero_src:
         st.markdown(f"""
         <div class="hero-wrap">
-          <img src="{hero_src}">
+          <img src="{hero_src}" alt="Eden Food Hero">
           <div class="hero-overlay">
             <div class="hero-text">
               {logo_ov}
