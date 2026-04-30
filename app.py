@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import plotly.express as px
 import base64
 import os
@@ -45,11 +45,6 @@ section[data-testid="stSidebar"] .stButton>button{
 section[data-testid="stSidebar"] .stButton>button:hover{
   background:var(--primary-light)!important;color:var(--primary)!important;transform:translateX(2px)!important;
 }
-.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:18px 36px;
-  display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
-.topbar-title{font-size:20px;font-weight:800;color:var(--text-primary);letter-spacing:-0.5px}
-.topbar-badge{background:var(--primary-light);color:var(--primary);padding:4px 12px;
-  border-radius:var(--radius-full);font-size:11px;font-weight:700;}
 .main-wrap{padding:28px 36px;max-width:1500px;margin:0 auto}
 .kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:28px}
 .kpi-card{background:var(--surface);border-radius:var(--radius-lg);padding:20px 18px;
@@ -111,13 +106,10 @@ hr{border:none!important;border-top:1px solid var(--border)!important;margin:16p
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:#D1D5DB;border-radius:var(--radius-full)}
-
-/* ── TRACKING ── */
 .track-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);
-  box-shadow:var(--shadow-sm);margin-bottom:14px;overflow:hidden;transition:var(--transition);cursor:pointer;}
+  box-shadow:var(--shadow-sm);margin-bottom:14px;overflow:hidden;transition:var(--transition);}
 .track-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px)}
 .track-header{padding:18px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
-.track-route{padding:0 22px 18px;overflow-x:auto}
 .stage-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   font-size:12px;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);flex-shrink:0}
 .stage-line{flex:1;height:2px;min-width:24px;position:relative;overflow:hidden}
@@ -135,9 +127,11 @@ USERS = {
     "edenfood": {"password": "Edenfood@2026",   "role": "user"},
 }
 
-for k, v in {"authenticated": False, "username": "", "role": "",
-             "page": "dashboard", "new_commandes": [], "expanded_cmd": None,
-             "expanded_track": set()}.items():
+for k, v in {
+    "authenticated": False, "username": "", "role": "",
+    "page": "dashboard", "new_commandes": [],
+    "expanded_cmd": None, "expanded_track": set()
+}.items():
     if k not in st.session_state:
         st.session_state[k] = v
 
@@ -145,7 +139,7 @@ for k, v in {"authenticated": False, "username": "", "role": "",
 def img_to_b64(path):
     try:
         ext  = path.split(".")[-1].lower()
-        mime = "jpeg" if ext in ["jpg","jpeg"] else "png"
+        mime = "jpeg" if ext in ["jpg", "jpeg"] else "png"
         return f"data:image/{mime};base64,{base64.b64encode(open(path,'rb').read()).decode()}"
     except:
         return None
@@ -185,20 +179,38 @@ def delete_doc(booking, filename):
     if os.path.exists(fp):
         os.remove(fp)
 
-# ══════════════════════════════════════════════════════════════════════════════
-# TRACKING HELPERS
-# ══════════════════════════════════════════════════════════════════════════════
-# Étapes avec durée cumulée en jours depuis le départ
-TRANSIT_STAGES = [
-    {"id": "plantation",   "icon": "🌿", "label": "Plantation",     "days": -3,  "color": "#6B7280"},
-    {"id": "port_depart",  "icon": "⚓", "label": "Port départ",    "days": 0,   "color": "#4361EE"},
-    {"id": "atlantique",   "icon": "🌊", "label": "Atlantique",     "days": 3,   "color": "#3B82F6"},
-    {"id": "gibraltar",    "icon": "🏛️", "label": "Gibraltar",      "days": 14,  "color": "#8B5CF6"},
-    {"id": "mediterranee", "icon": "🌊", "label": "Méditerranée",   "days": 17,  "color": "#0EA5E9"},
-    {"id": "ghazaouet",    "icon": "⚓", "label": "Ghazaouet 🇩🇿",  "days": 21,  "color": "#10B981"},
-]
-TOTAL_DAYS = 21  # durée totale approximative
+# ── ROUTING MARITIME PAR POL ──────────────────────────────────────────────────
+ROUTING = {
+    "MOIN(COSTA RICA)": {
+        "total_days": 21,
+        "stages": [
+            {"id": "moin",       "icon": "⚓", "label": "MOIN CR",       "days": 0,  "color": "#F59E0B"},
+            {"id": "caraibes",   "icon": "🌊", "label": "Caraïbes",      "days": 3,  "color": "#3B82F6"},
+            {"id": "atlantique", "icon": "🌊", "label": "Atlantique",    "days": 8,  "color": "#2563EB"},
+            {"id": "algeciras",  "icon": "🔄", "label": "Algeciras",     "days": 15, "color": "#8B5CF6"},
+            {"id": "alboran",    "icon": "🌊", "label": "Mer Alboran",   "days": 18, "color": "#0EA5E9"},
+            {"id": "ghazaouet",  "icon": "⚓", "label": "Ghazaouet DZ", "days": 21, "color": "#10B981"},
+        ]
+    },
+    "TURBO(COLOMBIA)": {
+        "total_days": 19,
+        "stages": [
+            {"id": "turbo",      "icon": "⚓", "label": "TURBO COL",     "days": 0,  "color": "#F59E0B"},
+            {"id": "caraibes",   "icon": "🌊", "label": "Caraïbes",      "days": 2,  "color": "#3B82F6"},
+            {"id": "atlantique", "icon": "🌊", "label": "Atlantique",    "days": 6,  "color": "#2563EB"},
+            {"id": "algeciras",  "icon": "🔄", "label": "Algeciras",     "days": 13, "color": "#8B5CF6"},
+            {"id": "alboran",    "icon": "🌊", "label": "Mer Alboran",   "days": 16, "color": "#0EA5E9"},
+            {"id": "ghazaouet",  "icon": "⚓", "label": "Ghazaouet DZ", "days": 19, "color": "#10B981"},
+        ]
+    }
+}
 
+def get_routing(pol):
+    pol_up = str(pol).upper()
+    for key in ROUTING:
+        if key in pol_up or pol_up in key:
+            return ROUTING[key]
+    return ROUTING["MOIN(COSTA RICA)"]
 
 def parse_depart(depart_str):
     for fmt in ["%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y", "%Y/%m/%d"]:
@@ -208,108 +220,73 @@ def parse_depart(depart_str):
             continue
     return None
 
-
-def get_tracking_info(depart_str):
-    """Retourne (stage_idx, progress_pct, days_elapsed, eta_arrive)"""
+def get_tracking_info(depart_str, pol="MOIN(COSTA RICA)"):
     dep = parse_depart(depart_str)
     if not dep:
-        return 0, 0, None, None
-
-    today = date.today()
-    days_elapsed = (today - dep).days
-    eta = dep + __import__("datetime").timedelta(days=TOTAL_DAYS)
-
-    # Trouver l'étape actuelle
-    stage_idx = 0
-    for i, s in enumerate(TRANSIT_STAGES):
-        if days_elapsed >= s["days"]:
+        return 0, 0.0, None, None
+    routing    = get_routing(pol)
+    total_days = routing["total_days"]
+    stages     = routing["stages"]
+    today      = date.today()
+    days_el    = (today - dep).days
+    eta        = dep + timedelta(days=total_days)
+    stage_idx  = 0
+    for i, s in enumerate(stages):
+        if days_el >= s["days"]:
             stage_idx = i
-
-    # Progression globale (0-100%)
-    if days_elapsed < TRANSIT_STAGES[0]["days"]:
+    if days_el < 0:
         progress = 0.0
-    elif days_elapsed >= TOTAL_DAYS:
+    elif days_el >= total_days:
         progress = 100.0
     else:
-        progress = min(100.0, max(0.0, days_elapsed / TOTAL_DAYS * 100))
-
-    return stage_idx, progress, days_elapsed, eta
-
+        progress = round(min(100.0, max(0.0, days_el / total_days * 100)), 1)
+    return stage_idx, progress, days_el, eta
 
 def build_stage_timeline_html(stage_idx, progress, pol):
-    """Génère le HTML de la timeline des étapes"""
-    html = '<div style="display:flex;align-items:center;padding:14px 0;gap:0;min-width:600px">'
-
-    for i, s in enumerate(TRANSIT_STAGES):
-        # Statut du dot
+    routing = get_routing(pol)
+    stages  = routing["stages"]
+    html = '<div style="display:flex;align-items:center;padding:14px 0;gap:0;min-width:580px;overflow-x:auto">'
+    for i, s in enumerate(stages):
         is_done    = i < stage_idx
         is_current = i == stage_idx
         is_future  = i > stage_idx
-
         if is_done:
-            dot_bg    = "#10B981"
-            dot_border = "#10B981"
-            dot_shadow = ""
-            dot_content = "✓"
-            lbl_color  = "#10B981"
-            lbl_weight = "600"
+            dot_bg = "#10B981"; dot_border = "#10B981"; dot_shadow = ""
+            dot_content = "v"; lbl_color = "#10B981"; lbl_weight = "600"
         elif is_current:
-            dot_bg    = s["color"]
-            dot_border = s["color"]
-            dot_shadow = f"box-shadow:0 0 0 4px {s['color']}22,0 0 12px {s['color']}44"
-            dot_content = s["icon"]
-            lbl_color  = s["color"]
-            lbl_weight = "800"
+            dot_bg = s["color"]; dot_border = s["color"]
+            dot_shadow = f"box-shadow:0 0 0 4px {s['color']}33,0 0 12px {s['color']}55"
+            dot_content = s["icon"]; lbl_color = s["color"]; lbl_weight = "800"
         else:
-            dot_bg    = "#F9FAFB"
-            dot_border = "#E5E7EB"
-            dot_shadow = ""
-            dot_content = s["icon"]
-            lbl_color  = "#9CA3AF"
-            lbl_weight = "500"
-
-        label = s["label"]
-        if i == 0:
-            flag = "🇨🇷" if "COSTA" in pol.upper() else "🇨🇴"
-            label = f"{flag} {pol.split('(')[0].strip()[:5]}"
-
-        anim = 'class="ship-active"' if is_current and i not in [0, 5] else ""
-
+            dot_bg = "#F9FAFB"; dot_border = "#E5E7EB"; dot_shadow = ""
+            dot_content = s["icon"]; lbl_color = "#9CA3AF"; lbl_weight = "500"
+        anim      = 'class="ship-active"' if is_current and 0 < i < len(stages) - 1 else ""
+        txt_color = "#fff" if not is_future else "#9CA3AF"
         html += f"""
         <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0">
           <div {anim} class="stage-dot"
-            style="background:{dot_bg};border:2px solid {dot_border};{dot_shadow};color:{'#fff' if not is_future else '#9CA3AF'};font-size:{'13px' if is_done else '14px'}">
+            style="background:{dot_bg};border:2px solid {dot_border};{dot_shadow};
+            color:{txt_color};font-size:{'11px' if is_done else '14px'}">
             {dot_content}
           </div>
-          <div style="font-size:9px;color:{lbl_color};font-weight:{lbl_weight};text-align:center;max-width:68px;line-height:1.3">
-            {label}
-          </div>
+          <div style="font-size:9px;color:{lbl_color};font-weight:{lbl_weight};
+            text-align:center;max-width:72px;line-height:1.3">{s['label']}</div>
         </div>"""
-
-        if i < len(TRANSIT_STAGES) - 1:
-            # Ligne entre les étapes
+        if i < len(stages) - 1:
+            line_color  = "#10B981" if is_done else ("#E5E7EB" if is_future else s["color"])
             line_filled = 100 if is_done else 0
-            line_color  = "#10B981" if is_done else TRANSIT_STAGES[i]["color"]
             html += f"""
             <div class="stage-line" style="background:#E5E7EB;margin-bottom:16px">
               <div class="stage-line-fill" style="background:{line_color};width:{line_filled}%"></div>
             </div>"""
-
     html += "</div>"
     return html
 
-
 def render_route_map_svg(active_ships):
     WAYPOINTS = [
-        (55,  155),
-        (160, 145),
-        (310, 120),
-        (480, 95),
-        (590, 80),
-        (660, 90),
-        (730, 100),
+        (60,  150), (165, 140), (315, 115),
+        (480, 92),  (590, 78),  (660, 88), (730, 98),
     ]
-
     path_d = f"M {WAYPOINTS[0][0]} {WAYPOINTS[0][1]}"
     for i in range(1, len(WAYPOINTS)):
         x0, y0 = WAYPOINTS[i-1]
@@ -317,122 +294,82 @@ def render_route_map_svg(active_ships):
         cx = (x0 + x1) / 2
         path_d += f" C {cx} {y0}, {cx} {y1}, {x1} {y1}"
 
-    ships_svg = ""
-    for ship in active_ships:
+    filter_defs = ""
+    ships_svg   = ""
+    for idx, ship in enumerate(active_ships):
+        fid = f"sg{idx}"
         pct = max(0.0, min(1.0, ship["progress"] / 100))
-        total_segs = len(WAYPOINTS) - 1
-        seg_f = pct * total_segs
-        seg_i = min(int(seg_f), total_segs - 1)
-        seg_t = seg_f - seg_i
-        x0, y0 = WAYPOINTS[seg_i]
-        x1, y1 = WAYPOINTS[min(seg_i + 1, total_segs)]
-        sx = round(x0 + (x1 - x0) * seg_t, 1)
-        sy = round(y0 + (y1 - y0) * seg_t, 1)
+        segs = len(WAYPOINTS) - 1
+        sf   = pct * segs
+        si   = min(int(sf), segs - 1)
+        st_  = sf - si
+        x0, y0 = WAYPOINTS[si]
+        x1, y1 = WAYPOINTS[min(si + 1, segs)]
+        sx  = round(x0 + (x1 - x0) * st_, 1)
+        sy  = round(y0 + (y1 - y0) * st_, 1)
         lbl = ship["label"][:9]
+        filter_defs += (
+            f'<filter id="{fid}" x="-50%" y="-50%" width="200%" height="200%">'
+            f'<feGaussianBlur stdDeviation="2.5" result="blur"/>'
+            f'<feComposite in="SourceGraphic" in2="blur" operator="over"/>'
+            f'</filter>'
+        )
+        ships_svg += (
+            f'<g transform="translate({sx},{sy})">'
+            f'<ellipse cx="0" cy="3" rx="13" ry="5" fill="#1D4ED8" opacity="0.85" filter="url(#{fid})"/>'
+            f'<rect x="-9" y="-3" width="18" height="7" rx="3" fill="#3B82F6"/>'
+            f'<polygon points="9,-3 15,0 9,4" fill="#60A5FA"/>'
+            f'<rect x="-4" y="-9" width="3" height="8" fill="#93C5FD" opacity="0.9"/>'
+            f'<rect x="-4" y="-9" width="8" height="3" rx="1" fill="#BFDBFE" opacity="0.7"/>'
+            f'<circle cx="0" cy="0" r="2" fill="#34D399" opacity="0.95"/>'
+            f'<text x="0" y="22" font-size="7" fill="#93C5FD" font-weight="700" '
+            f'text-anchor="middle" font-family="Arial,sans-serif">{lbl}</text>'
+            f'</g>'
+        )
 
-        # Icone navire en SVG pur (pas d'emoji)
-        ships_svg += f"""
-        <g transform="translate({sx},{sy})">
-          <filter id="shipglow_{lbl[:3]}">
-            <feGaussianBlur stdDeviation="3" result="blur"/>
-            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-          </filter>
-          <ellipse cx="0" cy="3" rx="13" ry="5"
-            fill="#1D4ED8" opacity="0.85" filter="url(#shipglow_{lbl[:3]})"/>
-          <rect x="-9" y="-3" width="18" height="7" rx="3"
-            fill="#3B82F6"/>
-          <polygon points="9,-3 15,0 9,4"
-            fill="#60A5FA"/>
-          <rect x="-4" y="-9" width="3" height="8"
-            fill="#93C5FD" opacity="0.9"/>
-          <rect x="-4" y="-9" width="8" height="3" rx="1"
-            fill="#BFDBFE" opacity="0.7"/>
-          <circle cx="0" cy="0" r="2"
-            fill="#34D399" opacity="0.95"/>
-          <text x="0" y="20"
-            font-size="7" fill="#93C5FD" font-weight="700"
-            text-anchor="middle"
-            font-family="Arial,sans-serif">{lbl}</text>
-        </g>"""
-
-    svg = f"""
-    <svg viewBox="0 0 800 220" xmlns="http://www.w3.org/2000/svg"
-         style="width:100%;height:190px;border-radius:12px;
-         background:linear-gradient(180deg,#0F172A 0%,#0C2340 40%,#0F3460 100%)">
-
-      <defs>
-        <pattern id="ocean-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-          <path d="M 40 0 L 0 0 0 40" fill="none"
-            stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>
-        </pattern>
-        <linearGradient id="routeGrad" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%"   stop-color="#4361EE"/>
-          <stop offset="50%"  stop-color="#3B82F6"/>
-          <stop offset="100%" stop-color="#10B981"/>
-        </linearGradient>
-        <filter id="ptglow">
-          <feGaussianBlur stdDeviation="2.5" result="blur"/>
-          <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-        </filter>
-      </defs>
-
-      <rect width="800" height="220" fill="url(#ocean-grid)"/>
-
-      <!-- Amerique centrale -->
-      <ellipse cx="40" cy="160" rx="38" ry="26" fill="#1E3A2F" opacity="0.65"/>
-      <text x="8" y="183" font-size="8" fill="rgba(255,255,255,0.35)"
-        font-family="Arial,sans-serif">AMÉR. CENTRALE</text>
-
-      <!-- Espagne / Gibraltar -->
-      <ellipse cx="592" cy="56" rx="28" ry="16" fill="#1A2A4A" opacity="0.65"/>
-      <text x="570" y="50" font-size="8" fill="rgba(255,255,255,0.35)"
-        font-family="Arial,sans-serif">ESPAGNE</text>
-
-      <!-- Algerie / Maroc -->
-      <rect x="558" y="108" width="242" height="48" rx="6"
-        fill="#1E2A1A" opacity="0.65"/>
-      <text x="615" y="138" font-size="9" fill="rgba(255,255,255,0.35)"
-        font-family="Arial,sans-serif">ALGÉRIE / MAROC</text>
-
-      <!-- Détroit Gibraltar -->
-      <line x1="590" y1="72" x2="590" y2="108"
-        stroke="rgba(255,200,80,0.25)" stroke-width="1" stroke-dasharray="3,3"/>
-      <text x="596" y="93" font-size="8" fill="rgba(255,200,80,0.6)"
-        font-family="Arial,sans-serif">GIBRALTAR</text>
-
-      <!-- Route en pointillés -->
-      <path d="{path_d}" fill="none"
-        stroke="rgba(255,255,255,0.1)" stroke-width="2" stroke-dasharray="6,4"/>
-
-      <!-- Route active gradient -->
-      <path d="{path_d}" fill="none"
-        stroke="url(#routeGrad)" stroke-width="2.5" stroke-linecap="round"/>
-
-      <!-- Points clés -->
-      <circle cx="{WAYPOINTS[0][0]}" cy="{WAYPOINTS[0][1]}" r="5"
-        fill="#F59E0B" filter="url(#ptglow)"/>
-      <circle cx="{WAYPOINTS[4][0]}" cy="{WAYPOINTS[4][1]}" r="5"
-        fill="#8B5CF6" filter="url(#ptglow)"/>
-      <circle cx="{WAYPOINTS[6][0]}" cy="{WAYPOINTS[6][1]}" r="6"
-        fill="#10B981" filter="url(#ptglow)"/>
-
-      <text x="{WAYPOINTS[0][0]-4}" y="{WAYPOINTS[0][1]+17}"
-        font-size="8" fill="#F59E0B" font-family="Arial,sans-serif" font-weight="700">DÉPART</text>
-      <text x="{WAYPOINTS[6][0]-28}" y="{WAYPOINTS[6][1]+17}"
-        font-size="8" fill="#10B981" font-family="Arial,sans-serif" font-weight="700">GHAZAOUET</text>
-
-      <!-- Navires -->
-      {ships_svg}
-
-      <!-- Légende -->
-      <rect x="10" y="8" width="148" height="22" rx="6" fill="rgba(255,255,255,0.06)"/>
-      <circle cx="22" cy="19" r="4" fill="#10B981"/>
-      <text x="31" y="23" font-size="9" fill="rgba(255,255,255,0.65)"
-        font-family="Arial,sans-serif">Route maritime active</text>
-    </svg>"""
-
+    wp0, wp4, wp6 = WAYPOINTS[0], WAYPOINTS[4], WAYPOINTS[6]
+    svg = (
+        '<svg viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" '
+        'style="width:100%;height:190px;border-radius:12px;display:block;'
+        'background:linear-gradient(180deg,#0F172A 0%,#0C2340 40%,#0F3460 100%)">'
+        "<defs>"
+        '<pattern id="og" width="40" height="40" patternUnits="userSpaceOnUse">'
+        '<path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>'
+        "</pattern>"
+        '<linearGradient id="rg" x1="0" y1="0" x2="1" y2="0">'
+        '<stop offset="0%" stop-color="#4361EE"/>'
+        '<stop offset="50%" stop-color="#3B82F6"/>'
+        '<stop offset="100%" stop-color="#10B981"/>'
+        "</linearGradient>"
+        '<filter id="ptg" x="-50%" y="-50%" width="200%" height="200%">'
+        '<feGaussianBlur stdDeviation="2.5" result="blur"/>'
+        '<feComposite in="SourceGraphic" in2="blur" operator="over"/>'
+        "</filter>"
+        + filter_defs +
+        "</defs>"
+        '<rect width="800" height="200" fill="url(#og)"/>'
+        f'<ellipse cx="{wp0[0]}" cy="{wp0[1]+22}" rx="42" ry="24" fill="#1E3A2F" opacity="0.6"/>'
+        f'<text x="{wp0[0]-30}" y="{wp0[1]+44}" font-size="8" fill="rgba(255,255,255,0.3)" font-family="Arial,sans-serif">AMER. CENTRALE</text>'
+        f'<ellipse cx="{wp4[0]}" cy="{wp4[1]-18}" rx="28" ry="14" fill="#1A2A4A" opacity="0.6"/>'
+        f'<text x="{wp4[0]-20}" y="{wp4[1]-24}" font-size="8" fill="rgba(255,255,255,0.3)" font-family="Arial,sans-serif">ESPAGNE</text>'
+        f'<rect x="555" y="{wp4[1]+10}" width="245" height="45" rx="6" fill="#1E2A1A" opacity="0.6"/>'
+        f'<text x="595" y="{wp4[1]+36}" font-size="9" fill="rgba(255,255,255,0.3)" font-family="Arial,sans-serif">ALGERIE / MAROC</text>'
+        f'<line x1="{wp4[0]}" y1="{wp4[1]+6}" x2="{wp4[0]}" y2="{wp4[1]+10}" stroke="rgba(255,200,80,0.3)" stroke-width="1" stroke-dasharray="3,2"/>'
+        f'<text x="{wp4[0]+4}" y="{wp4[1]+9}" font-size="7.5" fill="rgba(255,200,80,0.55)" font-family="Arial,sans-serif">ALGECIRAS</text>'
+        f'<path d="{path_d}" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2" stroke-dasharray="6,4"/>'
+        f'<path d="{path_d}" fill="none" stroke="url(#rg)" stroke-width="2.5" stroke-linecap="round"/>'
+        f'<circle cx="{wp0[0]}" cy="{wp0[1]}" r="5" fill="#F59E0B" filter="url(#ptg)"/>'
+        f'<circle cx="{wp4[0]}" cy="{wp4[1]}" r="5" fill="#8B5CF6" filter="url(#ptg)"/>'
+        f'<circle cx="{wp6[0]}" cy="{wp6[1]}" r="6" fill="#10B981" filter="url(#ptg)"/>'
+        f'<text x="{wp0[0]-4}" y="{wp0[1]+16}" font-size="8" fill="#F59E0B" font-family="Arial,sans-serif" font-weight="700">DEPART</text>'
+        f'<text x="{wp6[0]-30}" y="{wp6[1]+16}" font-size="8" fill="#10B981" font-family="Arial,sans-serif" font-weight="700">GHAZAOUET</text>'
+        + ships_svg +
+        '<rect x="10" y="8" width="152" height="22" rx="6" fill="rgba(255,255,255,0.06)"/>'
+        '<circle cx="22" cy="19" r="4" fill="#10B981"/>'
+        '<text x="31" y="23" font-size="9" fill="rgba(255,255,255,0.6)" font-family="Arial,sans-serif">Route maritime active</text>'
+        "</svg>"
+    )
     return svg
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 # LOGIN
@@ -461,10 +398,10 @@ def login_page():
           animation:slideUp 0.5s cubic-bezier(0.34,1.56,0.64,1) both,pulse 4s ease-in-out 0.5s infinite">
         {logo_html}
         <p style="font-size:23px;font-weight:900;color:#111827;margin:0 0 5px;letter-spacing:-0.6px">Eden Food</p>
-        <p style="font-size:13px;color:#9CA3AF;margin:0 0 10px">Logistics Platform · Accès sécurisé</p>
+        <p style="font-size:13px;color:#9CA3AF;margin:0 0 10px">Logistics Platform · Acces securise</p>
         <div style="display:inline-flex;align-items:center;gap:6px;background:#D1FAE5;color:#065F46;
             padding:4px 14px;border-radius:20px;font-size:11px;font-weight:700;margin-bottom:24px">
-          🟢 Système opérationnel</div>
+          Systeme operationnel</div>
         <div style="height:1px;background:linear-gradient(90deg,transparent,#E5E7EB,transparent);margin-bottom:22px"></div>
       </div>
     </div>""", unsafe_allow_html=True)
@@ -523,9 +460,9 @@ def login_page():
     c1, c2, c3 = st.columns([1, 2, 1])
     with c2:
         with st.form("login_form"):
-            u   = st.text_input("", placeholder="✦ Identifiant")
-            pwd = st.text_input("", type="password", placeholder="🔒 Mot de passe")
-            if st.form_submit_button("Connexion →", use_container_width=True, type="primary"):
+            u   = st.text_input("", placeholder="Identifiant")
+            pwd = st.text_input("", type="password", placeholder="Mot de passe")
+            if st.form_submit_button("Connexion", use_container_width=True, type="primary"):
                 ul = u.strip().lower()
                 if ul in USERS and USERS[ul]["password"] == pwd:
                     st.session_state.update(authenticated=True, username=ul, role=USERS[ul]["role"])
@@ -537,7 +474,7 @@ if not st.session_state.authenticated:
     login_page()
     st.stop()
 
-# ── Suppression sparkles sur toutes les pages authentifiées ───────────────────
+# ── Suppression sparkles apres connexion ──────────────────────────────────────
 components.html("""
 <script>
 (function(){
@@ -597,7 +534,7 @@ clients["poids_total"] = pd.to_numeric(clients["poids_total"], errors="coerce").
 
 def get_solde_reel(nom, lic, poids):
     mask = (commandes["client"]==nom)&(commandes["licence"]==lic)&\
-           (~commandes["statut"].str.contains("À GÉNÉRER", na=False))
+           (~commandes["statut"].str.contains("A GENERER", na=False))
     return round(poids - commandes.loc[mask,"total_kgs"].sum(), 2)
 
 def get_solde_prev(nom, lic, poids):
@@ -622,7 +559,7 @@ with st.sidebar:
         st.markdown(f'<div style="padding:24px 18px 14px"><img src="{logo_src}" style="height:30px"></div>',
                     unsafe_allow_html=True)
     else:
-        st.markdown('<div style="padding:24px 18px 14px;font-size:16px;font-weight:900;color:#111827">🍌 EDEN FOOD</div>',
+        st.markdown('<div style="padding:24px 18px 14px;font-size:16px;font-weight:900;color:#111827">EDEN FOOD</div>',
                     unsafe_allow_html=True)
 
     st.markdown('<div style="height:1px;background:#E5E7EB;margin:0 18px 14px"></div>', unsafe_allow_html=True)
@@ -633,7 +570,7 @@ with st.sidebar:
         ("dashboard", "🏠", "Overview"),
         ("semaine",   "📅", f"Semaine {current_week_str}"),
         ("commandes", "🚢", "Commandes"),
-        ("tracking",  "🗺️", "Tracking maritime"),   # ← NOUVEAU
+        ("tracking",  "🗺️", "Tracking maritime"),
         ("documents", "📁", "Documents"),
         ("licences",  "📋", "Licences DPVCT"),
         ("planning",  "👤", "Planning client"),
@@ -667,7 +604,7 @@ with st.sidebar:
         f'<div><div style="font-size:12px;font-weight:700;color:#111827">{st.session_state.username.upper()}</div>'
         f'<div style="font-size:10px;color:#9CA3AF">{st.session_state.role}</div></div></div>',
         unsafe_allow_html=True)
-    if st.button("🚪  Déconnexion", use_container_width=True, key="logout"):
+    if st.button("🚪  Deconnexion", use_container_width=True, key="logout"):
         st.session_state.update(authenticated=False, username="")
         st.rerun()
 
@@ -688,49 +625,48 @@ if page == "dashboard":
             <div class="hero-text">
               {logo_ov}
               <h1>Fresh from the<br>plantation to the world</h1>
-              <p>Suivi en temps réel — Colombie & Costa Rica</p>
-              <div class="hero-badge">🍌 {current_week_str} · {len(commandes)} expéditions actives</div>
+              <p>Suivi en temps reel — Colombie & Costa Rica</p>
+              <div class="hero-badge">🍌 {current_week_str} · {len(commandes)} expeditions actives</div>
             </div>
           </div>
         </div>""", unsafe_allow_html=True)
     else:
         st.markdown(f"""
-        <div style="background:linear-gradient(110deg,#0F172A,#4361EE);padding:52px;overflow:hidden;position:relative;height:320px;display:flex;align-items:center;">
-          <div style="position:absolute;top:-40px;right:-40px;width:300px;height:300px;
-              background:rgba(255,255,255,0.04);border-radius:50%"></div>
+        <div style="background:linear-gradient(110deg,#0F172A,#4361EE);padding:52px;
+            overflow:hidden;position:relative;height:320px;display:flex;align-items:center;">
           {logo_ov}
           <div>
           <h1 style="font-size:32px;font-weight:900;color:#fff;letter-spacing:-1px;margin:0 0 10px">
             Fresh from the plantation to the world</h1>
           <p style="font-size:14px;color:rgba(255,255,255,0.72);max-width:440px;margin:0 0 22px">
-            Colombie & Costa Rica — Suivi logistique temps réel</p>
-          <div class="hero-badge">🍌 {current_week_str} · {len(commandes)} expéditions</div>
+            Colombie & Costa Rica — Suivi logistique temps reel</p>
+          <div class="hero-badge">🍌 {current_week_str} · {len(commandes)} expeditions</div>
           </div>
         </div>""", unsafe_allow_html=True)
 
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
 
-    todo  = commandes[commandes["statut"].str.contains("À GÉNÉRER", na=False)]
-    done  = commandes[commandes["statut"].str.contains("GÉNÉRÉ",    na=False)]
+    todo  = commandes[commandes["statut"].str.contains("GENERER", na=False)]
+    done  = commandes[commandes["statut"].str.contains("GENERE",  na=False)]
     alert = clients[clients["solde_reel"] < 19591.2]
     tdocs = sum(len(list_docs(b)) for b in commandes["booking"].dropna().unique())
 
     st.markdown(f"""
     <div class="kpi-grid">
       <div class="kpi-card" style="--card-color:#4361EE;--card-bg:#EEF2FF">
-        <div class="icon-wrap">🚢</div><div class="kpi-lbl">Expéditions</div>
-        <div class="kpi-val" style="color:#4361EE">{len(commandes)}</div><div class="kpi-sub">enregistrées</div>
+        <div class="icon-wrap">🚢</div><div class="kpi-lbl">Expeditions</div>
+        <div class="kpi-val" style="color:#4361EE">{len(commandes)}</div><div class="kpi-sub">enregistrees</div>
       </div>
       <div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7">
-        <div class="icon-wrap">⏳</div><div class="kpi-lbl">À générer</div>
+        <div class="icon-wrap">⏳</div><div class="kpi-lbl">A generer</div>
         <div class="kpi-val" style="color:#D97706">{len(todo)}</div><div class="kpi-sub">en attente</div>
       </div>
       <div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">
-        <div class="icon-wrap">✅</div><div class="kpi-lbl">Confirmées</div>
-        <div class="kpi-val" style="color:#059669">{len(done)}</div><div class="kpi-sub">générées</div>
+        <div class="icon-wrap">✅</div><div class="kpi-lbl">Confirmees</div>
+        <div class="kpi-val" style="color:#059669">{len(done)}</div><div class="kpi-sub">generees</div>
       </div>
       <div class="kpi-card" style="--card-color:#8B5CF6;--card-bg:#EDE9FE">
-        <div class="icon-wrap">📦</div><div class="kpi-lbl">CNT planifiés</div>
+        <div class="icon-wrap">📦</div><div class="kpi-lbl">CNT planifies</div>
         <div class="kpi-val" style="color:#7C3AED">{int(todo["nb_cnt"].sum())}</div><div class="kpi-sub">conteneurs</div>
       </div>
       <div class="kpi-card" style="--card-color:#EF4444;--card-bg:#FEE2E2">
@@ -739,13 +675,13 @@ if page == "dashboard":
       </div>
       <div class="kpi-card" style="--card-color:#3B82F6;--card-bg:#DBEAFE">
         <div class="icon-wrap">📁</div><div class="kpi-lbl">Documents</div>
-        <div class="kpi-val" style="color:#2563EB">{tdocs}</div><div class="kpi-sub">uploadés</div>
+        <div class="kpi-val" style="color:#2563EB">{tdocs}</div><div class="kpi-sub">uploades</div>
       </div>
     </div>""", unsafe_allow_html=True)
 
     c1, c2 = st.columns([3, 2])
     with c1:
-        st.markdown('<div class="sec-hdr"><span class="sec-title">Dernières expéditions</span><span class="sec-sub">10 dernières</span></div>', unsafe_allow_html=True)
+        st.markdown('<div class="sec-hdr"><span class="sec-title">Dernieres expeditions</span><span class="sec-sub">10 dernieres</span></div>', unsafe_allow_html=True)
         st.dataframe(commandes.tail(10)[["semaine","client","booking","pol","nb_cnt","depart","statut"]],
             use_container_width=True, hide_index=True, height=340,
             column_config={
@@ -754,11 +690,11 @@ if page == "dashboard":
                 "booking": st.column_config.TextColumn("Booking"),
                 "pol":     st.column_config.TextColumn("POL"),
                 "nb_cnt":  st.column_config.NumberColumn("CNT", format="%d"),
-                "depart":  st.column_config.TextColumn("Départ"),
+                "depart":  st.column_config.TextColumn("Depart"),
                 "statut":  st.column_config.TextColumn("Statut"),
             })
     with c2:
-        st.markdown('<div class="sec-hdr"><span class="sec-title">Répartition POL</span></div>', unsafe_allow_html=True)
+        st.markdown('<div class="sec-hdr"><span class="sec-title">Repartition POL</span></div>', unsafe_allow_html=True)
         if not commandes.empty:
             df_pol = commandes.groupby("pol")["nb_cnt"].sum().reset_index()
             fig = px.pie(df_pol, values="nb_cnt", names="pol", hole=0.65,
@@ -771,9 +707,9 @@ if page == "dashboard":
     st.markdown('<div class="sec-hdr"><span class="sec-title">Volume hebdomadaire</span><span class="sec-sub">CNT par semaine</span></div>', unsafe_allow_html=True)
     if not commandes.empty:
         df_sem = commandes.groupby("semaine")["nb_cnt"].sum().reset_index()
-        fig2 = px.bar(df_sem, x="semaine", y="nb_cnt",
-                      color_discrete_sequence=["#4361EE"],
-                      labels={"semaine":"","nb_cnt":"Conteneurs"})
+        fig2   = px.bar(df_sem, x="semaine", y="nb_cnt",
+                        color_discrete_sequence=["#4361EE"],
+                        labels={"semaine":"","nb_cnt":"Conteneurs"})
         fig2.update_traces(marker_cornerradius=6, marker_line_width=0)
         fig2 = apply_chart_style(fig2)
         st.plotly_chart(fig2, use_container_width=True)
@@ -784,24 +720,29 @@ if page == "dashboard":
 # SEMAINE
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "semaine":
-    st.markdown(f'<div class="topbar"><div style="display:flex;align-items:center;gap:14px"><div class="topbar-title">Semaine en cours</div><div class="topbar-badge">{current_week_str}</div></div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="background:#fff;border-bottom:1px solid #E5E7EB;padding:18px 36px;'
+                f'display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100">'
+                f'<div style="font-size:20px;font-weight:800;color:#111827">Semaine en cours</div>'
+                f'<div style="background:#EEF2FF;color:#4361EE;padding:4px 12px;border-radius:20px;'
+                f'font-size:11px;font-weight:700">{current_week_str}</div></div>',
+                unsafe_allow_html=True)
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
 
     if commandes_semaine.empty:
         st.info(f"Aucune commande pour {current_week_str}.")
     else:
-        todo_s = commandes_semaine[commandes_semaine["statut"].str.contains("À GÉNÉRER", na=False)]
-        done_s = commandes_semaine[commandes_semaine["statut"].str.contains("GÉNÉRÉ",    na=False)]
+        todo_s = commandes_semaine[commandes_semaine["statut"].str.contains("GENERER", na=False)]
+        done_s = commandes_semaine[commandes_semaine["statut"].str.contains("GENERE",  na=False)]
         st.markdown(f"""
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px">
           <div class="kpi-card" style="--card-color:#4361EE;--card-bg:#EEF2FF"><div class="kpi-lbl">Total</div><div class="kpi-val" style="color:#4361EE">{len(commandes_semaine)}</div></div>
-          <div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7"><div class="kpi-lbl">⏳ À générer</div><div class="kpi-val" style="color:#D97706">{len(todo_s)}</div></div>
-          <div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5"><div class="kpi-lbl">✅ Confirmées</div><div class="kpi-val" style="color:#059669">{len(done_s)}</div></div>
+          <div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7"><div class="kpi-lbl">A generer</div><div class="kpi-val" style="color:#D97706">{len(todo_s)}</div></div>
+          <div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5"><div class="kpi-lbl">Confirmees</div><div class="kpi-val" style="color:#059669">{len(done_s)}</div></div>
           <div class="kpi-card" style="--card-color:#8B5CF6;--card-bg:#EDE9FE"><div class="kpi-lbl">CNT total</div><div class="kpi-val" style="color:#7C3AED">{int(commandes_semaine["nb_cnt"].sum())}</div></div>
         </div>""", unsafe_allow_html=True)
 
         for _, row in commandes_semaine.iterrows():
-            pc = "pill-green" if "GÉNÉRÉ" in str(row["statut"]) else "pill-orange"
+            pc = "pill-green" if "GENERE" in str(row["statut"]) else "pill-orange"
             nd = len(list_docs(row["booking"]))
             dp = f'<span class="pill pill-blue">📁 {nd}</span>' if nd else ""
             st.markdown(f"""
@@ -812,7 +753,7 @@ elif page == "semaine":
               </div>
               <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:3px;text-transform:uppercase">POL</div><div style="font-weight:700;color:#111827;font-size:12px">{row['pol']}</div></div>
               <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:3px;text-transform:uppercase">CNT</div><div style="font-weight:900;color:#4361EE;font-size:22px;letter-spacing:-1px">{row['nb_cnt']}</div></div>
-              <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:3px;text-transform:uppercase">Départ</div><div style="font-weight:600;color:#374151;font-size:12px">{row['depart']}</div></div>
+              <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:3px;text-transform:uppercase">Depart</div><div style="font-weight:600;color:#374151;font-size:12px">{row['depart']}</div></div>
               <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:3px;text-transform:uppercase">ETA</div><div style="font-weight:600;color:#374151;font-size:12px">{row['eta']}</div></div>
               <div style="display:flex;gap:6px;align-items:center">{dp}<span class="pill {pc}">{row['statut']}</span></div>
             </div>""", unsafe_allow_html=True)
@@ -823,21 +764,23 @@ elif page == "semaine":
 # COMMANDES
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "commandes":
-    st.markdown('<div class="topbar"><div class="topbar-title">Commandes</div></div>', unsafe_allow_html=True)
+    st.markdown('<div style="background:#fff;border-bottom:1px solid #E5E7EB;padding:18px 36px;'
+                'position:sticky;top:0;z-index:100;font-size:20px;font-weight:800;color:#111827">Commandes</div>',
+                unsafe_allow_html=True)
     st.markdown('<div style="background:#fff;border-bottom:1px solid #E5E7EB;padding:10px 36px">', unsafe_allow_html=True)
-    fc1,fc2,fc3,fc4 = st.columns([2,2,2,1])
+    fc1, fc2, fc3, fc4 = st.columns([2,2,2,1])
     with fc1:
         f_client = st.multiselect("c", commandes["client"].dropna().unique().tolist(),
                                   default=commandes["client"].dropna().unique().tolist(),
-                                  label_visibility="collapsed", placeholder="🔍 Client")
+                                  label_visibility="collapsed", placeholder="Client")
     with fc2:
         f_pol = st.multiselect("p", commandes["pol"].dropna().unique().tolist(),
                                default=commandes["pol"].dropna().unique().tolist(),
-                               label_visibility="collapsed", placeholder="🌍 POL")
+                               label_visibility="collapsed", placeholder="POL")
     with fc3:
         f_statut = st.multiselect("s", commandes["statut"].dropna().unique().tolist(),
                                   default=commandes["statut"].dropna().unique().tolist(),
-                                  label_visibility="collapsed", placeholder="📊 Statut")
+                                  label_visibility="collapsed", placeholder="Statut")
     with fc4:
         f_sem = st.text_input("sem", placeholder="S-18", label_visibility="collapsed")
     st.markdown('</div>', unsafe_allow_html=True)
@@ -847,10 +790,14 @@ elif page == "commandes":
     if f_sem:
         df_filt = df_filt[df_filt["semaine"].str.contains(f_sem, case=False, na=False)]
 
-    st.markdown(f'<div style="font-size:12px;color:#6B7280;margin-bottom:14px"><b style="color:#111827">{len(df_filt)}</b> commandes · <b style="color:#111827">{int(df_filt["nb_cnt"].sum())}</b> CNT · <b style="color:#111827">{df_filt["total_kgs"].sum():,.0f}</b> kgs</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="font-size:12px;color:#6B7280;margin-bottom:14px">'
+                f'<b style="color:#111827">{len(df_filt)}</b> commandes · '
+                f'<b style="color:#111827">{int(df_filt["nb_cnt"].sum())}</b> CNT · '
+                f'<b style="color:#111827">{df_filt["total_kgs"].sum():,.0f}</b> kgs</div>',
+                unsafe_allow_html=True)
 
     for _, row in df_filt.iterrows():
-        pc = "pill-green" if "GÉNÉRÉ" in str(row["statut"]) else "pill-orange"
+        pc = "pill-green" if "GENERE" in str(row["statut"]) else "pill-orange"
         nd = len(list_docs(row["booking"]))
         dp = f'<span class="pill pill-blue">📁 {nd}</span>' if nd else '<span class="pill" style="background:#F3F4F6;color:#9CA3AF">📁 0</span>'
         st.markdown(f"""
@@ -860,39 +807,40 @@ elif page == "commandes":
           <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase">Navire</div><div style="font-weight:500;color:#374151;font-size:11px">{row['navire']}</div></div>
           <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase">POL</div><div style="font-weight:700;color:#111827;font-size:12px">{row['pol']}</div></div>
           <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase">CNT</div><div style="font-weight:900;color:#4361EE;font-size:20px">{row['nb_cnt']}</div></div>
-          <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase">Départ</div><div style="font-weight:500;color:#374151;font-size:11px">{row['depart']}</div></div>
+          <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase">Depart</div><div style="font-weight:500;color:#374151;font-size:11px">{row['depart']}</div></div>
           <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase">ETA</div><div style="font-weight:500;color:#374151;font-size:11px">{row['eta']}</div></div>
           <div style="display:flex;gap:6px;align-items:center">{dp}<span class="pill {pc}">{row['statut']}</span></div>
         </div>""", unsafe_allow_html=True)
 
-        is_open = st.session_state.expanded_cmd == row['booking']
+        is_open = st.session_state.expanded_cmd == row["booking"]
         col_btn, _ = st.columns([1,5])
         with col_btn:
-            if st.button("🔼 Fermer" if is_open else "📁 Documents",
+            if st.button("Fermer" if is_open else "📁 Documents",
                          key=f"docbtn_{row['booking']}", use_container_width=True):
-                st.session_state.expanded_cmd = None if is_open else row['booking']
+                st.session_state.expanded_cmd = None if is_open else row["booking"]
                 st.rerun()
 
         if is_open:
-            st.markdown(f'<div class="doc-zone"><div style="font-size:12px;font-weight:700;color:#111827;margin-bottom:12px">📁 Documents — <span style="color:#4361EE">{row["booking"]}</span></div></div>', unsafe_allow_html=True)
-            existing = list_docs(row['booking'])
+            st.markdown(f'<div class="doc-zone"><div style="font-size:12px;font-weight:700;color:#111827;margin-bottom:12px">📁 Documents — <span style="color:#4361EE">{row["booking"]}</span></div></div>',
+                        unsafe_allow_html=True)
+            existing = list_docs(row["booking"])
             if existing:
                 for doc_name in existing:
-                    doc_path = os.path.join(docs_path(row['booking']), doc_name)
-                    d1,d2,d3 = st.columns([4,1,1])
+                    doc_path = os.path.join(docs_path(row["booking"]), doc_name)
+                    d1, d2, d3 = st.columns([4,1,1])
                     with d1: st.markdown(f'<div class="doc-chip">📄 {doc_name}</div>', unsafe_allow_html=True)
                     with d2:
-                        with open(doc_path,"rb") as f:
+                        with open(doc_path, "rb") as f:
                             st.download_button("⬇️", f.read(), file_name=doc_name,
                                 key=f"dl_{row['booking']}_{doc_name}", use_container_width=True)
                     with d3:
                         if st.session_state.role == "admin":
                             if st.button("🗑️", key=f"del_{row['booking']}_{doc_name}", use_container_width=True):
-                                delete_doc(row['booking'], doc_name)
+                                delete_doc(row["booking"], doc_name)
                                 st.rerun()
             else:
                 st.caption("Aucun document — uploadez ci-dessous.")
-            u1,u2 = st.columns([3,1])
+            u1, u2 = st.columns([3,1])
             with u1:
                 uploaded = st.file_uploader("", type=["pdf","xlsx","xls","docx","jpg","png"],
                                             key=f"up_{row['booking']}", label_visibility="collapsed")
@@ -900,18 +848,23 @@ elif page == "commandes":
                 dtype = st.selectbox("", DOC_TYPES, key=f"dtype_{row['booking']}", label_visibility="collapsed")
             if uploaded and st.button("✅ Uploader", key=f"upconf_{row['booking']}", type="primary"):
                 uploaded.name = f"{dtype.replace(' ','_')}_{uploaded.name}"
-                save_doc(row['booking'], uploaded)
-                st.success("✅ Uploadé !")
+                save_doc(row["booking"], uploaded)
+                st.success("Uploade !")
                 st.rerun()
             st.markdown("")
 
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TRACKING MARITIME  ← NOUVEAU
+# TRACKING MARITIME
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "tracking":
-    st.markdown('<div class="topbar"><div style="display:flex;align-items:center;gap:14px"><div class="topbar-title">Tracking maritime</div><div class="topbar-badge">🌊 En temps réel</div></div></div>', unsafe_allow_html=True)
+    st.markdown('<div style="background:#fff;border-bottom:1px solid #E5E7EB;padding:18px 36px;'
+                'display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100">'
+                '<div style="font-size:20px;font-weight:800;color:#111827">Tracking maritime</div>'
+                '<div style="background:#DBEAFE;color:#1D4ED8;padding:4px 12px;border-radius:20px;'
+                'font-size:11px;font-weight:700">En temps reel</div></div>',
+                unsafe_allow_html=True)
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
 
     df_track = commandes[commandes["depart"].notna()].copy()
@@ -919,10 +872,12 @@ elif page == "tracking":
     active_ships_for_map = []
 
     for _, row in df_track.iterrows():
-        s_idx, prog, days_el, eta_calc = get_tracking_info(row["depart"])
+        s_idx, prog, days_el, eta_calc = get_tracking_info(row["depart"], row["pol"])
+        routing    = get_routing(row["pol"])
+        total_days = routing["total_days"]
         if days_el is not None and days_el < 0:
             en_attente_list.append(row)
-        elif s_idx >= 5:
+        elif days_el is not None and days_el >= total_days:
             arrives_list.append(row)
         else:
             en_mer_list.append(row)
@@ -931,7 +886,7 @@ elif page == "tracking":
     st.markdown(f"""
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px">
       <div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7">
-        <div class="icon-wrap">⏳</div><div class="kpi-lbl">En attente départ</div>
+        <div class="icon-wrap">⏳</div><div class="kpi-lbl">En attente depart</div>
         <div class="kpi-val" style="color:#D97706">{len(en_attente_list)}</div><div class="kpi-sub">pas encore partis</div>
       </div>
       <div class="kpi-card" style="--card-color:#3B82F6;--card-bg:#DBEAFE">
@@ -939,66 +894,68 @@ elif page == "tracking":
         <div class="kpi-val" style="color:#2563EB">{len(en_mer_list)}</div><div class="kpi-sub">en transit actif</div>
       </div>
       <div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">
-        <div class="icon-wrap">⚓</div><div class="kpi-lbl">Arrivés Ghazaouet</div>
-        <div class="kpi-val" style="color:#059669">{len(arrives_list)}</div><div class="kpi-sub">à destination</div>
+        <div class="icon-wrap">⚓</div><div class="kpi-lbl">Arrives Ghazaouet</div>
+        <div class="kpi-val" style="color:#059669">{len(arrives_list)}</div><div class="kpi-sub">a destination</div>
       </div>
     </div>""", unsafe_allow_html=True)
 
-    if active_ships_for_map or en_attente_list or arrives_list:
-        map_svg = render_route_map_svg(active_ships_for_map)
-        st.markdown(f"""
-        <div style="background:#0F172A;border-radius:16px;padding:16px;margin-bottom:24px;
+    # Carte SVG via components.html (evite le parsing markdown)
+    map_svg = render_route_map_svg(active_ships_for_map)
+    components.html(
+        f"""<div style="background:#0F172A;border-radius:16px;padding:16px;
              box-shadow:0 8px 32px rgba(0,0,0,0.3)">
           <div style="font-size:11px;color:rgba(255,255,255,0.5);font-weight:700;
-               text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">
-            🗺️ Route maritime — Amériques → Ghazaouet
+               text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;
+               font-family:Arial,sans-serif">
+            Route maritime — Ameriques vers Ghazaouet
           </div>
           {map_svg}
-        </div>""", unsafe_allow_html=True)
+        </div>""",
+        height=250
+    )
 
-    filter_track = st.selectbox("",
-        ["🌊 Tous", "⏳ En attente", "🚢 En mer", "⚓ Arrivés"],
-        label_visibility="collapsed")
-
-    if filter_track == "⏳ En attente":
+    filter_track = st.selectbox("", ["Tous", "En attente", "En mer", "Arrives"],
+                                label_visibility="collapsed")
+    if filter_track == "En attente":
         rows_to_show = en_attente_list
-    elif filter_track == "🚢 En mer":
+    elif filter_track == "En mer":
         rows_to_show = en_mer_list
-    elif filter_track == "⚓ Arrivés":
+    elif filter_track == "Arrives":
         rows_to_show = arrives_list
     else:
         rows_to_show = en_mer_list + en_attente_list + arrives_list
 
     if not rows_to_show:
-        st.info("Aucune commande dans cette catégorie.")
+        st.info("Aucune commande dans cette categorie.")
     else:
         for row in rows_to_show:
-            s_idx, prog, days_el, eta_calc = get_tracking_info(row["depart"])
-            current_s = TRANSIT_STAGES[min(s_idx, len(TRANSIT_STAGES) - 1)]
+            s_idx, prog, days_el, eta_calc = get_tracking_info(row["depart"], row["pol"])
+            routing    = get_routing(row["pol"])
+            total_days = routing["total_days"]
+            stages     = routing["stages"]
+            current_s  = stages[min(s_idx, len(stages) - 1)]
 
-            if s_idx >= 5:
-                card_color = "#10B981"
-                card_bg    = "#D1FAE5"
-                status_txt = "⚓ Arrivé à Ghazaouet"
-            elif s_idx >= 2:
-                card_color = "#3B82F6"
-                card_bg    = "#DBEAFE"
-                status_txt = f"🚢 {current_s['label']}"
-            elif s_idx == 1:
-                card_color = "#4361EE"
-                card_bg    = "#EEF2FF"
-                status_txt = "⚓ Port de départ"
+            if days_el is not None and days_el >= total_days:
+                card_color = "#10B981"; card_bg = "#D1FAE5"; status_txt = "Arrive a Ghazaouet"
+            elif s_idx >= 3:
+                card_color = "#8B5CF6"; card_bg = "#EDE9FE"; status_txt = f"Transit {current_s['label']}"
+            elif s_idx >= 1:
+                card_color = "#3B82F6"; card_bg = "#DBEAFE"; status_txt = f"En mer — {current_s['label']}"
+            elif days_el is not None and days_el >= 0:
+                card_color = "#4361EE"; card_bg = "#EEF2FF"; status_txt = "Port de depart"
             else:
-                card_color = "#F59E0B"
-                card_bg    = "#FEF3C7"
-                status_txt = "⏳ Avant départ"
+                card_color = "#F59E0B"; card_bg = "#FEF3C7"; status_txt = "Avant depart"
 
-            days_label = f"J+{days_el}" if days_el is not None and days_el >= 0 else (
-                         f"Départ dans {abs(days_el)}j" if days_el is not None else "—")
-            eta_label  = eta_calc.strftime("%d/%m/%Y") if eta_calc else "—"
+            if days_el is not None and days_el >= 0:
+                days_label = f"J+{days_el}"
+            elif days_el is not None:
+                days_label = f"Depart dans {abs(days_el)}j"
+            else:
+                days_label = "—"
+
+            eta_label = eta_calc.strftime("%d/%m/%Y") if eta_calc else "—"
             timeline_html = build_stage_timeline_html(s_idx, prog, str(row["pol"]))
-
-            bkey = str(row["booking"]).replace(" ", "_")
+            bkey = str(row["booking"]).replace(" ", "_").replace("/", "_")
             is_open = bkey in st.session_state.expanded_track
 
             st.markdown(f"""
@@ -1007,17 +964,21 @@ elif page == "tracking":
                 <div>
                   <div style="font-size:15px;font-weight:800;color:#111827">{row['client']}</div>
                   <div style="font-size:11px;color:#9CA3AF;margin-top:3px">
-                    {row['navire']} · {row['booking']} · {row['pol'].split('(')[0].strip()}
+                    {row['navire']} · {row['booking']} · {str(row['pol']).split('(')[0].strip()}
                   </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
                   <div style="text-align:center">
-                    <div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;margin-bottom:2px">Départ</div>
+                    <div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;margin-bottom:2px">Depart</div>
                     <div style="font-size:12px;font-weight:700;color:#374151">{row['depart']}</div>
                   </div>
                   <div style="text-align:center">
                     <div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;margin-bottom:2px">ETA Ghaz.</div>
                     <div style="font-size:12px;font-weight:700;color:#374151">{eta_label}</div>
+                  </div>
+                  <div style="text-align:center">
+                    <div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;margin-bottom:2px">Transit</div>
+                    <div style="font-size:16px;font-weight:900;color:{card_color}">{total_days}j</div>
                   </div>
                   <div style="text-align:center">
                     <div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;margin-bottom:2px">Progression</div>
@@ -1028,15 +989,15 @@ elif page == "tracking":
                     padding:4px 10px;border-radius:20px">{days_label}</span>
                 </div>
               </div>
-              <div style="padding:0 22px 6px">
+              <div style="padding:0 22px 10px">
                 <div class="prog-track" style="height:6px">
                   <div class="prog-fill" style="background:linear-gradient(90deg,{card_color},{card_color}88);width:{prog}%"></div>
                 </div>
               </div>
             </div>""", unsafe_allow_html=True)
 
-            btn_lbl = "🔼 Masquer étapes" if is_open else "🔽 Voir étapes détaillées"
-            if st.button(btn_lbl, key=f"track_toggle_{bkey}", use_container_width=False):
+            btn_lbl = "Masquer etapes" if is_open else "Voir etapes"
+            if st.button(btn_lbl, key=f"tt_{bkey}", use_container_width=False):
                 if is_open:
                     st.session_state.expanded_track.discard(bkey)
                 else:
@@ -1049,7 +1010,7 @@ elif page == "tracking":
                      padding:18px 22px;margin-bottom:10px;overflow-x:auto">
                   <div style="font-size:11px;color:#9CA3AF;font-weight:700;
                        text-transform:uppercase;letter-spacing:1px;margin-bottom:14px">
-                    Étapes — {row['booking']}
+                    Etapes — {row['booking']}
                   </div>
                   {timeline_html}
                   <div style="margin-top:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
@@ -1078,7 +1039,9 @@ elif page == "tracking":
 # DOCUMENTS
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "documents":
-    st.markdown('<div class="topbar"><div class="topbar-title">Documents</div></div>', unsafe_allow_html=True)
+    st.markdown('<div style="background:#fff;border-bottom:1px solid #E5E7EB;padding:18px 36px;'
+                'position:sticky;top:0;z-index:100;font-size:20px;font-weight:800;color:#111827">Documents</div>',
+                unsafe_allow_html=True)
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
 
     all_b  = commandes["booking"].dropna().unique()
@@ -1089,11 +1052,11 @@ elif page == "documents":
     st.markdown(f"""
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:26px">
       <div class="kpi-card" style="--card-color:#3B82F6;--card-bg:#DBEAFE"><div class="icon-wrap">📁</div><div class="kpi-lbl">Total documents</div><div class="kpi-val" style="color:#2563EB">{tdocs}</div></div>
-      <div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5"><div class="icon-wrap">✅</div><div class="kpi-lbl">Documentées</div><div class="kpi-val" style="color:#059669">{c_avec}</div><div class="kpi-sub">avec docs</div></div>
-      <div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7"><div class="icon-wrap">⚠️</div><div class="kpi-lbl">Sans documents</div><div class="kpi-val" style="color:#D97706">{c_sans}</div><div class="kpi-sub">à compléter</div></div>
+      <div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5"><div class="icon-wrap">✅</div><div class="kpi-lbl">Documentees</div><div class="kpi-val" style="color:#059669">{c_avec}</div><div class="kpi-sub">avec docs</div></div>
+      <div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7"><div class="icon-wrap">⚠️</div><div class="kpi-lbl">Sans documents</div><div class="kpi-val" style="color:#D97706">{c_sans}</div><div class="kpi-sub">a completer</div></div>
     </div>""", unsafe_allow_html=True)
 
-    search = st.text_input("", placeholder="🔍 Rechercher par booking ou client...", label_visibility="collapsed")
+    search = st.text_input("", placeholder="Rechercher par booking ou client...", label_visibility="collapsed")
 
     for _, row in commandes.iterrows():
         if search and search.lower() not in str(row["booking"]).lower() and search.lower() not in str(row["client"]).lower():
@@ -1101,7 +1064,7 @@ elif page == "documents":
         docs = list_docs(row["booking"])
         n    = len(docs)
         clr  = "#10B981" if n >= 3 else ("#F59E0B" if n >= 1 else "#EF4444")
-        lbl  = f"✅ {n} doc{'s' if n>1 else ''}" if n else "⚠️ Aucun"
+        lbl  = f"{n} doc{'s' if n>1 else ''}" if n else "Aucun"
         st.markdown(f"""
         <div class="cmd-row" style="border-left:3px solid {clr}">
           <div style="min-width:220px"><div style="font-size:13px;font-weight:700;color:#111827">{row['client']}</div>
@@ -1112,24 +1075,24 @@ elif page == "documents":
           </div>
         </div>""", unsafe_allow_html=True)
 
-        with st.expander(f"📤 Upload · {row['booking']}", expanded=False):
-            u1,u2 = st.columns([3,1])
+        with st.expander(f"Upload · {row['booking']}", expanded=False):
+            u1, u2 = st.columns([3,1])
             with u1:
                 upf = st.file_uploader("", type=["pdf","xlsx","xls","docx","jpg","png"],
                                        key=f"gup_{row['booking']}", label_visibility="collapsed")
             with u2:
                 dtype = st.selectbox("", DOC_TYPES, key=f"gdtype_{row['booking']}", label_visibility="collapsed")
-            if upf and st.button("✅ Uploader", key=f"gupconf_{row['booking']}", type="primary"):
+            if upf and st.button("Uploader", key=f"gupconf_{row['booking']}", type="primary"):
                 upf.name = f"{dtype.replace(' ','_')}_{upf.name}"
                 save_doc(row["booking"], upf)
-                st.success("✅ Uploadé !")
+                st.success("Uploade !")
                 st.rerun()
             if docs:
                 for doc_name in docs:
                     dp = os.path.join(docs_path(row["booking"]), doc_name)
-                    c1, c2 = st.columns([4, 1])
-                    with c1: st.markdown(f"`{doc_name}`")
-                    with c2:
+                    c1_col, c2_col = st.columns([4,1])
+                    with c1_col: st.markdown(f"`{doc_name}`")
+                    with c2_col:
                         with open(dp, "rb") as f:
                             st.download_button("⬇️", f.read(), file_name=doc_name,
                                 key=f"gdl_{row['booking']}_{doc_name}", use_container_width=True)
@@ -1140,7 +1103,9 @@ elif page == "documents":
 # LICENCES
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "licences":
-    st.markdown('<div class="topbar"><div class="topbar-title">Licences DPVCT</div></div>', unsafe_allow_html=True)
+    st.markdown('<div style="background:#fff;border-bottom:1px solid #E5E7EB;padding:18px 36px;'
+                'position:sticky;top:0;z-index:100;font-size:20px;font-weight:800;color:#111827">Licences DPVCT</div>',
+                unsafe_allow_html=True)
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
 
     for _, row in clients.iterrows():
@@ -1148,10 +1113,10 @@ elif page == "licences":
         pp = max(0, min(100, row["solde_prev"]/row["poids_total"]*100)) if row["poids_total"] > 0 else 0
         pc = "#10B981" if pr > 30 else ("#F59E0B" if pr > 10 else "#EF4444")
 
-        if   row["solde_reel"] < 0:       badge = '<span class="pill pill-red">❌ DÉPASSEMENT</span>'
-        elif row["solde_reel"] < 19591.2: badge = '<span class="pill pill-red">🔴 CRITIQUE</span>'
-        elif row["solde_reel"] < 58773.6: badge = '<span class="pill pill-orange">⚠️ ATTENTION</span>'
-        else:                              badge = '<span class="pill pill-green">✅ OK</span>'
+        if   row["solde_reel"] < 0:       badge = '<span class="pill pill-red">DEPASSEMENT</span>'
+        elif row["solde_reel"] < 19591.2: badge = '<span class="pill pill-red">CRITIQUE</span>'
+        elif row["solde_reel"] < 58773.6: badge = '<span class="pill pill-orange">ATTENTION</span>'
+        else:                              badge = '<span class="pill pill-green">OK</span>'
 
         pdf_path   = licence_pdf_path(row["licence"])
         pdf_exists = os.path.exists(pdf_path)
@@ -1160,173 +1125,4 @@ elif page == "licences":
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:16px">
             <div><div style="font-size:16px;font-weight:800;color:#111827">{row['nom']}</div>
-            <div style="font-size:12px;color:#9CA3AF;margin-top:3px">🔑 {row['licence']} · {row['pays']}</div></div>
-            {badge}
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
-            <div style="background:#F9FAFB;border-radius:10px;padding:14px">
-              <div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">Poids total</div>
-              <div style="font-size:19px;font-weight:800;color:#111827">{row['poids_total']:,.0f} <span style="font-size:12px;color:#9CA3AF">kgs</span></div>
-            </div>
-            <div style="background:#EEF2FF;border-radius:10px;padding:14px">
-              <div style="font-size:9px;color:#4361EE;text-transform:uppercase;font-weight:700;margin-bottom:4px">Solde réel</div>
-              <div style="font-size:19px;font-weight:800;color:#4361EE">{row['solde_reel']:,.0f} <span style="font-size:12px">kgs</span></div>
-            </div>
-            <div style="background:#FEF3C7;border-radius:10px;padding:14px">
-              <div style="font-size:9px;color:#D97706;text-transform:uppercase;font-weight:700;margin-bottom:4px">Solde prévi.</div>
-              <div style="font-size:19px;font-weight:800;color:#D97706">{row['solde_prev']:,.0f} <span style="font-size:12px">kgs</span></div>
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">
-            <div style="background:#EEF2FF;border-radius:10px;padding:12px;text-align:center">
-              <div style="font-size:9px;color:#4361EE;font-weight:700;text-transform:uppercase;margin-bottom:4px">🇨🇷 CR Réel</div>
-              <div style="font-size:20px;font-weight:900;color:#4361EE">{row['cnt_reel_cr']:.1f}</div>
-              <div style="font-size:9px;color:#9CA3AF">CNT</div>
-            </div>
-            <div style="background:#FEF3C7;border-radius:10px;padding:12px;text-align:center">
-              <div style="font-size:9px;color:#D97706;font-weight:700;text-transform:uppercase;margin-bottom:4px">🇨🇷 CR Prév.</div>
-              <div style="font-size:20px;font-weight:900;color:#D97706">{row['cnt_prev_cr']:.1f}</div>
-              <div style="font-size:9px;color:#9CA3AF">CNT</div>
-            </div>
-            <div style="background:#EEF2FF;border-radius:10px;padding:12px;text-align:center">
-              <div style="font-size:9px;color:#4361EE;font-weight:700;text-transform:uppercase;margin-bottom:4px">🇨🇴 COL Réel</div>
-              <div style="font-size:20px;font-weight:900;color:#4361EE">{row['cnt_reel_col']:.1f}</div>
-              <div style="font-size:9px;color:#9CA3AF">CNT</div>
-            </div>
-            <div style="background:#FEF3C7;border-radius:10px;padding:12px;text-align:center">
-              <div style="font-size:9px;color:#D97706;font-weight:700;text-transform:uppercase;margin-bottom:4px">🇨🇴 COL Prév.</div>
-              <div style="font-size:20px;font-weight:900;color:#D97706">{row['cnt_prev_col']:.1f}</div>
-              <div style="font-size:9px;color:#9CA3AF">CNT</div>
-            </div>
-          </div>
-          <div style="margin-bottom:8px">
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-              <span style="font-size:11px;color:#6B7280">Solde réel</span>
-              <span style="font-size:11px;font-weight:700;color:{pc}">{pr:.0f}%</span>
-            </div>
-            <div class="prog-track"><div class="prog-fill" style="background:{pc};width:{pr}%"></div></div>
-          </div>
-          <div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-              <span style="font-size:11px;color:#6B7280">Solde prévisionnel</span>
-              <span style="font-size:11px;font-weight:700;color:#D97706">{pp:.0f}%</span>
-            </div>
-            <div class="prog-track"><div class="prog-fill" style="background:#F59E0B;width:{pp}%"></div></div>
-          </div>
-        </div>""", unsafe_allow_html=True)
-
-        if pdf_exists:
-            with open(pdf_path, "rb") as f:
-                pdf_data = f.read()
-            c, _ = st.columns([2, 5])
-            with c:
-                st.download_button(f"📄 {row['licence']}", pdf_data,
-                    file_name=licence_to_filename(row["licence"]),
-                    mime="application/pdf", key=f"pdf_{row['licence']}", use_container_width=True)
-        else:
-            st.caption(f"⚠️ PDF manquant → `{pdf_path}`")
-        st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ══════════════════════════════════════════════════════════════════════════════
-# PLANNING CLIENT
-# ══════════════════════════════════════════════════════════════════════════════
-elif page == "planning":
-    st.markdown('<div class="topbar"><div class="topbar-title">Planning client</div></div>', unsafe_allow_html=True)
-    st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
-
-    client_sel = st.selectbox("", sorted(commandes["client"].dropna().unique().tolist()),
-                               label_visibility="collapsed")
-    if client_sel:
-        df_c = commandes[commandes["client"] == client_sel].copy()
-
-        st.markdown(f"""
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px">
-          <div class="kpi-card" style="--card-color:#4361EE;--card-bg:#EEF2FF"><div class="kpi-lbl">Total CNT</div><div class="kpi-val" style="color:#4361EE">{int(df_c["nb_cnt"].sum())}</div></div>
-          <div class="kpi-card" style="--card-color:#8B5CF6;--card-bg:#EDE9FE"><div class="kpi-lbl">Total kgs</div><div class="kpi-val" style="color:#7C3AED;font-size:1.5rem">{df_c["total_kgs"].sum():,.0f}</div></div>
-          <div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7"><div class="kpi-lbl">⏳ En cours</div><div class="kpi-val" style="color:#D97706">{len(df_c[df_c["statut"].str.contains("À GÉNÉRER", na=False)])}</div></div>
-          <div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5"><div class="kpi-lbl">✅ Confirmées</div><div class="kpi-val" style="color:#059669">{len(df_c[df_c["statut"].str.contains("GÉNÉRÉ", na=False)])}</div></div>
-        </div>""", unsafe_allow_html=True)
-
-        for _, row in df_c.sort_values("semaine", ascending=False).iterrows():
-            pc = "pill-green" if "GÉNÉRÉ" in str(row["statut"]) else "pill-orange"
-            nd = len(list_docs(row["booking"]))
-            st.markdown(f"""
-            <div class="cmd-row">
-              <div><div style="font-size:13px;font-weight:700;color:#111827">{row['booking']}</div>
-              <div style="font-size:11px;color:#9CA3AF">{row['semaine']} · {row['licence']}</div></div>
-              <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">POL</div><div style="font-weight:700;color:#111827">{row['pol']}</div></div>
-              <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">CNT</div><div style="font-weight:900;color:#4361EE;font-size:20px">{row['nb_cnt']}</div></div>
-              <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">Départ</div><div style="font-weight:500;color:#374151;font-size:12px">{row['depart']}</div></div>
-              <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">ETA</div><div style="font-weight:500;color:#374151;font-size:12px">{row['eta']}</div></div>
-              <span class="pill pill-blue">📁 {nd}</span>
-              <span class="pill {pc}">{row['statut']}</span>
-            </div>""", unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ══════════════════════════════════════════════════════════════════════════════
-# NOUVELLE COMMANDE
-# ══════════════════════════════════════════════════════════════════════════════
-elif page == "new_cmd":
-    if st.session_state.role != "admin":
-        st.error("⛔ Accès réservé aux administrateurs")
-        st.stop()
-
-    st.markdown('<div class="topbar"><div class="topbar-title">Nouvelle commande</div></div>', unsafe_allow_html=True)
-    st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
-
-    with st.form("form_cmd", clear_on_submit=True):
-        f1, f2 = st.columns(2)
-        with f1:
-            sem        = st.text_input("Semaine *", placeholder="S-26")
-            client_sel = st.selectbox("Client *", sorted(clients["nom"].unique().tolist()))
-            booking    = st.text_input("Booking *", placeholder="LHV4005547")
-            lic_dispo  = clients[clients["nom"] == client_sel]["licence"].tolist()
-            lic_sel    = st.selectbox("Licence *", lic_dispo)
-        with f2:
-            navire  = st.text_input("Navire *", placeholder="CMA CGM EXCELLENCE")
-            voyage  = st.text_input("Voyage *", placeholder="0DVOPN1MA")
-            pol_sel = st.selectbox("POL *", list(CRTNS.keys()))
-            nb_cnt  = st.number_input("CNT *", min_value=1, max_value=100, value=1)
-
-        f3, f4, f5 = st.columns(3)
-        with f3: depart  = st.date_input("Départ *", value=date.today())
-        with f4: eta     = st.date_input("ETA *",    value=date.today())
-        with f5: produit = st.selectbox("Produit *", ["BANANE","ANANAS","MANGUE","AUTRE"])
-
-        crtns_cnt   = CRTNS[pol_sel]
-        total_kgs   = round(nb_cnt * crtns_cnt * POIDS_UNIT, 2)
-        lic_row     = clients[(clients["nom"] == client_sel) & (clients["licence"] == lic_sel)]
-        solde_avant = float(lic_row["solde_reel"].values[0]) if len(lic_row) > 0 else 0
-        solde_apres = round(solde_avant - total_kgs, 2)
-        cnt_a_cr    = round(solde_apres / KGS_PER_CNT["MOIN(COSTA RICA)"], 2)
-        cnt_a_col   = round(solde_apres / KGS_PER_CNT["TURBO(COLOMBIA)"], 2)
-
-        st.markdown("---")
-        p1, p2, p3, p4, p5, p6 = st.columns(6)
-        p1.metric("Cartons/CNT",     f"{crtns_cnt:,}")
-        p2.metric("Total cartons",   f"{nb_cnt * crtns_cnt:,}")
-        p3.metric("Total kgs",       f"{total_kgs:,.0f}")
-        p4.metric("Solde après",     f"{solde_apres:,.0f}", delta=f"{-total_kgs:,.0f}", delta_color="inverse")
-        p5.metric("CNT restants 🇨🇷", f"{cnt_a_cr:.1f}")
-        p6.metric("CNT restants 🇨🇴", f"{cnt_a_col:.1f}")
-
-        if   solde_apres < 0:       st.markdown('<div class="alert alert-red">⚠️ Solde insuffisant</div>', unsafe_allow_html=True)
-        elif solde_apres < 19591.2: st.markdown('<div class="alert alert-warn">🟠 Solde critique</div>', unsafe_allow_html=True)
-        else:                        st.markdown('<div class="alert alert-ok">✅ Solde suffisant</div>', unsafe_allow_html=True)
-
-        if st.form_submit_button("✅ Enregistrer", use_container_width=True,
-                                 type="primary", disabled=(solde_apres < 0)):
-            st.session_state.new_commandes.append({
-                "num": "", "semaine": sem, "client": client_sel, "booking": booking,
-                "licence": lic_sel, "navire": navire, "voyage": voyage, "pol": pol_sel,
-                "depart": depart.strftime("%d/%m/%Y"), "eta": eta.strftime("%d/%m/%Y"),
-                "nb_cnt": nb_cnt, "produit": produit, "statut": "⏳ À GÉNÉRER"
-            })
-            st.cache_data.clear()
-            st.success(f"✅ Commande {booking} enregistrée !")
-            st.rerun()
-
-    st.markdown('</div>', unsafe_allow_html=True)
+            <div style="font-size
