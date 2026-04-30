@@ -4,6 +4,7 @@ from datetime import datetime, date
 import plotly.express as px
 import base64
 import os
+import streamlit.components.v1 as components
 
 st.set_page_config(page_title="EDEN FOOD", page_icon="🍌",
                    layout="wide", initial_sidebar_state="expanded")
@@ -79,7 +80,8 @@ section[data-testid="stSidebar"] .stButton>button:hover{
   padding:14px 18px;margin-bottom:6px;display:flex;align-items:center;
   justify-content:space-between;flex-wrap:wrap;gap:10px;transition:var(--transition);position:relative;}
 .cmd-row::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
-  width:3px;height:0;border-radius:0 2px 2px 0;background:var(--primary);transition:all 0.35s cubic-bezier(0.4,0,0.2,1);}
+  width:3px;height:0;border-radius:0 2px 2px 0;background:var(--primary);
+  transition:all 0.35s cubic-bezier(0.4,0,0.2,1);}
 .cmd-row:hover{box-shadow:var(--shadow-md);border-color:rgba(67,97,238,0.2);transform:translateX(2px)}
 .cmd-row:hover::before{height:60%}
 
@@ -150,12 +152,14 @@ def img_to_b64(path):
         return None
 
 def apply_chart_style(fig, bgcolor="#fff"):
-    fig.update_layout(paper_bgcolor=bgcolor, plot_bgcolor=bgcolor,
-        font=dict(family="Inter",size=12,color="#111827"),
-        margin=dict(t=20,b=20,l=20,r=20),
-        legend=dict(font=dict(color="#111827",size=12)))
-    fig.update_xaxes(tickfont=dict(color="#6B7280"),showgrid=False,linecolor="#E5E7EB")
-    fig.update_yaxes(tickfont=dict(color="#6B7280"),gridcolor="#F3F4F6",linecolor="transparent")
+    fig.update_layout(
+        paper_bgcolor=bgcolor, plot_bgcolor=bgcolor,
+        font=dict(family="Inter", size=12, color="#111827"),
+        margin=dict(t=20, b=20, l=20, r=20),
+        legend=dict(font=dict(color="#111827", size=12))
+    )
+    fig.update_xaxes(tickfont=dict(color="#6B7280"), showgrid=False, linecolor="#E5E7EB")
+    fig.update_yaxes(tickfont=dict(color="#6B7280"), gridcolor="#F3F4F6", linecolor="#F3F4F6")
     return fig
 
 # ── DOCUMENTS ─────────────────────────────────────────────────────────────────
@@ -182,49 +186,145 @@ def delete_doc(booking, filename):
     if os.path.exists(fp):
         os.remove(fp)
 
-# ── LOGIN ─────────────────────────────────────────────────────────────────────
+# ── LOGIN + SPARKLES ──────────────────────────────────────────────────────────
 def login_page():
     logo_src = img_to_b64("logo_eden_food.jpg") or img_to_b64("logo_eden_food.png")
     fond_src = img_to_b64("fond.png") or img_to_b64("fond.jpg")
+    bg_css   = f"url('{fond_src}') center/cover no-repeat fixed" if fond_src \
+               else "linear-gradient(135deg,#0F172A 0%,#1E3A5F 50%,#0F172A 100%)"
     logo_html = (f'<img src="{logo_src}" style="height:52px;display:block;margin:0 auto 20px">'
                  if logo_src else '<div style="font-size:48px;text-align:center;margin-bottom:16px">🍌</div>')
-    bg_css = f"url('{fond_src}') center/cover no-repeat fixed" if fond_src \
-             else "linear-gradient(135deg,#0F172A,#1E3A5F,#0F172A)"
 
     st.markdown(f"""
     <style>
     .stApp{{background:{bg_css}!important}}
     section[data-testid="stSidebar"]{{display:none!important}}
     section[data-testid="stSidebarCollapsedControl"]{{display:none!important}}
-    .login-overlay{{position:fixed;inset:0;background:rgba(0,0,0,0.55);
-      backdrop-filter:blur(4px);z-index:0;pointer-events:none;}}
-    @keyframes slideUp{{from{{opacity:0;transform:translateY(28px)}}to{{opacity:1;transform:translateY(0)}}}}
+    @keyframes slideUp{{from{{opacity:0;transform:translateY(32px)}}to{{opacity:1;transform:translateY(0)}}}}
+    @keyframes pulse{{0%,100%{{box-shadow:0 24px 60px rgba(0,0,0,0.35)}}50%{{box-shadow:0 28px 70px rgba(67,97,238,0.25)}}}}
     </style>
-    <div class="login-overlay"></div>
-    <div style="position:relative;z-index:1;display:flex;align-items:center;
-        justify-content:center;min-height:82vh">
-      <div style="background:rgba(255,255,255,0.98);border-radius:24px;padding:48px 44px;
-          max-width:400px;width:92%;text-align:center;
-          box-shadow:0 24px 60px rgba(0,0,0,0.35);animation:slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1)">
+    <div style="position:relative;z-index:10;display:flex;align-items:center;
+        justify-content:center;min-height:85vh;padding:20px">
+      <div style="background:rgba(255,255,255,0.97);border-radius:28px;padding:52px 48px;
+          max-width:420px;width:100%;text-align:center;
+          box-shadow:0 24px 60px rgba(0,0,0,0.35);
+          animation:slideUp 0.5s cubic-bezier(0.34,1.56,0.64,1) both,pulse 4s ease-in-out 0.5s infinite">
         {logo_html}
-        <p style="font-size:22px;font-weight:900;color:#111827;margin:0 0 4px;letter-spacing:-0.5px">Eden Food</p>
-        <p style="font-size:13px;color:#9CA3AF;margin:0 0 6px">Logistics Platform · Accès sécurisé</p>
+        <p style="font-size:23px;font-weight:900;color:#111827;margin:0 0 5px;letter-spacing:-0.6px">Eden Food</p>
+        <p style="font-size:13px;color:#9CA3AF;margin:0 0 10px;font-weight:400">Logistics Platform · Accès sécurisé</p>
         <div style="display:inline-flex;align-items:center;gap:6px;background:#D1FAE5;color:#065F46;
-            padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;margin-bottom:20px">
+            padding:4px 14px;border-radius:20px;font-size:11px;font-weight:700;margin-bottom:24px">
           🟢 Système opérationnel</div>
-        <div style="height:1px;background:linear-gradient(90deg,transparent,#E5E7EB,transparent);margin-bottom:20px"></div>
+        <div style="height:1px;background:linear-gradient(90deg,transparent,#E5E7EB,transparent);margin-bottom:22px"></div>
       </div>
     </div>""", unsafe_allow_html=True)
 
-    c1, c2, c3 = st.columns([1,2,1])
+    # SparklesCore — Canvas JS natif (équivalent tsparticles)
+    components.html("""
+    <script>
+    (function(){
+      try {
+        const old = parent.document.getElementById('eden-sparkles');
+        if (old) old.remove();
+
+        const cvs = parent.document.createElement('canvas');
+        cvs.id = 'eden-sparkles';
+        cvs.style.cssText = [
+          'position:fixed','top:0','left:0',
+          'width:100vw','height:100vh',
+          'pointer-events:none','z-index:2',
+          'opacity:0','transition:opacity 1.2s ease'
+        ].join(';');
+        parent.document.body.appendChild(cvs);
+
+        const ctx = cvs.getContext('2d');
+
+        function resize(){
+          cvs.width  = parent.window.innerWidth;
+          cvs.height = parent.window.innerHeight;
+        }
+        resize();
+        parent.window.addEventListener('resize', resize);
+
+        setTimeout(() => { cvs.style.opacity = '1'; }, 120);
+
+        const N = 160;
+        const pts = Array.from({length: N}, () => ({
+          x:   Math.random() * cvs.width,
+          y:   Math.random() * cvs.height,
+          r:   Math.random() * 1.6 + 0.4,
+          o:   Math.random(),
+          os:  (Math.random() * 0.007 + 0.003) * (Math.random() > .5 ? 1 : -1),
+          vx:  (Math.random() - .5) * 0.4,
+          vy:  (Math.random() - .5) * 0.4,
+          col: Math.random() > .62 ? '#F5A623' : '#FFFFFF'
+        }));
+
+        function draw(){
+          ctx.clearRect(0, 0, cvs.width, cvs.height);
+          pts.forEach(p => {
+            p.x += p.vx; p.y += p.vy;
+            p.o += p.os;
+            if (p.o >= 1 || p.o <= 0.04) p.os *= -1;
+            if (p.x < 0) p.x = cvs.width;
+            if (p.x > cvs.width)  p.x = 0;
+            if (p.y < 0) p.y = cvs.height;
+            if (p.y > cvs.height) p.y = 0;
+
+            if (p.col !== '#FFFFFF' && p.o > 0.7){
+              ctx.shadowBlur  = 7;
+              ctx.shadowColor = '#F5A623';
+            } else {
+              ctx.shadowBlur = 0;
+            }
+
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fillStyle   = p.col;
+            ctx.globalAlpha = p.o;
+            ctx.fill();
+          });
+          ctx.globalAlpha = 1;
+          ctx.shadowBlur  = 0;
+          requestAnimationFrame(draw);
+        }
+        draw();
+
+        // onClick push — mode:"push" quantity:4
+        parent.document.addEventListener('click', function(e){
+          for (let i = 0; i < 4; i++){
+            pts.push({
+              x: e.clientX + (Math.random()-.5)*30,
+              y: e.clientY + (Math.random()-.5)*30,
+              r: Math.random()*2+0.5,
+              o: 1,
+              os: -(Math.random()*0.015+0.005),
+              vx: (Math.random()-.5)*1.5,
+              vy: (Math.random()-.5)*1.5,
+              col: Math.random()>.5 ? '#F5A623':'#FFFFFF'
+            });
+            if (pts.length > N + 40) pts.shift();
+          }
+        });
+
+      } catch(e){ console.warn('Sparkles:', e); }
+    })();
+    </script>
+    """, height=1)
+
+    c1, c2, c3 = st.columns([1, 2, 1])
     with c2:
         with st.form("login_form"):
-            u = st.text_input("", placeholder="✦ Identifiant")
-            p = st.text_input("", type="password", placeholder="🔒 Mot de passe")
+            u   = st.text_input("", placeholder="✦ Identifiant")
+            pwd = st.text_input("", type="password", placeholder="🔒 Mot de passe")
             if st.form_submit_button("Connexion →", use_container_width=True, type="primary"):
                 ul = u.strip().lower()
-                if ul in USERS and USERS[ul]["password"] == p:
+                if ul in USERS and USERS[ul]["password"] == pwd:
                     st.session_state.update(authenticated=True, username=ul, role=USERS[ul]["role"])
+                    components.html("""
+                    <script>
+                    try{const c=parent.document.getElementById('eden-sparkles');if(c)c.remove();}catch(e){}
+                    </script>""", height=0)
                     st.rerun()
                 else:
                     st.error("Identifiant ou mot de passe incorrect")
@@ -239,7 +339,7 @@ CRTNS       = {"TURBO(COLOMBIA)": 1080, "MOIN(COSTA RICA)": 1200}
 KGS_PER_CNT = {"MOIN(COSTA RICA)": 1200*18.14, "TURBO(COLOMBIA)": 1080*18.14}
 
 def licence_to_filename(lic): return str(lic).replace(" ","_").replace("/","_") + ".pdf"
-def licence_pdf_path(lic):   return os.path.join("licences", licence_to_filename(lic))
+def licence_pdf_path(lic):    return os.path.join("licences", licence_to_filename(lic))
 
 # ── DATA ──────────────────────────────────────────────────────────────────────
 @st.cache_data(ttl=60)
@@ -281,7 +381,7 @@ clients["poids_total"] = pd.to_numeric(clients["poids_total"], errors="coerce").
 
 def get_solde_reel(nom, lic, poids):
     mask = (commandes["client"]==nom)&(commandes["licence"]==lic)&\
-           (~commandes["statut"].str.contains("À GÉNÉRER",na=False))
+           (~commandes["statut"].str.contains("À GÉNÉRER", na=False))
     return round(poids - commandes.loc[mask,"total_kgs"].sum(), 2)
 
 def get_solde_prev(nom, lic, poids):
@@ -299,7 +399,7 @@ current_week_num  = datetime.now().isocalendar()[1]
 current_week_str  = f"S-{current_week_num}"
 commandes_semaine = commandes[commandes["semaine"]==current_week_str]
 
-# ── SIDEBAR — SANS label_visibility ──────────────────────────────────────────
+# ── SIDEBAR ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     logo_src = img_to_b64("logo_eden_food.jpg") or img_to_b64("logo_eden_food.png")
     if logo_src:
@@ -380,17 +480,20 @@ if page == "dashboard":
     else:
         st.markdown(f"""
         <div style="background:linear-gradient(110deg,#0F172A,#4361EE);padding:52px;overflow:hidden;position:relative">
-          <div style="position:absolute;top:-40px;right:-40px;width:300px;height:300px;background:rgba(255,255,255,0.04);border-radius:50%"></div>
+          <div style="position:absolute;top:-40px;right:-40px;width:300px;height:300px;
+              background:rgba(255,255,255,0.04);border-radius:50%"></div>
           {logo_ov}
-          <h1 style="font-size:32px;font-weight:900;color:#fff;letter-spacing:-1px;margin:0 0 10px">Fresh from the plantation to the world</h1>
-          <p style="font-size:14px;color:rgba(255,255,255,0.72);max-width:440px;margin:0 0 22px">Colombie & Costa Rica — Suivi logistique temps réel</p>
+          <h1 style="font-size:32px;font-weight:900;color:#fff;letter-spacing:-1px;margin:0 0 10px">
+            Fresh from the plantation to the world</h1>
+          <p style="font-size:14px;color:rgba(255,255,255,0.72);max-width:440px;margin:0 0 22px">
+            Colombie & Costa Rica — Suivi logistique temps réel</p>
           <div class="hero-badge">🍌 {current_week_str} · {len(commandes)} expéditions</div>
         </div>""", unsafe_allow_html=True)
 
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
 
-    todo  = commandes[commandes["statut"].str.contains("À GÉNÉRER",na=False)]
-    done  = commandes[commandes["statut"].str.contains("GÉNÉRÉ",na=False)]
+    todo  = commandes[commandes["statut"].str.contains("À GÉNÉRER", na=False)]
+    done  = commandes[commandes["statut"].str.contains("GÉNÉRÉ",    na=False)]
     alert = clients[clients["solde_reel"] < 19591.2]
     tdocs = sum(len(list_docs(b)) for b in commandes["booking"].dropna().unique())
 
@@ -422,7 +525,7 @@ if page == "dashboard":
       </div>
     </div>""", unsafe_allow_html=True)
 
-    c1, c2 = st.columns([3,2])
+    c1, c2 = st.columns([3, 2])
     with c1:
         st.markdown('<div class="sec-hdr"><span class="sec-title">Dernières expéditions</span><span class="sec-sub">10 dernières</span></div>', unsafe_allow_html=True)
         st.dataframe(commandes.tail(10)[["semaine","client","booking","pol","nb_cnt","depart","statut"]],
@@ -443,14 +546,15 @@ if page == "dashboard":
             fig = px.pie(df_pol, values="nb_cnt", names="pol", hole=0.65,
                          color_discrete_sequence=["#4361EE","#F59E0B"])
             fig.update_traces(textinfo="percent+label")
-            fig = apply_chart_style(fig,"rgba(0,0,0,0)")
-            fig.update_layout(legend=dict(orientation="h",y=-0.1))
+            fig = apply_chart_style(fig, "rgba(0,0,0,0)")
+            fig.update_layout(legend=dict(orientation="h", y=-0.1))
             st.plotly_chart(fig, use_container_width=True)
 
     st.markdown('<div class="sec-hdr"><span class="sec-title">Volume hebdomadaire</span><span class="sec-sub">CNT par semaine</span></div>', unsafe_allow_html=True)
     if not commandes.empty:
         df_sem = commandes.groupby("semaine")["nb_cnt"].sum().reset_index()
-        fig2 = px.bar(df_sem, x="semaine", y="nb_cnt", color_discrete_sequence=["#4361EE"],
+        fig2 = px.bar(df_sem, x="semaine", y="nb_cnt",
+                      color_discrete_sequence=["#4361EE"],
                       labels={"semaine":"","nb_cnt":"Conteneurs"})
         fig2.update_traces(marker_cornerradius=6, marker_line_width=0)
         fig2 = apply_chart_style(fig2)
@@ -468,8 +572,8 @@ elif page == "semaine":
     if commandes_semaine.empty:
         st.info(f"Aucune commande pour {current_week_str}.")
     else:
-        todo_s = commandes_semaine[commandes_semaine["statut"].str.contains("À GÉNÉRER",na=False)]
-        done_s = commandes_semaine[commandes_semaine["statut"].str.contains("GÉNÉRÉ",na=False)]
+        todo_s = commandes_semaine[commandes_semaine["statut"].str.contains("À GÉNÉRER", na=False)]
+        done_s = commandes_semaine[commandes_semaine["statut"].str.contains("GÉNÉRÉ",    na=False)]
         st.markdown(f"""
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px">
           <div class="kpi-card" style="--card-color:#4361EE;--card-bg:#EEF2FF"><div class="kpi-lbl">Total</div><div class="kpi-val" style="color:#4361EE">{len(commandes_semaine)}</div></div>
@@ -484,8 +588,10 @@ elif page == "semaine":
             dp = f'<span class="pill pill-blue">📁 {nd}</span>' if nd else ""
             st.markdown(f"""
             <div class="cmd-row">
-              <div style="min-width:190px"><div style="font-size:14px;font-weight:700;color:#111827">{row['client']}</div>
-              <div style="font-size:11px;color:#9CA3AF;margin-top:3px">{row['booking']} · {row['licence']}</div></div>
+              <div style="min-width:190px">
+                <div style="font-size:14px;font-weight:700;color:#111827">{row['client']}</div>
+                <div style="font-size:11px;color:#9CA3AF;margin-top:3px">{row['booking']} · {row['licence']}</div>
+              </div>
               <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:3px;text-transform:uppercase">POL</div><div style="font-weight:700;color:#111827;font-size:12px">{row['pol']}</div></div>
               <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:3px;text-transform:uppercase">CNT</div><div style="font-weight:900;color:#4361EE;font-size:22px;letter-spacing:-1px">{row['nb_cnt']}</div></div>
               <div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:3px;text-transform:uppercase">Départ</div><div style="font-weight:600;color:#374151;font-size:12px">{row['depart']}</div></div>
@@ -517,11 +623,11 @@ elif page == "commandes":
     with fc4:
         f_sem = st.text_input("sem", placeholder="S-18", label_visibility="collapsed")
     st.markdown('</div>', unsafe_allow_html=True)
-
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
-    df_filt = commandes[commandes["client"].isin(f_client)&commandes["pol"].isin(f_pol)&commandes["statut"].isin(f_statut)]
+
+    df_filt = commandes[commandes["client"].isin(f_client) & commandes["pol"].isin(f_pol) & commandes["statut"].isin(f_statut)]
     if f_sem:
-        df_filt = df_filt[df_filt["semaine"].str.contains(f_sem,case=False,na=False)]
+        df_filt = df_filt[df_filt["semaine"].str.contains(f_sem, case=False, na=False)]
 
     st.markdown(f'<div style="font-size:12px;color:#6B7280;margin-bottom:14px"><b style="color:#111827">{len(df_filt)}</b> commandes · <b style="color:#111827">{int(df_filt["nb_cnt"].sum())}</b> CNT · <b style="color:#111827">{df_filt["total_kgs"].sum():,.0f}</b> kgs</div>', unsafe_allow_html=True)
 
@@ -529,7 +635,6 @@ elif page == "commandes":
         pc = "pill-green" if "GÉNÉRÉ" in str(row["statut"]) else "pill-orange"
         nd = len(list_docs(row["booking"]))
         dp = f'<span class="pill pill-blue">📁 {nd}</span>' if nd else '<span class="pill" style="background:#F3F4F6;color:#9CA3AF">📁 0</span>'
-
         st.markdown(f"""
         <div class="cmd-row">
           <div style="min-width:200px"><div style="font-size:13px;font-weight:700;color:#111827">{row['client']}</div>
@@ -654,8 +759,8 @@ elif page == "licences":
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
 
     for _, row in clients.iterrows():
-        pr = max(0,min(100, row["solde_reel"]/row["poids_total"]*100)) if row["poids_total"] > 0 else 0
-        pp = max(0,min(100, row["solde_prev"]/row["poids_total"]*100)) if row["poids_total"] > 0 else 0
+        pr = max(0, min(100, row["solde_reel"]/row["poids_total"]*100)) if row["poids_total"] > 0 else 0
+        pp = max(0, min(100, row["solde_prev"]/row["poids_total"]*100)) if row["poids_total"] > 0 else 0
         pc = "#10B981" if pr > 30 else ("#F59E0B" if pr > 10 else "#EF4444")
 
         if   row["solde_reel"] < 0:       badge = '<span class="pill pill-red">❌ DÉPASSEMENT</span>'
@@ -745,10 +850,10 @@ elif page == "planning":
     st.markdown('<div class="topbar"><div class="topbar-title">Planning client</div></div>', unsafe_allow_html=True)
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
 
-    client_sel = st.selectbox("", sorted(commandes["client"].dropna().unique().tolist()), label_visibility="collapsed")
+    client_sel = st.selectbox("", sorted(commandes["client"].dropna().unique().tolist()),
+                               label_visibility="collapsed")
     if client_sel:
-        df_c  = commandes[commandes["client"]==client_sel].copy()
-        lic_c = clients[clients["nom"]==client_sel]
+        df_c = commandes[commandes["client"]==client_sel].copy()
 
         st.markdown(f"""
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px">
@@ -758,7 +863,7 @@ elif page == "planning":
           <div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5"><div class="kpi-lbl">✅ Confirmées</div><div class="kpi-val" style="color:#059669">{len(df_c[df_c["statut"].str.contains("GÉNÉRÉ",na=False)])}</div></div>
         </div>""", unsafe_allow_html=True)
 
-        for _, row in df_c.sort_values("semaine",ascending=False).iterrows():
+        for _, row in df_c.sort_values("semaine", ascending=False).iterrows():
             pc = "pill-green" if "GÉNÉRÉ" in str(row["statut"]) else "pill-orange"
             nd = len(list_docs(row["booking"]))
             st.markdown(f"""
@@ -810,8 +915,8 @@ elif page == "new_cmd":
         lic_row     = clients[(clients["nom"]==client_sel)&(clients["licence"]==lic_sel)]
         solde_avant = float(lic_row["solde_reel"].values[0]) if len(lic_row)>0 else 0
         solde_apres = round(solde_avant - total_kgs, 2)
-        cnt_a_cr    = round(solde_apres/KGS_PER_CNT["MOIN(COSTA RICA)"],2)
-        cnt_a_col   = round(solde_apres/KGS_PER_CNT["TURBO(COLOMBIA)"],2)
+        cnt_a_cr    = round(solde_apres/KGS_PER_CNT["MOIN(COSTA RICA)"], 2)
+        cnt_a_col   = round(solde_apres/KGS_PER_CNT["TURBO(COLOMBIA)"], 2)
 
         st.markdown("---")
         p1,p2,p3,p4,p5,p6 = st.columns(6)
