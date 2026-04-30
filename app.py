@@ -56,35 +56,65 @@ header[data-testid="stHeader"],#MainMenu,.stAppDeployButton,footer{display:none!
   --transition-slow:all 0.35s cubic-bezier(0.4,0,0.2,1);
 }
 
-/* ══ SIDEBAR — Cargo Produce Pro ══════════════════════════════════════════ */
-section[data-testid="stSidebar"]{
-  transform:none!important;
-  min-width:240px!important;max-width:240px!important;
-  background:var(--surface)!important;
-  border-right:1px solid var(--border)!important;
-  box-shadow:var(--shadow-md)!important;
-  visibility:visible!important;display:block!important;
-}
-section[data-testid="stSidebarCollapsedControl"]{display:none!important;width:0!important}
-[data-testid="collapsedControl"]{display:none!important}
-section[data-testid="stSidebar"] button[data-testid="baseButton-headerNoPadding"]{display:none!important}
-section[data-testid="stSidebar"] *{font-family:'Inter',sans-serif!important}
+# ── SIDEBAR ───────────────────────────────────────────────────────────────────
+with st.sidebar:
+    logo_src = img_to_b64("logo_eden_food.jpg") or img_to_b64("logo_eden_food.png")
+    if logo_src:
+        st.markdown(f'<div style="padding:24px 18px 14px"><img src="{logo_src}" style="height:30px"></div>',
+                    unsafe_allow_html=True)
+    else:
+        st.markdown('<div style="padding:24px 18px 14px;font-size:16px;font-weight:900;color:#111827;letter-spacing:-0.5px">🍌 EDEN FOOD</div>',
+                    unsafe_allow_html=True)
 
-section[data-testid="stSidebar"] .stButton>button{
-  background:transparent!important;border:none!important;
-  color:var(--text-secondary)!important;text-align:left!important;
-  width:100%!important;padding:10px 14px!important;
-  border-radius:var(--radius-sm)!important;
-  font-size:13.5px!important;font-weight:500!important;
-  transition:var(--transition)!important;margin-bottom:1px!important;
-  letter-spacing:-0.1px!important;
-  display:flex!important;align-items:center!important;gap:8px!important;
-}
-section[data-testid="stSidebar"] .stButton>button:hover{
-  background:var(--primary-light)!important;
-  color:var(--primary)!important;
-  transform:translateX(2px)!important;
-}
+    st.markdown('<div style="height:1px;background:#E5E7EB;margin:0 18px 14px"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="padding:0 18px 8px;font-size:10px;color:#D1D5DB;text-transform:uppercase;letter-spacing:1.5px;font-weight:700">Navigation</div>',
+                unsafe_allow_html=True)
+
+    NAV = [
+        ("dashboard", "🏠", "Overview"),
+        ("semaine",   "📅", f"Semaine {current_week_str}"),
+        ("commandes", "🚢", "Commandes"),
+        ("documents", "📁", "Documents"),
+        ("licences",  "📋", "Licences DPVCT"),
+        ("planning",  "👤", "Planning client"),
+    ]
+
+    for pid, icon, label in NAV:
+        active = st.session_state.page == pid
+        if active:
+            # Item actif : visuel HTML uniquement, pas de bouton caché
+            st.markdown(
+                f'<div style="background:#EEF2FF;border-radius:8px;padding:10px 14px;'
+                f'margin-bottom:1px;color:#4361EE;font-size:13.5px;font-weight:600;'
+                f'border-left:3px solid #4361EE;cursor:default">'
+                f'{icon}&nbsp;&nbsp;{label}</div>',
+                unsafe_allow_html=True
+            )
+        else:
+            if st.button(f"{icon}  {label}", key=f"nav_{pid}", use_container_width=True):
+                st.session_state.page = pid
+                st.rerun()
+
+    if st.session_state.role == "admin":
+        st.markdown('<div style="height:1px;background:#E5E7EB;margin:10px 18px 10px"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="padding:0 18px 8px;font-size:10px;color:#D1D5DB;text-transform:uppercase;letter-spacing:1.5px;font-weight:700">Admin</div>',
+                    unsafe_allow_html=True)
+        if st.button("➕  Nouvelle commande", key="nav_new_cmd", use_container_width=True):
+            st.session_state.page = "new_cmd"
+            st.rerun()
+
+    st.markdown('<div style="height:1px;background:#E5E7EB;margin:12px 18px 8px"></div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<div style="padding:8px 18px;display:flex;align-items:center;gap:10px">'
+        f'<div style="width:32px;height:32px;border-radius:50%;background:#EEF2FF;'
+        f'display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>'
+        f'<div><div style="font-size:12px;font-weight:700;color:#111827">{st.session_state.username.upper()}</div>'
+        f'<div style="font-size:10px;color:#9CA3AF">{st.session_state.role}</div></div></div>',
+        unsafe_allow_html=True
+    )
+    if st.button("🚪  Déconnexion", use_container_width=True, key="logout"):
+        st.session_state.update(authenticated=False, username="")
+        st.rerun()
 
 /* ══ TOPBAR ════════════════════════════════════════════════════════════════ */
 .topbar{
