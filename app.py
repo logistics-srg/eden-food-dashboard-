@@ -1117,4 +1117,4 @@ elif page == "tracking":
                     f'<div style="background:#fff;border-radius:10px;padding:12px;border:1px solid #E5E7EB">'
                     f'<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">Semaine</div>'
                     f'<div style="font-size:14px;font-weight:800;color:#111827">{row["semaine"]}</div></div>'
-                    f'<div style="background:#fff;border-radius:10px;padding:12px;border:1
+                   
