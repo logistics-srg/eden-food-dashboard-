@@ -1232,8 +1232,92 @@ elif page == "licences":
         unsafe_allow_html=True)
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
 
-    for _, row in clients.iterrows():
-        pr = max(0, min(100, row["solde_reel"]/row["poids_total"]*100)) if row["poids_total"] > 0 else 0
+    # ── KPIs globaux ──────────────────────────────────────────────────────────
+    total_clients  = len(clients)
+    clients_ok     = len(clients[clients["solde_reel"] >= 58773.6])
+    clients_warn   = len(clients[(clients["solde_reel"] >= 19591.2) & (clients["solde_reel"] < 58773.6)])
+    clients_crit   = len(clients[clients["solde_reel"] < 19591.2])
+
+    st.markdown(
+        '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px">'
+        '<div class="kpi-card" style="--card-color:#4361EE;--card-bg:#EEF2FF">'
+        '<div class="icon-wrap">📋</div>'
+        '<div class="kpi-lbl">Total clients</div>'
+        '<div class="kpi-val" style="color:#4361EE">'+str(total_clients)+'</div></div>'
+        '<div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">'
+        '<div class="icon-wrap">✅</div>'
+        '<div class="kpi-lbl">OK</div>'
+        '<div class="kpi-val" style="color:#059669">'+str(clients_ok)+'</div></div>'
+        '<div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7">'
+        '<div class="icon-wrap">⚠️</div>'
+        '<div class="kpi-lbl">Attention</div>'
+        '<div class="kpi-val" style="color:#D97706">'+str(clients_warn)+'</div></div>'
+        '<div class="kpi-card" style="--card-color:#EF4444;--card-bg:#FEE2E2">'
+        '<div class="icon-wrap">🔴</div>'
+        '<div class="kpi-lbl">Critique</div>'
+        '<div class="kpi-val" style="color:#DC2626">'+str(clients_crit)+'</div></div>'
+        '</div>',
+        unsafe_allow_html=True)
+
+    # ── FILTRES ───────────────────────────────────────────────────────────────
+    f1, f2, f3 = st.columns([3, 2, 2])
+    with f1:
+        search_lic = st.selectbox(
+            "Rechercher un client",
+            ["Tous les clients"] + sorted(clients["nom"].dropna().tolist()),
+            label_visibility="collapsed"
+        )
+    with f2:
+        filter_statut = st.selectbox(
+            "Statut licence",
+            ["Tous", "OK", "Attention", "Critique", "Depassement"],
+            label_visibility="collapsed"
+        )
+    with f3:
+        sort_by = st.selectbox(
+            "Trier par",
+            ["Nom (A→Z)", "Solde reel ↑", "Solde reel ↓", "% restant ↑", "% restant ↓"],
+            label_visibility="collapsed"
+        )
+
+    # ── Application des filtres ───────────────────────────────────────────────
+    df_lic = clients.copy()
+
+    # Filtre par nom
+    if search_lic != "Tous les clients":
+        df_lic = df_lic[df_lic["nom"] == search_lic]
+
+    # Filtre par statut
+    if filter_statut == "OK":
+        df_lic = df_lic[df_lic["solde_reel"] >= 58773.6]
+    elif filter_statut == "Attention":
+        df_lic = df_lic[(df_lic["solde_reel"] >= 19591.2) & (df_lic["solde_reel"] < 58773.6)]
+    elif filter_statut == "Critique":
+        df_lic = df_lic[(df_lic["solde_reel"] >= 0) & (df_lic["solde_reel"] < 19591.2)]
+    elif filter_statut == "Depassement":
+        df_lic = df_lic[df_lic["solde_reel"] < 0]
+
+    # Tri
+    if sort_by == "Nom (A→Z)":
+        df_lic = df_lic.sort_values("nom")
+    elif sort_by == "Solde reel ↑":
+        df_lic = df_lic.sort_values("solde_reel", ascending=True)
+    elif sort_by == "Solde reel ↓":
+        df_lic = df_lic.sort_values("solde_reel", ascending=False)
+    elif sort_by == "% restant ↑":
+        df_lic = df_lic.sort_values("solde_reel", ascending=True)
+    elif sort_by == "% restant ↓":
+        df_lic = df_lic.sort_values("solde_reel", ascending=False)
+
+    # Compteur résultats
+    st.markdown(
+        '<div style="font-size:12px;color:#6B7280;margin-bottom:16px">'
+        '<b style="color:#111827">'+str(len(df_lic))+'</b> client(s) affiché(s)</div>',
+        unsafe_allow_html=True)
+
+    # ── Cartes licences ───────────────────────────────────────────────────────
+    for _, row in df_lic.iterrows():
+        pr = max(0, min(100, row["solde_reel"] / row["poids_total"] * 100)) if row["poids_total"] > 0 else 0
         pc = "#10B981" if pr > 30 else ("#F59E0B" if pr > 10 else "#EF4444")
 
         if   row["solde_reel"] < 0:        badge = '<span class="pill pill-red">DEPASSEMENT</span>'
@@ -1243,6 +1327,8 @@ elif page == "licences":
 
         pdf_path   = licence_pdf_path(row["licence"])
         pdf_exists = os.path.exists(pdf_path)
+        pdf_badge  = ('<span class="pill pill-blue">📄 PDF</span>' if pdf_exists
+                      else '<span class="pill" style="background:#F3F4F6;color:#9CA3AF">📄 Pas de PDF</span>')
 
         poids_fmt     = "{:,.0f}".format(row["poids_total"])
         solde_r_fmt   = "{:,.0f}".format(row["solde_reel"])
@@ -1251,9 +1337,6 @@ elif page == "licences":
         cnt_r_col_fmt = str(row["cnt_reel_col"])
         cnt_p_cr_fmt  = str(row["cnt_prev_cr"])
         cnt_p_col_fmt = str(row["cnt_prev_col"])
-        nom_val       = str(row["nom"])
-        lic_val       = str(row["licence"])
-        pays_val      = str(row["pays"])
         pr_int        = str(int(pr))
 
         st.markdown(
@@ -1261,28 +1344,22 @@ elif page == "licences":
             '<div style="display:flex;justify-content:space-between;align-items:flex-start;'
             'flex-wrap:wrap;gap:8px;margin-bottom:16px">'
             '<div>'
-            '<div style="font-size:16px;font-weight:800;color:#111827">'+nom_val+'</div>'
+            '<div style="font-size:16px;font-weight:800;color:#111827">'+str(row["nom"])+'</div>'
             '<div style="font-size:12px;color:#9CA3AF;margin-top:3px">'
-            'Licence '+lic_val+' · '+pays_val+'</div>'
+            'Licence '+str(row["licence"])+' · '+str(row["pays"])+'</div>'
             '</div>'
-            +badge+
+            '<div style="display:flex;gap:8px;align-items:center">'+pdf_badge+badge+'</div>'
             '</div>'
             '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">'
             '<div style="background:#F9FAFB;border-radius:10px;padding:14px">'
-            '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;'
-            'font-weight:700;margin-bottom:4px">Poids total</div>'
-            '<div style="font-size:18px;font-weight:800;color:#111827">'
-            +poids_fmt+' <span style="font-size:11px;color:#9CA3AF">kgs</span></div></div>'
+            '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">Poids total</div>'
+            '<div style="font-size:18px;font-weight:800;color:#111827">'+poids_fmt+' <span style="font-size:11px;color:#9CA3AF">kgs</span></div></div>'
             '<div style="background:#EEF2FF;border-radius:10px;padding:14px">'
-            '<div style="font-size:9px;color:#4361EE;text-transform:uppercase;'
-            'font-weight:700;margin-bottom:4px">Solde reel</div>'
-            '<div style="font-size:18px;font-weight:800;color:#4361EE">'
-            +solde_r_fmt+' <span style="font-size:11px">kgs</span></div></div>'
+            '<div style="font-size:9px;color:#4361EE;text-transform:uppercase;font-weight:700;margin-bottom:4px">Solde reel</div>'
+            '<div style="font-size:18px;font-weight:800;color:#4361EE">'+solde_r_fmt+' <span style="font-size:11px">kgs</span></div></div>'
             '<div style="background:#FEF3C7;border-radius:10px;padding:14px">'
-            '<div style="font-size:9px;color:#D97706;text-transform:uppercase;'
-            'font-weight:700;margin-bottom:4px">Solde prev.</div>'
-            '<div style="font-size:18px;font-weight:800;color:#D97706">'
-            +solde_p_fmt+' <span style="font-size:11px">kgs</span></div></div>'
+            '<div style="font-size:9px;color:#D97706;text-transform:uppercase;font-weight:700;margin-bottom:4px">Solde prev.</div>'
+            '<div style="font-size:18px;font-weight:800;color:#D97706">'+solde_p_fmt+' <span style="font-size:11px">kgs</span></div></div>'
             '</div>'
             '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">'
             '<div style="background:#EEF2FF;border-radius:10px;padding:12px;text-align:center">'
@@ -1309,14 +1386,14 @@ elif page == "licences":
             unsafe_allow_html=True)
 
         if pdf_exists:
-            lc1, lc2 = st.columns([1,4])
+            lc1, lc2 = st.columns([1, 4])
             with lc1:
-                with open(pdf_path,"rb") as f:
+                with open(pdf_path, "rb") as f:
                     st.download_button("📄 Telecharger licence", f.read(),
                         file_name=licence_to_filename(row["licence"]),
                         key="dllic_"+str(row["licence"]), use_container_width=True)
         else:
-            lc1, lc2 = st.columns([2,3])
+            lc1, lc2 = st.columns([2, 3])
             with lc1:
                 up_lic = st.file_uploader("", type=["pdf"],
                     key="uplic_"+str(row["licence"]), label_visibility="collapsed")
@@ -1324,10 +1401,11 @@ elif page == "licences":
                 if up_lic and st.button("✅ Uploader licence",
                     key="uplicconf_"+str(row["licence"]), type="primary"):
                     os.makedirs("licences", exist_ok=True)
-                    with open(pdf_path,"wb") as f: f.write(up_lic.getbuffer())
+                    with open(pdf_path, "wb") as f: f.write(up_lic.getbuffer())
                     st.success("Licence uploadee !"); st.rerun()
 
         st.markdown('</div>', unsafe_allow_html=True)
+
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
