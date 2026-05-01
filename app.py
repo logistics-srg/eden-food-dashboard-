@@ -1321,7 +1321,7 @@ elif page == "planning":
             '</div>',
             unsafe_allow_html=True)
 
-        for _, srow in cli_rows.iterrows():
+                for _, srow in cli_rows.iterrows():
             sr = max(0, min(100, srow["solde_reel"] / srow["poids_total"] * 100)) if srow["poids_total"] > 0 else 0
             sc = "#10B981" if sr > 30 else ("#F59E0B" if sr > 10 else "#EF4444")
             st.markdown(
@@ -1338,3 +1338,137 @@ elif page == "planning":
                 '<div style="font-size:13px;font-weight:800;color:' + sc + '">' + str(int(sr)) + '%</div></div>'
                 '</div>',
                 unsafe_allow_html=True)
+
+        st.markdown(
+            '<div class="sec-hdr" style="margin-top:20px">'
+            '<span class="sec-title">Historique commandes</span>'
+            '<span class="sec-sub">' + str(len(cli_cmds)) + ' commandes</span>'
+            '</div>',
+            unsafe_allow_html=True)
+
+        if cli_cmds.empty:
+            st.info("Aucune commande pour ce client.")
+        else:
+            for _, crow in cli_cmds.iterrows():
+                cpill = "pill-green" if "GENERE" in str(crow["statut"]) else "pill-orange"
+                st.markdown(
+                    '<div class="cmd-row">'
+                    '<div style="min-width:120px">'
+                    '<div style="font-size:12px;font-weight:700;color:#4361EE">' + str(crow["semaine"]) + '</div>'
+                    '<div style="font-size:11px;color:#9CA3AF;margin-top:2px">' + str(crow["booking"]) + '</div>'
+                    '</div>'
+                    '<div style="text-align:center">'
+                    '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;margin-bottom:2px">POL</div>'
+                    '<div style="font-size:11px;font-weight:700;color:#111827">' + str(crow["pol"]) + '</div>'
+                    '</div>'
+                    '<div style="text-align:center">'
+                    '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;margin-bottom:2px">CNT</div>'
+                    '<div style="font-size:20px;font-weight:900;color:#4361EE">' + str(crow["nb_cnt"]) + '</div>'
+                    '</div>'
+                    '<div style="text-align:center">'
+                    '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;margin-bottom:2px">Depart</div>'
+                    '<div style="font-size:11px;font-weight:600;color:#374151">' + str(crow["depart"]) + '</div>'
+                    '</div>'
+                    '<span class="pill ' + cpill + '">' + str(crow["statut"]) + '</span>'
+                    '</div>',
+                    unsafe_allow_html=True)
+
+            df_cli_sem = cli_cmds.groupby("semaine")["nb_cnt"].sum().reset_index()
+            fig3 = px.bar(df_cli_sem, x="semaine", y="nb_cnt",
+                          color_discrete_sequence=["#4361EE"],
+                          labels={"semaine": "", "nb_cnt": "CNT"})
+            fig3.update_traces(marker_cornerradius=6, marker_line_width=0)
+            fig3 = apply_chart_style(fig3)
+            st.plotly_chart(fig3, use_container_width=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+elif page == "new_cmd":
+    if st.session_state.role != "admin":
+        st.error("Acces refuse.")
+        st.stop()
+    st.markdown(
+        '<div style="background:#fff;border-bottom:1px solid #E5E7EB;padding:18px 36px;'
+        'position:sticky;top:0;z-index:100;font-size:20px;font-weight:800;color:#111827">'
+        'Nouvelle commande</div>',
+        unsafe_allow_html=True)
+    st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
+
+    noms_cmd = ["— Selectionner —"] + sorted(
+        clients["nom_client"].dropna()
+        .str.strip().replace("", pd.NA).dropna()
+        .unique().tolist()
+    )
+    cli_cmd_sel = st.selectbox("Client", noms_cmd, label_visibility="collapsed")
+
+    if cli_cmd_sel != "— Selectionner —":
+        cli_cmd_rows   = clients[clients["nom_client"].str.strip() == cli_cmd_sel]
+        licences_dispo = cli_cmd_rows[["nom","licence","solde_reel"]].copy()
+        licences_dispo["label"] = (
+            licences_dispo["nom"] + " — " +
+            licences_dispo["licence"] + " — Solde: " +
+            licences_dispo["solde_reel"].apply(lambda x: "{:,.0f}".format(x)) + " kgs"
+        )
+        lic_opts = ["— Choisir une licence —"] + licences_dispo["label"].tolist()
+        lic_sel  = st.selectbox("Licence", lic_opts, label_visibility="collapsed")
+
+        if lic_sel != "— Choisir une licence —":
+            lic_row    = licences_dispo[licences_dispo["label"] == lic_sel].iloc[0]
+            client_nom = lic_row["nom"]
+            match      = clients[clients["nom"] == client_nom]
+            client_row = match.iloc[0] if len(match) > 0 else None
+
+            with st.form("new_cmd_form"):
+                c1, c2, c3 = st.columns(3)
+                with c1:
+                    semaine  = st.text_input("Semaine", value=current_week_str)
+                    booking  = st.text_input("Reference Booking")
+                    navire   = st.text_input("Navire")
+                with c2:
+                    voyage   = st.text_input("N Voyage")
+                    pol      = st.selectbox("POL", ["TURBO(COLOMBIA)","MOIN(COSTA RICA)"])
+                    nb_cnt   = st.number_input("Nombre CNT", min_value=1, max_value=500, value=80)
+                with c3:
+                    depart_d = st.date_input("Date depart", value=date.today())
+                    st.number_input("Solde avant (kgs)", value=float(lic_row["solde_reel"]), format="%.2f")
+                    produit  = st.text_input("Produit", value="BANANE")
+
+                if st.form_submit_button("Creer la commande", type="primary", use_container_width=True):
+                    routing_sel = get_routing(pol)
+                    eta_calc    = depart_d + timedelta(days=routing_sel["total_days"])
+                    st.session_state.new_commandes.append({
+                        "num": "", "semaine": semaine, "client": client_nom,
+                        "booking": booking, "licence": lic_row["licence"],
+                        "navire": navire, "voyage": voyage, "pol": pol,
+                        "depart": depart_d.strftime("%d/%m/%Y"),
+                        "eta":    eta_calc.strftime("%d/%m/%Y"),
+                        "nb_cnt": nb_cnt, "produit": produit,
+                        "statut": "A GENERER",
+                        "total_kgs": nb_cnt * CRTNS.get(pol, 1200) * POIDS_UNIT,
+                    })
+                    st.success("Commande creee ! Allez dans Commandes pour la voir.")
+                    st.rerun()
+
+            adresse1 = str(client_row.get("adresse","")) if client_row is not None else ""
+            ville    = str(client_row.get("ville",""))   if client_row is not None else ""
+            pays     = str(client_row.get("pays",""))    if client_row is not None else ""
+            poids_lic = client_row.get("poids_total",0)  if client_row is not None else 0
+            routing_prev = get_routing(pol)
+            eta_prev = (date.today() + timedelta(days=routing_prev["total_days"])).strftime("%d/%m/%Y")
+
+            try:
+                xlsx_bytes = generate_conf_commande({
+                    "booking": "PREVIEW", "semaine": current_week_str,
+                    "client": client_nom, "adresse1": adresse1, "adresse2": "",
+                    "ville": ville, "pays": pays, "licence": lic_row["licence"],
+                    "poids_total_lic": poids_lic, "navire": "—", "voyage": "—",
+                    "pol": pol, "depart": date.today().strftime("%d/%m/%Y"),
+                    "eta": eta_prev, "nb_cnt": nb_cnt, "solde_avant": lic_row["solde_reel"],
+                })
+                st.download_button("Telecharger confirmation (apercu)", xlsx_bytes,
+                    file_name="CONF-COMMANDE-PREVIEW.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            except Exception as e:
+                st.warning("Template non trouve : " + str(e))
+
+    st.markdown('</div>', unsafe_allow_html=True)
