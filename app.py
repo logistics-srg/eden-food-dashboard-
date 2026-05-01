@@ -1278,7 +1278,7 @@ elif page == "planning":
         elif total_solde_r < 19591.2: badge = '<span class="pill pill-red">CRITIQUE</span>'
         elif total_solde_r < 58773.6: badge = '<span class="pill pill-orange">ATTENTION</span>'
         else:                          badge = '<span class="pill pill-green">OK</span>'
-                st.markdown(
+                  st.markdown(
             '<div class="sec-hdr">'
             '<span class="sec-title">Societes du client</span>'
             '<span class="sec-sub">' + str(nb_soc) + ' societe(s)</span>'
