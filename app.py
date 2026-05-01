@@ -9,7 +9,7 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from io import BytesIO
 
-st.set_page_config(page_title="EDEN FOOD", page_icon="🍌",
+st.set_page_config(page_title="EDEN FOOD", page_icon="ðŸŒ",
                    layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
@@ -182,23 +182,23 @@ ROUTING = {
     "MOIN(COSTA RICA)": {
         "total_days": 21,
         "stages": [
-            {"id":"moin",       "icon":"⚓","label":"MOIN CR",      "days":0,  "color":"#F59E0B"},
-            {"id":"caraibes",   "icon":"🌊","label":"Caraibes",     "days":3,  "color":"#3B82F6"},
-            {"id":"atlantique", "icon":"🌊","label":"Atlantique",   "days":8,  "color":"#2563EB"},
-            {"id":"algeciras",  "icon":"🔄","label":"Algeciras",    "days":15, "color":"#8B5CF6"},
-            {"id":"alboran",    "icon":"🌊","label":"Mer Alboran",  "days":18, "color":"#0EA5E9"},
-            {"id":"ghazaouet",  "icon":"⚓","label":"Ghazaouet DZ","days":21, "color":"#10B981"},
+            {"id":"moin",       "icon":"âš“","label":"MOIN CR",      "days":0,  "color":"#F59E0B"},
+            {"id":"caraibes",   "icon":"ðŸŒŠ","label":"Caraibes",     "days":3,  "color":"#3B82F6"},
+            {"id":"atlantique", "icon":"ðŸŒŠ","label":"Atlantique",   "days":8,  "color":"#2563EB"},
+            {"id":"algeciras",  "icon":"ðŸ”„","label":"Algeciras",    "days":15, "color":"#8B5CF6"},
+            {"id":"alboran",    "icon":"ðŸŒŠ","label":"Mer Alboran",  "days":18, "color":"#0EA5E9"},
+            {"id":"ghazaouet",  "icon":"âš“","label":"Ghazaouet DZ","days":21, "color":"#10B981"},
         ]
     },
     "TURBO(COLOMBIA)": {
         "total_days": 19,
         "stages": [
-            {"id":"turbo",      "icon":"⚓","label":"TURBO COL",   "days":0,  "color":"#F59E0B"},
-            {"id":"caraibes",   "icon":"🌊","label":"Caraibes",    "days":2,  "color":"#3B82F6"},
-            {"id":"atlantique", "icon":"🌊","label":"Atlantique",  "days":6,  "color":"#2563EB"},
-            {"id":"algeciras",  "icon":"🔄","label":"Algeciras",   "days":13, "color":"#8B5CF6"},
-            {"id":"alboran",    "icon":"🌊","label":"Mer Alboran", "days":16, "color":"#0EA5E9"},
-            {"id":"ghazaouet",  "icon":"⚓","label":"Ghazaouet DZ","days":19,"color":"#10B981"},
+            {"id":"turbo",      "icon":"âš“","label":"TURBO COL",   "days":0,  "color":"#F59E0B"},
+            {"id":"caraibes",   "icon":"ðŸŒŠ","label":"Caraibes",    "days":2,  "color":"#3B82F6"},
+            {"id":"atlantique", "icon":"ðŸŒŠ","label":"Atlantique",  "days":6,  "color":"#2563EB"},
+            {"id":"algeciras",  "icon":"ðŸ”„","label":"Algeciras",   "days":13, "color":"#8B5CF6"},
+            {"id":"alboran",    "icon":"ðŸŒŠ","label":"Mer Alboran", "days":16, "color":"#0EA5E9"},
+            {"id":"ghazaouet",  "icon":"âš“","label":"Ghazaouet DZ","days":19,"color":"#10B981"},
         ]
     }
 }
@@ -445,7 +445,7 @@ def login_page():
         with st.form("login_form"):
             u   = st.text_input("u", placeholder="Identifiant",  label_visibility="collapsed")
             pwd = st.text_input("p", placeholder="Mot de passe", label_visibility="collapsed", type="password")
-            if st.form_submit_button("Connexion  →", use_container_width=True, type="primary"):
+            if st.form_submit_button("Connexion  â†’", use_container_width=True, type="primary"):
                 ul = u.strip().lower()
                 if ul in USERS and USERS[ul]["password"] == pwd:
                     st.session_state.update(authenticated=True, username=ul, role=USERS[ul]["role"])
@@ -467,7 +467,7 @@ def licence_pdf_path(lic):
 
 @st.cache_data(ttl=60)
 def load_clients():
-    df = pd.read_excel("eden_food.xlsx", sheet_name="📋 BASE CLIENTS",
+    df = pd.read_excel("eden_food.xlsx", sheet_name="ðŸ“‹ BASE CLIENTS",
                        usecols=list(range(11)), header=3)
     df.columns = ["num","nom_client","nom","adresse","ville","pays",
                   "licence","poids_total","solde_excel","cnt_cr","cnt_col"]
@@ -478,7 +478,7 @@ def load_clients():
 
 @st.cache_data(ttl=60)
 def load_commandes():
-    df = pd.read_excel("eden_food.xlsx", sheet_name="🚢 COMMANDES",
+    df = pd.read_excel("eden_food.xlsx", sheet_name="ðŸš¢ COMMANDES",
                        usecols=list(range(13)), header=3)
     df.columns = ["num","semaine","client","booking","licence","navire","voyage",
                   "pol","depart","eta","nb_cnt","produit","statut"]
@@ -538,9 +538,9 @@ ICO = {
     "settings":  '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
 }
 EMO = {
-    "dashboard": "⊞", "semaine": "📅", "commandes": "🚢", "tracking": "🗺️",
-    "documents": "📁", "licences": "📋", "planning": "👤",
-    "new_cmd": "➕", "logout": "🚪",
+    "dashboard": "âŠž", "semaine": "ðŸ“…", "commandes": "ðŸš¢", "tracking": "ðŸ—ºï¸",
+    "documents": "ðŸ“", "licences": "ðŸ“‹", "planning": "ðŸ‘¤",
+    "new_cmd": "âž•", "logout": "ðŸšª",
 }
 NAV = [
     ("dashboard", "Overview"),
@@ -627,9 +627,9 @@ with st.sidebar:
 
 page = st.session_state.page
 
-# ══════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 # DASHBOARD
-# ══════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 if page == "dashboard":
     hero_src = img_to_b64("hero.jpg") or img_to_b64("hero.png")
     logo_src = img_to_b64("logo_eden_food.jpg") or img_to_b64("logo_eden_food.png")
@@ -641,8 +641,8 @@ if page == "dashboard":
             '<div class="hero-overlay"><div class="hero-text">'
             +logo_ov
             +'<h1>Fresh from the<br>plantation to the world</h1>'
-            '<p>Suivi en temps reel — Colombie & Costa Rica</p>'
-            '<div class="hero-badge">🍌 '+current_week_str+' · '+str(len(commandes))+' expeditions actives</div>'
+            '<p>Suivi en temps reel â€” Colombie & Costa Rica</p>'
+            '<div class="hero-badge">ðŸŒ '+current_week_str+' Â· '+str(len(commandes))+' expeditions actives</div>'
             '</div></div></div>',
             unsafe_allow_html=True)
     else:
@@ -653,8 +653,8 @@ if page == "dashboard":
             +'<div><h1 style="font-size:32px;font-weight:900;color:#fff;margin:0 0 10px">'
             'Fresh from the plantation to the world</h1>'
             '<p style="font-size:14px;color:rgba(255,255,255,0.72);max-width:440px;margin:0 0 22px">'
-            'Colombie & Costa Rica — Suivi logistique temps reel</p>'
-            '<div class="hero-badge">🍌 '+current_week_str+' · '+str(len(commandes))+' expeditions</div>'
+            'Colombie & Costa Rica â€” Suivi logistique temps reel</p>'
+            '<div class="hero-badge">ðŸŒ '+current_week_str+' Â· '+str(len(commandes))+' expeditions</div>'
             '</div></div>',
             unsafe_allow_html=True)
 
@@ -667,27 +667,27 @@ if page == "dashboard":
     st.markdown(
         '<div class="kpi-grid">'
         '<div class="kpi-card" style="--card-color:#4361EE;--card-bg:#EEF2FF">'
-        '<div class="icon-wrap">🚢</div><div class="kpi-lbl">Expeditions</div>'
+        '<div class="icon-wrap">ðŸš¢</div><div class="kpi-lbl">Expeditions</div>'
         '<div class="kpi-val" style="color:#4361EE">'+str(len(commandes))+'</div>'
         '<div class="kpi-sub">enregistrees</div></div>'
         '<div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7">'
-        '<div class="icon-wrap">⏳</div><div class="kpi-lbl">A generer</div>'
+        '<div class="icon-wrap">â³</div><div class="kpi-lbl">A generer</div>'
         '<div class="kpi-val" style="color:#D97706">'+str(len(todo))+'</div>'
         '<div class="kpi-sub">en attente</div></div>'
         '<div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">'
-        '<div class="icon-wrap">✅</div><div class="kpi-lbl">Confirmees</div>'
+        '<div class="icon-wrap">âœ…</div><div class="kpi-lbl">Confirmees</div>'
         '<div class="kpi-val" style="color:#059669">'+str(len(done))+'</div>'
         '<div class="kpi-sub">generees</div></div>'
         '<div class="kpi-card" style="--card-color:#8B5CF6;--card-bg:#EDE9FE">'
-        '<div class="icon-wrap">📦</div><div class="kpi-lbl">CNT planifies</div>'
+        '<div class="icon-wrap">ðŸ“¦</div><div class="kpi-lbl">CNT planifies</div>'
         '<div class="kpi-val" style="color:#7C3AED">'+str(int(todo["nb_cnt"].sum()))+'</div>'
         '<div class="kpi-sub">conteneurs</div></div>'
         '<div class="kpi-card" style="--card-color:#EF4444;--card-bg:#FEE2E2">'
-        '<div class="icon-wrap">🔴</div><div class="kpi-lbl">Alertes</div>'
+        '<div class="icon-wrap">ðŸ”´</div><div class="kpi-lbl">Alertes</div>'
         '<div class="kpi-val" style="color:#DC2626">'+str(len(alert))+'</div>'
         '<div class="kpi-sub">licences critiques</div></div>'
         '<div class="kpi-card" style="--card-color:#3B82F6;--card-bg:#DBEAFE">'
-        '<div class="icon-wrap">📁</div><div class="kpi-lbl">Documents</div>'
+        '<div class="icon-wrap">ðŸ“</div><div class="kpi-lbl">Documents</div>'
         '<div class="kpi-val" style="color:#2563EB">'+str(tdocs)+'</div>'
         '<div class="kpi-sub">uploades</div></div>'
         '</div>',
@@ -765,13 +765,13 @@ elif page == "semaine":
         for _, row in commandes_semaine.iterrows():
             pc = "pill-green" if "GENERE" in str(row["statut"]) else "pill-orange"
             nd = len(list_docs(row["booking"]))
-            dp = '<span class="pill pill-blue">📁 '+str(nd)+'</span>' if nd else ""
+            dp = '<span class="pill pill-blue">ðŸ“ '+str(nd)+'</span>' if nd else ""
             st.markdown(
                 '<div class="cmd-row">'
                 '<div style="min-width:190px">'
                 '<div style="font-size:14px;font-weight:700;color:#111827">'+str(row["client"])+'</div>'
                 '<div style="font-size:11px;color:#9CA3AF;margin-top:3px">'
-                +str(row["booking"])+' · '+str(row["licence"])+'</div></div>'
+                +str(row["booking"])+' Â· '+str(row["licence"])+'</div></div>'
                 '<div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:3px;text-transform:uppercase">POL</div>'
                 '<div style="font-weight:700;color:#111827;font-size:12px">'+str(row["pol"])+'</div></div>'
                 '<div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:3px;text-transform:uppercase">CNT</div>'
@@ -820,21 +820,21 @@ elif page == "commandes":
         df_filt = df_filt[df_filt["semaine"].str.contains(f_sem, case=False, na=False)]
     st.markdown(
         '<div style="font-size:12px;color:#6B7280;margin-bottom:14px">'
-        '<b style="color:#111827">'+str(len(df_filt))+'</b> commandes · '
-        '<b style="color:#111827">'+str(int(df_filt["nb_cnt"].sum()))+'</b> CNT · '
+        '<b style="color:#111827">'+str(len(df_filt))+'</b> commandes Â· '
+        '<b style="color:#111827">'+str(int(df_filt["nb_cnt"].sum()))+'</b> CNT Â· '
         '<b style="color:#111827">'+"{:,.0f}".format(df_filt["total_kgs"].sum())+'</b> kgs</div>',
         unsafe_allow_html=True)
     for _, row in df_filt.iterrows():
         pc = "pill-green" if "GENERE" in str(row["statut"]) else "pill-orange"
         nd = len(list_docs(row["booking"]))
-        dp = ('<span class="pill pill-blue">📁 '+str(nd)+'</span>' if nd
-              else '<span class="pill" style="background:#F3F4F6;color:#9CA3AF">📁 0</span>')
+        dp = ('<span class="pill pill-blue">ðŸ“ '+str(nd)+'</span>' if nd
+              else '<span class="pill" style="background:#F3F4F6;color:#9CA3AF">ðŸ“ 0</span>')
         st.markdown(
             '<div class="cmd-row">'
             '<div style="min-width:200px">'
             '<div style="font-size:13px;font-weight:700;color:#111827">'+str(row["client"])+'</div>'
             '<div style="font-size:11px;color:#9CA3AF;margin-top:2px">'
-            +str(row["semaine"])+' · '+str(row["booking"])+'</div></div>'
+            +str(row["semaine"])+' Â· '+str(row["booking"])+'</div></div>'
             '<div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase">Navire</div>'
             '<div style="font-weight:500;color:#374151;font-size:11px">'+str(row["navire"])+'</div></div>'
             '<div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;margin-bottom:2px;text-transform:uppercase">POL</div>'
@@ -852,7 +852,7 @@ elif page == "commandes":
         is_open = st.session_state.expanded_cmd == row["booking"]
         col_btn, _ = st.columns([1,5])
         with col_btn:
-            if st.button("Fermer" if is_open else "📁 Documents",
+            if st.button("Fermer" if is_open else "ðŸ“ Documents",
                          key="docbtn_"+str(row["booking"]), use_container_width=True):
                 st.session_state.expanded_cmd = None if is_open else row["booking"]
                 st.rerun()
@@ -863,14 +863,14 @@ elif page == "commandes":
                     doc_path = os.path.join(docs_path(row["booking"]), doc_name)
                     d1,d2,d3 = st.columns([4,1,1])
                     with d1:
-                        st.markdown('<div class="doc-chip">📄 '+doc_name+'</div>', unsafe_allow_html=True)
+                        st.markdown('<div class="doc-chip">ðŸ“„ '+doc_name+'</div>', unsafe_allow_html=True)
                     with d2:
                         with open(doc_path,"rb") as f:
-                            st.download_button("⬇️", f.read(), file_name=doc_name,
+                            st.download_button("â¬‡ï¸", f.read(), file_name=doc_name,
                                 key="dl_"+str(row["booking"])+"_"+doc_name, use_container_width=True)
                     with d3:
                         if st.session_state.role == "admin":
-                            if st.button("🗑️", key="del_"+str(row["booking"])+"_"+doc_name,
+                            if st.button("ðŸ—‘ï¸", key="del_"+str(row["booking"])+"_"+doc_name,
                                          use_container_width=True):
                                 delete_doc(row["booking"], doc_name)
                                 st.rerun()
@@ -882,7 +882,7 @@ elif page == "commandes":
                                             key="up_"+str(row["booking"]), label_visibility="collapsed")
             with u2:
                 dtype = st.selectbox("", DOC_TYPES, key="dtype_"+str(row["booking"]), label_visibility="collapsed")
-            if uploaded and st.button("✅ Uploader", key="upconf_"+str(row["booking"]), type="primary"):
+            if uploaded and st.button("âœ… Uploader", key="upconf_"+str(row["booking"]), type="primary"):
                 uploaded.name = dtype.replace(" ","_")+"_"+uploaded.name
                 save_doc(row["booking"], uploaded)
                 st.success("Uploade !")
@@ -914,13 +914,13 @@ elif page == "tracking":
     st.markdown(
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px">'
         '<div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7">'
-        '<div class="icon-wrap">⏳</div><div class="kpi-lbl">En attente depart</div>'
+        '<div class="icon-wrap">â³</div><div class="kpi-lbl">En attente depart</div>'
         '<div class="kpi-val" style="color:#D97706">'+str(len(en_attente_list))+'</div></div>'
         '<div class="kpi-card" style="--card-color:#3B82F6;--card-bg:#DBEAFE">'
-        '<div class="icon-wrap">🚢</div><div class="kpi-lbl">En mer</div>'
+        '<div class="icon-wrap">ðŸš¢</div><div class="kpi-lbl">En mer</div>'
         '<div class="kpi-val" style="color:#2563EB">'+str(len(en_mer_list))+'</div></div>'
         '<div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">'
-        '<div class="icon-wrap">⚓</div><div class="kpi-lbl">Arrives Ghazaouet</div>'
+        '<div class="icon-wrap">âš“</div><div class="kpi-lbl">Arrives Ghazaouet</div>'
         '<div class="kpi-val" style="color:#059669">'+str(len(arrives_list))+'</div></div>'
         '</div>',
         unsafe_allow_html=True)
@@ -930,7 +930,7 @@ elif page == "tracking":
         'box-shadow:0 8px 32px rgba(0,0,0,0.3);margin-bottom:20px">'
         '<div style="font-size:11px;color:rgba(255,255,255,0.5);font-weight:700;'
         'text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;'
-        'font-family:Arial,sans-serif">Route maritime — Ameriques vers Ghazaouet</div>'
+        'font-family:Arial,sans-serif">Route maritime â€” Ameriques vers Ghazaouet</div>'
         +map_svg+'</div>', height=250)
     filter_track = st.selectbox("", ["Tous","En attente","En mer","Arrives"],
                                 label_visibility="collapsed")
@@ -952,7 +952,7 @@ elif page == "tracking":
             elif s_idx >= 3:
                 card_color="#8B5CF6"; card_bg="#EDE9FE"; status_txt="Transit "+current_s["label"]
             elif s_idx >= 1:
-                card_color="#3B82F6"; card_bg="#DBEAFE"; status_txt="En mer — "+current_s["label"]
+                card_color="#3B82F6"; card_bg="#DBEAFE"; status_txt="En mer â€” "+current_s["label"]
             elif days_el is not None and days_el >= 0:
                 card_color="#4361EE"; card_bg="#EEF2FF"; status_txt="Port de depart"
             else:
@@ -962,8 +962,8 @@ elif page == "tracking":
             elif days_el is not None:
                 days_label = "Depart dans "+str(abs(days_el))+"j"
             else:
-                days_label = "—"
-            eta_label     = eta_calc.strftime("%d/%m/%Y") if eta_calc else "—"
+                days_label = "â€”"
+            eta_label     = eta_calc.strftime("%d/%m/%Y") if eta_calc else "â€”"
             timeline_html = build_stage_timeline_html(s_idx, prog, str(row["pol"]))
             bkey          = str(row["booking"]).replace(" ","_").replace("/","_")
             is_open       = bkey in st.session_state.expanded_track
@@ -973,7 +973,7 @@ elif page == "tracking":
                 '<div>'
                 '<div style="font-size:15px;font-weight:800;color:#111827">'+str(row["client"])+'</div>'
                 '<div style="font-size:11px;color:#9CA3AF;margin-top:3px">'
-                +str(row["navire"])+' · '+str(row["booking"])+' · '+str(row["pol"]).split("(")[0].strip()+'</div></div>'
+                +str(row["navire"])+' Â· '+str(row["booking"])+' Â· '+str(row["pol"]).split("(")[0].strip()+'</div></div>'
                 '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
                 '<div style="text-align:center"><div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;margin-bottom:2px">Depart</div>'
                 '<div style="font-size:12px;font-weight:700;color:#374151">'+str(row["depart"])+'</div></div>'
@@ -1032,13 +1032,13 @@ elif page == "documents":
     st.markdown(
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px">'
         '<div class="kpi-card" style="--card-color:#4361EE;--card-bg:#EEF2FF">'
-        '<div class="icon-wrap">📦</div><div class="kpi-lbl">Bookings total</div>'
+        '<div class="icon-wrap">ðŸ“¦</div><div class="kpi-lbl">Bookings total</div>'
         '<div class="kpi-val" style="color:#4361EE">'+str(len(all_bookings))+'</div></div>'
         '<div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">'
-        '<div class="icon-wrap">✅</div><div class="kpi-lbl">Avec documents</div>'
+        '<div class="icon-wrap">âœ…</div><div class="kpi-lbl">Avec documents</div>'
         '<div class="kpi-val" style="color:#059669">'+str(bookings_ok)+'</div></div>'
         '<div class="kpi-card" style="--card-color:#3B82F6;--card-bg:#DBEAFE">'
-        '<div class="icon-wrap">📄</div><div class="kpi-lbl">Fichiers uploades</div>'
+        '<div class="icon-wrap">ðŸ“„</div><div class="kpi-lbl">Fichiers uploades</div>'
         '<div class="kpi-val" style="color:#2563EB">'+str(total_docs)+'</div></div>'
         '</div>',
         unsafe_allow_html=True)
@@ -1053,9 +1053,9 @@ elif page == "documents":
     for _, row in df_docs.iterrows():
         docs  = list_docs(row["booking"])
         nd    = len(docs)
-        badge_doc = ('<span class="pill pill-blue">📁 '+str(nd)+' doc(s)</span>'
+        badge_doc = ('<span class="pill pill-blue">ðŸ“ '+str(nd)+' doc(s)</span>'
                      if nd else
-                     '<span class="pill" style="background:#F3F4F6;color:#9CA3AF">📁 Vide</span>')
+                     '<span class="pill" style="background:#F3F4F6;color:#9CA3AF">ðŸ“ Vide</span>')
         st.markdown(
             '<div class="card">'
             '<div style="display:flex;justify-content:space-between;align-items:center;'
@@ -1063,7 +1063,7 @@ elif page == "documents":
             '<div>'
             '<div style="font-size:14px;font-weight:700;color:#111827">'+str(row["client"])+'</div>'
             '<div style="font-size:11px;color:#9CA3AF;margin-top:2px">'
-            +str(row["booking"])+' · '+str(row["semaine"])+'</div>'
+            +str(row["booking"])+' Â· '+str(row["semaine"])+'</div>'
             '</div>'+badge_doc+'</div>',
             unsafe_allow_html=True)
         if docs:
@@ -1071,14 +1071,14 @@ elif page == "documents":
                 doc_path = os.path.join(docs_path(row["booking"]), doc_name)
                 d1,d2,d3 = st.columns([4,1,1])
                 with d1:
-                    st.markdown('<div class="doc-chip">📄 '+doc_name+'</div>', unsafe_allow_html=True)
+                    st.markdown('<div class="doc-chip">ðŸ“„ '+doc_name+'</div>', unsafe_allow_html=True)
                 with d2:
                     with open(doc_path,"rb") as f:
-                        st.download_button("⬇️", f.read(), file_name=doc_name,
+                        st.download_button("â¬‡ï¸", f.read(), file_name=doc_name,
                             key="dldoc_"+str(row["booking"])+"_"+doc_name, use_container_width=True)
                 with d3:
                     if st.session_state.role == "admin":
-                        if st.button("🗑️", key="deldoc_"+str(row["booking"])+"_"+doc_name,
+                        if st.button("ðŸ—‘ï¸", key="deldoc_"+str(row["booking"])+"_"+doc_name,
                                      use_container_width=True):
                             delete_doc(row["booking"], doc_name)
                             st.rerun()
@@ -1091,7 +1091,7 @@ elif page == "documents":
         with u2:
             dtype = st.selectbox("", DOC_TYPES, key="dtypedoc_"+str(row["booking"]), label_visibility="collapsed")
         with u3:
-            if up and st.button("✅", key="upconfdoc_"+str(row["booking"]), type="primary", use_container_width=True):
+            if up and st.button("âœ…", key="upconfdoc_"+str(row["booking"]), type="primary", use_container_width=True):
                 up.name = dtype.replace(" ","_")+"_"+up.name
                 save_doc(row["booking"], up)
                 st.success("Uploade !")
@@ -1113,16 +1113,16 @@ elif page == "licences":
     st.markdown(
         '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px">'
         '<div class="kpi-card" style="--card-color:#4361EE;--card-bg:#EEF2FF">'
-        '<div class="icon-wrap">📋</div><div class="kpi-lbl">Total societes</div>'
+        '<div class="icon-wrap">ðŸ“‹</div><div class="kpi-lbl">Total societes</div>'
         '<div class="kpi-val" style="color:#4361EE">'+str(total_clients)+'</div></div>'
         '<div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">'
-        '<div class="icon-wrap">✅</div><div class="kpi-lbl">OK</div>'
+        '<div class="icon-wrap">âœ…</div><div class="kpi-lbl">OK</div>'
         '<div class="kpi-val" style="color:#059669">'+str(clients_ok)+'</div></div>'
         '<div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7">'
-        '<div class="icon-wrap">⚠️</div><div class="kpi-lbl">Attention</div>'
+        '<div class="icon-wrap">âš ï¸</div><div class="kpi-lbl">Attention</div>'
         '<div class="kpi-val" style="color:#D97706">'+str(clients_warn)+'</div></div>'
         '<div class="kpi-card" style="--card-color:#EF4444;--card-bg:#FEE2E2">'
-        '<div class="icon-wrap">🔴</div><div class="kpi-lbl">Critique</div>'
+        '<div class="icon-wrap">ðŸ”´</div><div class="kpi-lbl">Critique</div>'
         '<div class="kpi-val" style="color:#DC2626">'+str(clients_crit)+'</div></div>'
         '</div>',
         unsafe_allow_html=True)
@@ -1138,7 +1138,7 @@ elif page == "licences":
             ["Tous","OK","Attention","Critique","Depassement"], label_visibility="collapsed")
     with f3:
         sort_by = st.selectbox("Tri",
-            ["Nom client (A→Z)","Solde reel ↑","Solde reel ↓"], label_visibility="collapsed")
+            ["Nom client (Aâ†’Z)","Solde reel â†‘","Solde reel â†“"], label_visibility="collapsed")
     df_lic = clients.copy()
     if search_lic != "Tous les clients":
         df_lic = df_lic[df_lic["nom_client"].str.strip() == search_lic]
@@ -1150,15 +1150,15 @@ elif page == "licences":
         df_lic = df_lic[(df_lic["solde_reel"] >= 0) & (df_lic["solde_reel"] < 19591.2)]
     elif filter_statut == "Depassement":
         df_lic = df_lic[df_lic["solde_reel"] < 0]
-    if sort_by == "Nom client (A→Z)":
+    if sort_by == "Nom client (Aâ†’Z)":
         df_lic = df_lic.sort_values("nom_client")
-    elif sort_by == "Solde reel ↑":
+    elif sort_by == "Solde reel â†‘":
         df_lic = df_lic.sort_values("solde_reel", ascending=True)
-    elif sort_by == "Solde reel ↓":
+    elif sort_by == "Solde reel â†“":
         df_lic = df_lic.sort_values("solde_reel", ascending=False)
     st.markdown(
         '<div style="font-size:12px;color:#6B7280;margin-bottom:16px">'
-        '<b style="color:#111827">'+str(len(df_lic))+'</b> societe(s) · '
+        '<b style="color:#111827">'+str(len(df_lic))+'</b> societe(s) Â· '
         '<b style="color:#111827">'+str(df_lic["nom_client"].nunique())+'</b> client(s)</div>',
         unsafe_allow_html=True)
     for _, row in df_lic.iterrows():
@@ -1169,8 +1169,8 @@ elif page == "licences":
         elif row["solde_reel"] < 58773.6: badge = '<span class="pill pill-orange">ATTENTION</span>'
         else:                              badge = '<span class="pill pill-green">OK</span>'
         pdf_exists = os.path.exists(licence_pdf_path(row["licence"]))
-        pdf_badge  = ('<span class="pill pill-blue">📄 PDF</span>' if pdf_exists
-                      else '<span class="pill" style="background:#F3F4F6;color:#9CA3AF">📄 Pas de PDF</span>')
+        pdf_badge  = ('<span class="pill pill-blue">ðŸ“„ PDF</span>' if pdf_exists
+                      else '<span class="pill" style="background:#F3F4F6;color:#9CA3AF">ðŸ“„ Pas de PDF</span>')
         st.markdown(
             '<div class="card">'
             '<div style="display:flex;justify-content:space-between;align-items:flex-start;'
@@ -1180,7 +1180,7 @@ elif page == "licences":
             '<div style="font-size:12px;color:#9CA3AF;margin-top:3px">'
             '<span style="background:#EEF2FF;color:#4361EE;padding:2px 8px;border-radius:20px;'
             'font-size:10px;font-weight:700;margin-right:6px">'+str(row["nom_client"])+'</span>'
-            'Licence '+str(row["licence"])+' · '+str(row["ville"])+' · '+str(row["pays"])+'</div>'
+            'Licence '+str(row["licence"])+' Â· '+str(row["ville"])+' Â· '+str(row["pays"])+'</div>'
             '</div>'
             '<div style="display:flex;gap:8px;align-items:center">'+pdf_badge+badge+'</div>'
             '</div>'
@@ -1222,7 +1222,7 @@ elif page == "licences":
             lc1, _ = st.columns([1,4])
             with lc1:
                 with open(licence_pdf_path(row["licence"]),"rb") as f:
-                    st.download_button("📄 Telecharger licence", f.read(),
+                    st.download_button("ðŸ“„ Telecharger licence", f.read(),
                         file_name=licence_to_filename(row["licence"]),
                         key="dllic_"+str(row["licence"]), use_container_width=True)
         else:
@@ -1231,7 +1231,7 @@ elif page == "licences":
                 up_lic = st.file_uploader("", type=["pdf"],
                     key="uplic_"+str(row["licence"]), label_visibility="collapsed")
             with lc2:
-                if up_lic and st.button("✅ Uploader licence",
+                if up_lic and st.button("âœ… Uploader licence",
                     key="uplicconf_"+str(row["licence"]), type="primary"):
                     os.makedirs("licences", exist_ok=True)
                     with open(licence_pdf_path(row["licence"]),"wb") as f:
@@ -1248,15 +1248,15 @@ elif page == "planning":
         'Planning client</div>',
         unsafe_allow_html=True)
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
-    noms_planning = ["— Selectionner —"] + sorted(
+    noms_planning = ["â€” Selectionner â€”"] + sorted(
         clients["nom_client"].dropna()
         .str.strip().replace("", pd.NA).dropna()
         .unique().tolist())
     cli_sel = st.selectbox("Choisir un client", noms_planning, label_visibility="collapsed")
-    if cli_sel == "— Selectionner —":
+    if cli_sel == "â€” Selectionner â€”":
         st.markdown(
             '<div style="text-align:center;padding:60px 20px">'
-            '<div style="font-size:48px;margin-bottom:16px">👤</div>'
+            '<div style="font-size:48px;margin-bottom:16px">ðŸ‘¤</div>'
             '<div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:8px">'
             'Selectionnez un client</div>'
             '<div style="font-size:13px;color:#9CA3AF">'
@@ -1329,7 +1329,7 @@ elif page == "planning":
                 '<div style="flex:1">'
                 '<div style="font-size:13px;font-weight:700;color:#111827">' + str(srow["nom"]) + '</div>'
                 '<div style="font-size:11px;color:#9CA3AF;margin-top:2px">'
-                + str(srow.get("ville", "")) + ' · Licence ' + str(srow["licence"]) + '</div></div>'
+                + str(srow.get("ville", "")) + ' Â· Licence ' + str(srow["licence"]) + '</div></div>'
                 '<div style="text-align:center;min-width:100px">'
                 '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;margin-bottom:2px">Solde reel</div>'
                 '<div style="font-size:13px;font-weight:800;color:#4361EE">' + "{:,.0f}".format(srow["solde_reel"]) + ' kgs</div></div>'
@@ -1394,25 +1394,25 @@ elif page == "new_cmd":
         unsafe_allow_html=True)
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
 
-    noms_cmd = ["— Selectionner —"] + sorted(
+    noms_cmd = ["â€” Selectionner â€”"] + sorted(
         clients["nom_client"].dropna()
         .str.strip().replace("", pd.NA).dropna()
         .unique().tolist()
     )
     cli_cmd_sel = st.selectbox("Client", noms_cmd, label_visibility="collapsed")
 
-    if cli_cmd_sel != "— Selectionner —":
+    if cli_cmd_sel != "â€” Selectionner â€”":
         cli_cmd_rows   = clients[clients["nom_client"].str.strip() == cli_cmd_sel]
         licences_dispo = cli_cmd_rows[["nom","licence","solde_reel"]].copy()
         licences_dispo["label"] = (
-            licences_dispo["nom"] + " — " +
-            licences_dispo["licence"] + " — Solde: " +
+            licences_dispo["nom"] + " â€” " +
+            licences_dispo["licence"] + " â€” Solde: " +
             licences_dispo["solde_reel"].apply(lambda x: "{:,.0f}".format(x)) + " kgs"
         )
-        lic_opts = ["— Choisir une licence —"] + licences_dispo["label"].tolist()
+        lic_opts = ["â€” Choisir une licence â€”"] + licences_dispo["label"].tolist()
         lic_sel  = st.selectbox("Licence", lic_opts, label_visibility="collapsed")
 
-        if lic_sel != "— Choisir une licence —":
+        if lic_sel != "â€” Choisir une licence â€”":
             lic_row    = licences_dispo[licences_dispo["label"] == lic_sel].iloc[0]
             client_nom = lic_row["nom"]
             match      = clients[clients["nom"] == client_nom]
@@ -1461,7 +1461,7 @@ elif page == "new_cmd":
                     "booking": "PREVIEW", "semaine": current_week_str,
                     "client": client_nom, "adresse1": adresse1, "adresse2": "",
                     "ville": ville, "pays": pays, "licence": lic_row["licence"],
-                    "poids_total_lic": poids_lic, "navire": "—", "voyage": "—",
+                    "poids_total_lic": poids_lic, "navire": "â€”", "voyage": "â€”",
                     "pol": pol, "depart": date.today().strftime("%d/%m/%Y"),
                     "eta": eta_prev, "nb_cnt": nb_cnt, "solde_avant": lic_row["solde_reel"],
                 })
