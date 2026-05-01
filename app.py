@@ -1122,7 +1122,7 @@ elif page == "licences":
         unsafe_allow_html=True)
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
     st.markdown("""
-    <style>
+   <style>
     [data-testid="stExpander"] {
         background: #fff !important;
         border: 1px solid #E5E7EB !important;
@@ -1144,6 +1144,26 @@ elif page == "licences":
     [data-testid="stExpander"] label,
     [data-testid="stExpander"] span:not(.pill) {
         color: #111827 !important;
+    }
+    /* ✅ FIX flèche qui empiète sur le texte */
+    [data-testid="stExpander"] summary {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        padding: 12px 16px !important;
+    }
+    [data-testid="stExpander"] summary svg {
+        flex-shrink: 0 !important;
+        min-width: 16px !important;
+        order: 99 !important;
+        margin-left: auto !important;
+    }
+    [data-testid="stExpander"] summary p {
+        margin: 0 !important;
+        flex: 1 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
     }
     </style>
     """, unsafe_allow_html=True)
