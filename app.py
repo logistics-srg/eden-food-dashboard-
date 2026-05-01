@@ -888,7 +888,7 @@ elif page == "commandes":
                 st.success("Uploade !")
                 st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
-  elif page == "tracking":
+elif page == "tracking":
     st.markdown(
         '<div style="background:#fff;border-bottom:1px solid #E5E7EB;padding:18px 36px;'
         'display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100">'
