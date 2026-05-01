@@ -1217,7 +1217,7 @@ elif page == "planning":
         unsafe_allow_html=True)
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
     noms_clients = sorted(clients["nom_client"].dropna().str.strip().replace("", pd.NA).dropna().unique().tolist())
-        cli_sel = st.selectbox("", ["— Selectionner un client —"] + noms_clients, label_visibility="collapsed")
+    cli_sel = st.selectbox("", ["— Selectionner un client —"] + noms_clients, label_visibility="collapsed")
     if cli_sel == "— Selectionner un client —":
         st.info("Selectionnez un client pour voir son planning.")
     else:
