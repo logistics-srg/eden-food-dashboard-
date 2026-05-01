@@ -1141,8 +1141,8 @@ elif page == "licences":
         '</div>',
         unsafe_allow_html=True)
 
-    search_lic = st.text_input("", placeholder="🔍 Rechercher client, licence...", label_visibility="collapsed")
-        for idx, (_, row) in enumerate(clients.iterrows()):
+        search_lic = st.text_input("", placeholder="Rechercher client, licence...", label_visibility="collapsed")
+    for idx, (_, row) in enumerate(clients.iterrows()):
         if search_lic and search_lic.lower() not in str(row["nom"]).lower() and search_lic.lower() not in str(row["licence"]).lower():
             continue
         poids   = row["poids_total"]
