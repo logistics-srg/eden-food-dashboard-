@@ -1314,13 +1314,14 @@ elif page == "planning":
             '<div class="prog-fill" style="background:'+pc+';width:'+str(int(pr))+'%"></div>'
             '</div></div></div>',
             unsafe_allow_html=True)
-        st.markdown(
+              st.markdown(
             '<div class="sec-hdr">'
             '<span class="sec-title">Societes du client</span>'
-            '<span class="sec-sub">'+str(nb_soc)+' societe(s)</span>'
+            '<span class="sec-sub">' + str(nb_soc) + ' societe(s)</span>'
             '</div>',
             unsafe_allow_html=True)
-                for _, srow in cli_rows.iterrows():
+
+        for _, srow in cli_rows.iterrows():
             sr = max(0, min(100, srow["solde_reel"] / srow["poids_total"] * 100)) if srow["poids_total"] > 0 else 0
             sc = "#10B981" if sr > 30 else ("#F59E0B" if sr > 10 else "#EF4444")
             st.markdown(
