@@ -1321,4 +1321,4 @@ elif page == "planning":
             '</div>',
             unsafe_allow_html=True)
         for _, srow in cli_rows.iterrows():
-            sr = max(0, min(100, srow["solde_r
+        sr = max(0, min(100, srow["solde_r
