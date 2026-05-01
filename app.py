@@ -1314,6 +1314,7 @@ elif page == "planning":
             '<div class="prog-fill" style="background:'+pc+';width:'+str(int(pr))+'%"></div>'
             '</div></div></div>',
             unsafe_allow_html=True)
+      
               st.markdown(
             '<div class="sec-hdr">'
             '<span class="sec-title">Societes du client</span>'
