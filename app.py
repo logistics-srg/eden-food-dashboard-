@@ -455,7 +455,7 @@ def login_page():
 if not st.session_state.authenticated:
     login_page()
     st.stop()
-  POIDS_UNIT  = 18.14
+POIDS_UNIT  = 18.14
 CRTNS       = {"TURBO(COLOMBIA)": 1080, "MOIN(COSTA RICA)": 1200}
 KGS_PER_CNT = {"MOIN(COSTA RICA)": 1200*18.14, "TURBO(COLOMBIA)": 1080*18.14}
 
