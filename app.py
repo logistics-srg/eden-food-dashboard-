@@ -1320,5 +1320,20 @@ elif page == "planning":
             '<span class="sec-sub">'+str(nb_soc)+' societe(s)</span>'
             '</div>',
             unsafe_allow_html=True)
-        for _, srow in cli_rows.iterrows():
-        sr = max(0, min(100, srow["solde_r
+                for _, srow in cli_rows.iterrows():
+            sr = max(0, min(100, srow["solde_reel"] / srow["poids_total"] * 100)) if srow["poids_total"] > 0 else 0
+            sc = "#10B981" if sr > 30 else ("#F59E0B" if sr > 10 else "#EF4444")
+            st.markdown(
+                '<div class="cmd-row">'
+                '<div style="flex:1">'
+                '<div style="font-size:13px;font-weight:700;color:#111827">' + str(srow["nom"]) + '</div>'
+                '<div style="font-size:11px;color:#9CA3AF;margin-top:2px">'
+                + str(srow.get("ville", "")) + ' · Licence ' + str(srow["licence"]) + '</div></div>'
+                '<div style="text-align:center;min-width:100px">'
+                '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;margin-bottom:2px">Solde reel</div>'
+                '<div style="font-size:13px;font-weight:800;color:#4361EE">' + "{:,.0f}".format(srow["solde_reel"]) + ' kgs</div></div>'
+                '<div style="text-align:center;min-width:80px">'
+                '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;margin-bottom:2px">Reste</div>'
+                '<div style="font-size:13px;font-weight:800;color:' + sc + '">' + str(int(sr)) + '%</div></div>'
+                '</div>',
+                unsafe_allow_html=True)
