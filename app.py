@@ -1142,27 +1142,27 @@ elif page == "licences":
         unsafe_allow_html=True)
 
     search_lic = st.text_input("", placeholder="🔍 Rechercher client, licence...", label_visibility="collapsed")
-    for _, row in clients.iterrows():
+        for idx, (_, row) in enumerate(clients.iterrows()):
         if search_lic and search_lic.lower() not in str(row["nom"]).lower() and search_lic.lower() not in str(row["licence"]).lower():
             continue
         poids   = row["poids_total"]
         solde   = row["solde_reel"]
-        solde_p = row["solde_prev"]
         pct     = max(0, min(100, solde / poids * 100)) if poids > 0 else 0
         if pct > 30:
-            bar_color = "#10B981"; pill_cls = "pill-green"; alert_msg = ""
+            bar_color = "#10B981"; alert_msg = ""
         elif pct > 10:
-            bar_color = "#F59E0B"; pill_cls = "pill-orange"
-            alert_msg = '<div class="alert alert-warn">⚠️ Solde < 30% — Renouvellement recommande</div>'
+            bar_color = "#F59E0B"
+            alert_msg = '<div class="alert alert-warn">Solde < 30% — Renouvellement recommande</div>'
         else:
-            bar_color = "#EF4444"; pill_cls = "pill-red"
-            alert_msg = '<div class="alert alert-red">🔴 Solde critique — Action urgente requise</div>'
+            bar_color = "#EF4444"
+            alert_msg = '<div class="alert alert-red">Solde critique — Action urgente requise</div>'
 
-        has_pdf    = os.path.exists(licence_pdf_path(row["licence"]))
-        pdf_badge  = ('<span class="pill pill-green">📄 PDF</span>' if has_pdf
-                      else '<span class="pill" style="background:#F3F4F6;color:#9CA3AF">📄 Manquant</span>')
-        cnt_cr     = row["cnt_reel_cr"]
-        cnt_col    = row["cnt_reel_col"]
+        has_pdf  = os.path.exists(licence_pdf_path(row["licence"]))
+        pdf_badge = ('<span class="pill pill-green">PDF OK</span>' if has_pdf
+                     else '<span class="pill" style="background:#F3F4F6;color:#9CA3AF">PDF Manquant</span>')
+        cnt_cr  = row["cnt_reel_cr"]
+        cnt_col = row["cnt_reel_col"]
+        uid     = str(idx) + "_" + str(row["licence"]).replace(" ", "_").replace("/", "_")
 
         with st.expander(str(row["nom"]) + "  ·  " + str(row["licence"]) + "  ·  " + str(int(pct)) + "% restant"):
             st.markdown(alert_msg, unsafe_allow_html=True)
@@ -1191,21 +1191,20 @@ elif page == "licences":
                 st.markdown(pdf_badge, unsafe_allow_html=True)
                 if has_pdf:
                     with open(licence_pdf_path(row["licence"]), "rb") as f:
-                        st.download_button("⬇️ Telecharger PDF",
+                        st.download_button("Telecharger PDF",
                             f.read(), file_name=licence_to_filename(row["licence"]),
-                            key="dllic_" + str(row["licence"]), use_container_width=True)
+                            key="dllic_" + uid, use_container_width=True)
             with l2:
                 if st.session_state.role == "admin":
-                    upl = st.file_uploader("", type=["pdf"], key="upllic_" + str(row["licence"]),
+                    upl = st.file_uploader("", type=["pdf"], key="upllic_" + uid,
                                            label_visibility="collapsed")
-                    if upl and st.button("✅ Uploader PDF", key="uplconflic_" + str(row["licence"]), type="primary"):
+                    if upl and st.button("Uploader PDF", key="uplconflic_" + uid, type="primary"):
                         os.makedirs("licences", exist_ok=True)
                         with open(licence_pdf_path(row["licence"]), "wb") as f:
                             f.write(upl.getbuffer())
                         st.success("PDF uploade !")
                         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
-
 # ══════════════════════════════════════════════════════════════════════════════
 # PLANNING CLIENT
 # ══════════════════════════════════════════════════════════════════════════════
