@@ -1121,6 +1121,32 @@ elif page == "licences":
         'Licences DPVCT</div>',
         unsafe_allow_html=True)
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
+    st.markdown("""
+    <style>
+    [data-testid="stExpander"] {
+        background: #fff !important;
+        border: 1px solid #E5E7EB !important;
+        border-radius: 12px !important;
+        margin-bottom: 8px !important;
+    }
+    [data-testid="stExpander"] summary,
+    [data-testid="stExpander"] summary p,
+    [data-testid="stExpander"] summary span {
+        color: #111827 !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
+    }
+    [data-testid="stExpander"] > div[data-testid="stExpanderDetails"] {
+        background: #fff !important;
+        color: #111827 !important;
+    }
+    [data-testid="stExpander"] p,
+    [data-testid="stExpander"] label,
+    [data-testid="stExpander"] span:not(.pill) {
+        color: #111827 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
     total_poids = clients["poids_total"].sum()
     total_reel  = clients["solde_reel"].sum()
     total_prev  = clients["solde_prev"].sum()
@@ -1141,9 +1167,8 @@ elif page == "licences":
         '<div class="icon-wrap">⚠️</div><div class="kpi-lbl">Licences critiques</div>'
         '<div class="kpi-val" style="color:#D97706">'
         + str(len(clients[clients["solde_reel"] < 19591.2])) + '</div></div>'
-                '</div>',
+        '</div>',
         unsafe_allow_html=True)
-
     search_lic = st.text_input("", placeholder="Rechercher client, licence...", label_visibility="collapsed")
     for idx, (_, row) in enumerate(clients.iterrows()):
         if search_lic and search_lic.lower() not in str(row["nom"]).lower() and search_lic.lower() not in str(row["licence"]).lower():
@@ -1159,14 +1184,12 @@ elif page == "licences":
         else:
             bar_color = "#EF4444"
             alert_msg = '<div class="alert alert-red">Solde critique — Action urgente requise</div>'
-
-        has_pdf  = os.path.exists(licence_pdf_path(row["licence"]))
+        has_pdf   = os.path.exists(licence_pdf_path(row["licence"]))
         pdf_badge = ('<span class="pill pill-green">PDF OK</span>' if has_pdf
                      else '<span class="pill" style="background:#F3F4F6;color:#9CA3AF">PDF Manquant</span>')
         cnt_cr  = row["cnt_reel_cr"]
         cnt_col = row["cnt_reel_col"]
         uid     = str(idx) + "_" + str(row["licence"]).replace(" ", "_").replace("/", "_")
-
         with st.expander(str(row["nom"]) + "  ·  " + str(row["licence"]) + "  ·  " + str(int(pct)) + "% restant"):
             st.markdown(alert_msg, unsafe_allow_html=True)
             st.markdown(
