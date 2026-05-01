@@ -1054,16 +1054,15 @@ elif page == "documents":
     total_docs   = sum(len(list_docs(b)) for b in all_bookings)
     bookings_ok  = sum(1 for b in all_bookings if len(list_docs(b)) > 0)
     st.markdown(
-        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px">'
+         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px">'
         '<div class="kpi-card" style="--card-color:#4361EE;--card-bg:#EEF2FF">'
-        '<div class="icon-wrap">📦</div><div class="kpi-lbl">Bookings total</div>'
-        '<div class="k        '<div class="icon-wrap">📦</div><div class="kpi-lbl">Bookings total</div>'
+        '<div class="icon-wrap">\U0001f4e6</div><div class="kpi-lbl">Bookings total</div>'
         '<div class="kpi-val" style="color:#4361EE">' + str(len(all_bookings)) + '</div></div>'
         '<div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">'
-        '<div class="icon-wrap">📁</div><div class="kpi-lbl">Avec documents</div>'
+        '<div class="icon-wrap">\U0001f4c1</div><div class="kpi-lbl">Avec documents</div>'
         '<div class="kpi-val" style="color:#059669">' + str(bookings_ok) + '</div></div>'
         '<div class="kpi-card" style="--card-color:#8B5CF6;--card-bg:#EDE9FE">'
-        '<div class="icon-wrap">📄</div><div class="kpi-lbl">Total fichiers</div>'
+        '<div class="icon-wrap">\U0001f4c4</div><div class="kpi-lbl">Total fichiers</div>'
         '<div class="kpi-val" style="color:#7C3AED">' + str(total_docs) + '</div></div>'
         '</div>',
         unsafe_allow_html=True)
