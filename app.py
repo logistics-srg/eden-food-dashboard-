@@ -452,7 +452,6 @@ def login_page():
                     st.rerun()
                 else:
                     st.error("Identifiant ou mot de passe incorrect")
-
 if not st.session_state.authenticated:
     login_page()
     st.stop()
