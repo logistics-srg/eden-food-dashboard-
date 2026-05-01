@@ -1278,50 +1278,14 @@ elif page == "planning":
         elif total_solde_r < 19591.2: badge = '<span class="pill pill-red">CRITIQUE</span>'
         elif total_solde_r < 58773.6: badge = '<span class="pill pill-orange">ATTENTION</span>'
         else:                          badge = '<span class="pill pill-green">OK</span>'
-        st.markdown(
-            '<div class="card" style="margin-bottom:20px">'
-            '<div style="display:flex;justify-content:space-between;align-items:flex-start;'
-            'flex-wrap:wrap;gap:12px;margin-bottom:18px">'
-            '<div>'
-            '<div style="font-size:20px;font-weight:900;color:#111827">'+cli_sel+'</div>'
-            '<div style="font-size:12px;color:#9CA3AF;margin-top:4px">'
-            +str(nb_soc)+' societe(s) enregistree(s)</div>'
-            '</div>'+badge+'</div>'
-            '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">'
-            '<div style="background:#F9FAFB;border-radius:10px;padding:14px">'
-            '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;font-weight:700;margin-bottom:4px">Poids total licences</div>'
-            '<div style="font-size:16px;font-weight:800;color:#111827">'+"{:,.0f}".format(total_poids)+'</div>'
-            '<div style="font-size:10px;color:#9CA3AF">kgs</div></div>'
-            '<div style="background:#EEF2FF;border-radius:10px;padding:14px">'
-            '<div style="font-size:9px;color:#4361EE;text-transform:uppercase;font-weight:700;margin-bottom:4px">Solde reel total</div>'
-            '<div style="font-size:16px;font-weight:800;color:#4361EE">'+"{:,.0f}".format(total_solde_r)+'</div>'
-            '<div style="font-size:10px;color:#9CA3AF">kgs</div></div>'
-            '<div style="background:#FEF3C7;border-radius:10px;padding:14px">'
-            '<div style="font-size:9px;color:#D97706;text-transform:uppercase;font-weight:700;margin-bottom:4px">Solde prev. total</div>'
-            '<div style="font-size:16px;font-weight:800;color:#D97706">'+"{:,.0f}".format(total_solde_p)+'</div>'
-            '<div style="font-size:10px;color:#9CA3AF">kgs</div></div>'
-            '<div style="background:#D1FAE5;border-radius:10px;padding:14px">'
-            '<div style="font-size:9px;color:#059669;text-transform:uppercase;font-weight:700;margin-bottom:4px">CNT expedies</div>'
-            '<div style="font-size:16px;font-weight:800;color:#059669">'+str(total_cnt)+'</div>'
-            '<div style="font-size:10px;color:#9CA3AF">conteneurs</div></div>'
-            '</div>'
-            '<div style="margin-bottom:8px">'
-            '<div style="display:flex;justify-content:space-between;margin-bottom:6px">'
-            '<span style="font-size:11px;color:#6B7280;font-weight:600">Licence globale consommee</span>'
-            '<span style="font-size:11px;font-weight:700;color:'+pc+'">'+str(int(pr))+'%</span>'
-            '</div>'
-            '<div class="prog-track">'
-            '<div class="prog-fill" style="background:'+pc+';width:'+str(int(pr))+'%"></div>'
-            '</div></div></div>',
-            unsafe_allow_html=True)
-      st.markdown(
+                st.markdown(
             '<div class="sec-hdr">'
             '<span class="sec-title">Societes du client</span>'
             '<span class="sec-sub">' + str(nb_soc) + ' societe(s)</span>'
             '</div>',
             unsafe_allow_html=True)
 
-                for _, srow in cli_rows.iterrows():
+        for _, srow in cli_rows.iterrows():
             sr = max(0, min(100, srow["solde_reel"] / srow["poids_total"] * 100)) if srow["poids_total"] > 0 else 0
             sc = "#10B981" if sr > 30 else ("#F59E0B" if sr > 10 else "#EF4444")
             st.markdown(
@@ -1329,7 +1293,7 @@ elif page == "planning":
                 '<div style="flex:1">'
                 '<div style="font-size:13px;font-weight:700;color:#111827">' + str(srow["nom"]) + '</div>'
                 '<div style="font-size:11px;color:#9CA3AF;margin-top:2px">'
-                + str(srow.get("ville", "")) + ' Â· Licence ' + str(srow["licence"]) + '</div></div>'
+                + str(srow.get("ville", "")) + ' · Licence ' + str(srow["licence"]) + '</div></div>'
                 '<div style="text-align:center;min-width:100px">'
                 '<div style="font-size:9px;color:#9CA3AF;text-transform:uppercase;margin-bottom:2px">Solde reel</div>'
                 '<div style="font-size:13px;font-weight:800;color:#4361EE">' + "{:,.0f}".format(srow["solde_reel"]) + ' kgs</div></div>'
@@ -1394,25 +1358,25 @@ elif page == "new_cmd":
         unsafe_allow_html=True)
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
 
-    noms_cmd = ["â€” Selectionner â€”"] + sorted(
+    noms_cmd = ["— Selectionner —"] + sorted(
         clients["nom_client"].dropna()
         .str.strip().replace("", pd.NA).dropna()
         .unique().tolist()
     )
     cli_cmd_sel = st.selectbox("Client", noms_cmd, label_visibility="collapsed")
 
-    if cli_cmd_sel != "â€” Selectionner â€”":
+    if cli_cmd_sel != "— Selectionner —":
         cli_cmd_rows   = clients[clients["nom_client"].str.strip() == cli_cmd_sel]
         licences_dispo = cli_cmd_rows[["nom","licence","solde_reel"]].copy()
         licences_dispo["label"] = (
-            licences_dispo["nom"] + " â€” " +
-            licences_dispo["licence"] + " â€” Solde: " +
+            licences_dispo["nom"] + " — " +
+            licences_dispo["licence"] + " — Solde: " +
             licences_dispo["solde_reel"].apply(lambda x: "{:,.0f}".format(x)) + " kgs"
         )
-        lic_opts = ["â€” Choisir une licence â€”"] + licences_dispo["label"].tolist()
+        lic_opts = ["— Choisir une licence —"] + licences_dispo["label"].tolist()
         lic_sel  = st.selectbox("Licence", lic_opts, label_visibility="collapsed")
 
-        if lic_sel != "â€” Choisir une licence â€”":
+        if lic_sel != "— Choisir une licence —":
             lic_row    = licences_dispo[licences_dispo["label"] == lic_sel].iloc[0]
             client_nom = lic_row["nom"]
             match      = clients[clients["nom"] == client_nom]
@@ -1449,10 +1413,10 @@ elif page == "new_cmd":
                     st.success("Commande creee ! Allez dans Commandes pour la voir.")
                     st.rerun()
 
-            adresse1 = str(client_row.get("adresse","")) if client_row is not None else ""
-            ville    = str(client_row.get("ville",""))   if client_row is not None else ""
-            pays     = str(client_row.get("pays",""))    if client_row is not None else ""
-            poids_lic = client_row.get("poids_total",0)  if client_row is not None else 0
+            adresse1  = str(client_row.get("adresse","")) if client_row is not None else ""
+            ville     = str(client_row.get("ville",""))   if client_row is not None else ""
+            pays      = str(client_row.get("pays",""))    if client_row is not None else ""
+            poids_lic = client_row.get("poids_total",0)   if client_row is not None else 0
             routing_prev = get_routing(pol)
             eta_prev = (date.today() + timedelta(days=routing_prev["total_days"])).strftime("%d/%m/%Y")
 
@@ -1461,7 +1425,7 @@ elif page == "new_cmd":
                     "booking": "PREVIEW", "semaine": current_week_str,
                     "client": client_nom, "adresse1": adresse1, "adresse2": "",
                     "ville": ville, "pays": pays, "licence": lic_row["licence"],
-                    "poids_total_lic": poids_lic, "navire": "â€”", "voyage": "â€”",
+                    "poids_total_lic": poids_lic, "navire": "—", "voyage": "—",
                     "pol": pol, "depart": date.today().strftime("%d/%m/%Y"),
                     "eta": eta_prev, "nb_cnt": nb_cnt, "solde_avant": lic_row["solde_reel"],
                 })
