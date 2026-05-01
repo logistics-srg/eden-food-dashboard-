@@ -1138,10 +1138,10 @@ elif page == "licences":
         '<div class="icon-wrap">⚠️</div><div class="kpi-lbl">Licences critiques</div>'
         '<div class="kpi-val" style="color:#D97706">'
         + str(len(clients[clients["solde_reel"] < 19591.2])) + '</div></div>'
-        '</div>',
+                '</div>',
         unsafe_allow_html=True)
 
-        search_lic = st.text_input("", placeholder="Rechercher client, licence...", label_visibility="collapsed")
+    search_lic = st.text_input("", placeholder="Rechercher client, licence...", label_visibility="collapsed")
     for idx, (_, row) in enumerate(clients.iterrows()):
         if search_lic and search_lic.lower() not in str(row["nom"]).lower() and search_lic.lower() not in str(row["licence"]).lower():
             continue
