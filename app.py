@@ -1217,26 +1217,30 @@ elif page == "planning":
         unsafe_allow_html=True)
     st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
     noms_clients = sorted(clients["nom_client"].dropna().str.strip().replace("", pd.NA).dropna().unique().tolist())
-    cli_sel = st.selectbox("", ["— Selectionner un client —"] + noms_clients, label_visibility="collapsed")
+        cli_sel = st.selectbox("", ["— Selectionner un client —"] + noms_clients, label_visibility="collapsed")
     if cli_sel == "— Selectionner un client —":
         st.info("Selectionnez un client pour voir son planning.")
     else:
         cli_rows = clients[clients["nom_client"].str.strip() == cli_sel]
         cli_cmds = commandes[commandes["client"].isin(cli_rows["nom"].tolist())]
         nb_soc   = len(cli_rows)
-            st.markdown(
-        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px">'
-        '<div class="kpi-card" style="--card-color:#4361EE;--card-bg:#EEF2FF">'
-        '<div class="icon-wrap">📦</div><div class="kpi-lbl">Bookings total</div>'
-        '<div class="kpi-val" style="color:#4361EE">' + str(len(all_bookings)) + '</div></div>'
-        '<div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">'
-        '<div class="icon-wrap">📁</div><div class="kpi-lbl">Avec documents</div>'
-        '<div class="kpi-val" style="color:#059669">' + str(bookings_ok) + '</div></div>'
-        '<div class="kpi-card" style="--card-color:#8B5CF6;--card-bg:#EDE9FE">'
-        '<div class="icon-wrap">📄</div><div class="kpi-lbl">Total fichiers</div>'
-        '<div class="kpi-val" style="color:#7C3AED">' + str(total_docs) + '</div></div>'
-        '</div>',
-        unsafe_allow_html=True)
+        st.markdown(
+            '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">'
+            '<div class="kpi-card" style="--card-color:#4361EE;--card-bg:#EEF2FF">'
+            '<div class="kpi-lbl">Licences</div>'
+            '<div class="kpi-val" style="color:#4361EE">' + str(nb_soc) + '</div></div>'
+            '<div class="kpi-card" style="--card-color:#10B981;--card-bg:#D1FAE5">'
+            '<div class="kpi-lbl">Commandes</div>'
+            '<div class="kpi-val" style="color:#059669">' + str(len(cli_cmds)) + '</div></div>'
+            '<div class="kpi-card" style="--card-color:#8B5CF6;--card-bg:#EDE9FE">'
+            '<div class="kpi-lbl">CNT total</div>'
+            '<div class="kpi-val" style="color:#7C3AED">' + str(int(cli_cmds["nb_cnt"].sum())) + '</div></div>'
+            '<div class="kpi-card" style="--card-color:#F59E0B;--card-bg:#FEF3C7">'
+            '<div class="kpi-lbl">Solde reel total</div>'
+            '<div class="kpi-val" style="color:#D97706;font-size:1.1rem">'
+            + "{:,.0f}".format(cli_rows["solde_reel"].sum()) + '</div></div>'
+            '</div>',
+            unsafe_allow_html=True)
         st.markdown(
             '<div class="sec-hdr">'
             '<span class="sec-title">Societes du client</span>'
